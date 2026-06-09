@@ -36,7 +36,7 @@ public class TraineeService : ITraineeService
 
     public async Task<Trainee?> FetchTrainee(long id)
     {
-        var trainee = await _context.Trainees.FirstOrDefaultAsync(u => u.Id == id);
+        Trainee? trainee = await _context.Trainees.FirstOrDefaultAsync(u => u.Id == id);
 
         if (trainee == null)
         {
@@ -54,7 +54,7 @@ public class TraineeService : ITraineeService
             return false;
         }
         _context.Trainees.Remove(t);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return true;
     }
 
@@ -64,16 +64,16 @@ public class TraineeService : ITraineeService
         List<Trainee> trainees = await _context.Trainees.ToListAsync();
         if (trainees.Count == 0)
         {
-            return new List<TraineeResponse>();
+            return null;
         }
 
-        return trainees.Select(t => ToResponse(t)).ToList();
+        return trainees.Select(t => ToResponse(t));
     }
 
     // GET by ID
     public async Task<TraineeResponse?> GetTraineeResponseByIdService(long id)
     {
-        var trainee = await FetchTrainee(id);
+        Trainee? trainee = await FetchTrainee(id);
         if (trainee is null)
         {
             return null;
@@ -84,25 +84,19 @@ public class TraineeService : ITraineeService
     // CREATE
     public async Task<TraineeResponse?> CreateTraineeService(CreateTraineeRequest trainee)
     {
-        long temp = 0;
-        if (await _context.Trainees.AnyAsync())
-        {
-            temp = _context.Trainees.Last().Id;
-        }
+
         Trainee u = new Trainee
         {
-
-            Id = temp + 1,
             FirstName = trainee.FirstName,
             LastName = trainee.LastName,
             Email = trainee.Email,
             TechStack = trainee.TechStack,
             Status = trainee.Status,
-            CreatedDate = DateTime.Now,
-            UpdatedDate = DateTime.Now
+            CreatedDate = DateTime.UtcNow,
+            UpdatedDate = DateTime.UtcNow
         };
 
-        await _context.Trainees.AddAsync(u);
+        _context.Trainees.Add(u);
         await _context.SaveChangesAsync();
 
         return ToResponse(u);
@@ -111,7 +105,7 @@ public class TraineeService : ITraineeService
     // UPDATE
     public async Task<TraineeResponse?> UpdateTraineeService(long id, UpdateTraineeRequest trainee)
     {
-        var user = await FetchTrainee(id);
+        Trainee? user = await FetchTrainee(id);
         if (user is null)
         {
             return null;
@@ -122,7 +116,7 @@ public class TraineeService : ITraineeService
         user.Email = trainee.Email;
         user.TechStack = trainee.TechStack;
         user.Status = trainee.Status;
-        user.UpdatedDate = DateTime.Now;
+        user.UpdatedDate = DateTime.UtcNow;
 
         _context.Trainees.Update(user);
         await _context.SaveChangesAsync();
@@ -134,18 +128,18 @@ public class TraineeService : ITraineeService
     public async Task<IEnumerable<TraineeResponse>?> SearchTraineeService(String s)
     {
         s.ToLower();
-        var trainees = await _context.Trainees.Where(
+        List<Trainee>trainees = await _context.Trainees.Where(
             u => u.FirstName!.ToLower().Contains(s)
             || u.LastName!.ToLower().Contains(s)
             || u.TechStack!.ToLower().Contains(s)
             || u.Email!.ToLower().Contains(s)).ToListAsync();
 
-        if (trainees.Count() == 0)
+        if (trainees.Count == 0)
         {
             return null;
         }
-        List<TraineeResponse> traineeDto = trainees.Select(u => ToResponse(u)).ToList();
-        return traineeDto;
+        
+        return trainees.Select(u => ToResponse(u));
     }
 };
 
