@@ -1,4 +1,3 @@
-*mp4
-/bin
-/obj
-.env
+*.mp4
+bin/
+obj/
