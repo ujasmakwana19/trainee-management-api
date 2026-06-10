@@ -7,6 +7,6 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Port=3307;Database=trainee_management_db;User=root;Password=Ram@19;"
+    "DefaultConnection": "Server=YourHost;Port=YourPort;Database=DbName;User=User;Password=Pass;"
   }
 }
