@@ -1,12 +1,12 @@
-using TraineeManagement.Api.Models;
-using TraineeManagement.Api.DTOs;
+using TraineeManagement.Api.TraineeModel;
+using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using System.Threading.Tasks;
 using Namotion.Reflection;
 
-namespace TraineeManagement.Api.Services;
+namespace TraineeManagement.Api.TraineeServices;
 
 
 public class TraineeService : ITraineeService

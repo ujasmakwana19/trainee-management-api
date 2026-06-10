@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.Models;
-namespace TraineeManagement.Api.DTOs;
+using TraineeManagement.Api.TraineeModel;
+namespace TraineeManagement.Api.TraineeDTO;
 
 public record CreateTraineeRequest
 (
