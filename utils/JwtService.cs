@@ -29,9 +29,9 @@ public class JwtService : IJwtService
     {
         var claims = new[]
         {
-            new Claim("UserId", user.Id.ToString()),
-            new Claim("Username", user.Username),
-            new Claim(ClaimTypes.Role, user.Role.ToString())
+            new Claim("userId", user.Id.ToString()),
+            new Claim("userName", user.Username),
+            new Claim("role", user.Role.ToString())
         };
 
         var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);

@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace TraineeManagement.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/health")]
 public class HealthController : ControllerBase

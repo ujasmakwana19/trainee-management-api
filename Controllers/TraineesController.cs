@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.TraineeServices;
@@ -17,6 +18,7 @@ public class TraineesController : ControllerBase
 
   // Get all the Trainees
   // GET /api/trainees
+  [Authorize]
   [HttpGet("/getall")]
   public async Task<ActionResult<IEnumerable<TraineeResponse>>> GetTrainee()
   {

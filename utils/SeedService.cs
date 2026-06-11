@@ -12,7 +12,6 @@ public static class SeederService
 
             Username = "admin",
             Email = "admin@mail.com",
-            PasswordHash = "Ram",
             Role = UserRole.Admin,
             CreatedDate = DateTime.UtcNow,
             UpdatedDate = DateTime.UtcNow

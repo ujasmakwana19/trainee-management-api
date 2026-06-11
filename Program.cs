@@ -6,10 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 
 // System.Text.Json deserializes enums from their integer value by default.
 builder.Services.AddControllers().AddJsonOptions(options => 
@@ -29,7 +30,40 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi("v1",options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        var scheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "Enter your JWT token directly"
+        };
+        
+        document.Components ??= new Microsoft.OpenApi.Models.OpenApiComponents();
+        document.Components.SecuritySchemes.Add("Bearer", scheme);
+
+        // 2. Apply it globally to all endpoints
+        document.SecurityRequirements.Add(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
+            [new Microsoft.OpenApi.Models.OpenApiSecurityScheme 
+            { 
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference 
+                { 
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, 
+                    Id = "Bearer" 
+                } 
+            }] = Array.Empty<string>()
+        });
+
+        return Task.CompletedTask;
+    });
+});
+
+//--------------- DB ------------------------
 // builder.Services.AddDbContext<AppDbContext>(options =>
 //     options.UseInMemoryDatabase("TraineeApp"));
 
@@ -39,6 +73,7 @@ var serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion));
+//--------------------------------------------- 
 
 // Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -66,6 +101,8 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 var app = builder.Build();
+
+// Seeder Function
 await SeederService.CreateAdminUser(app.Services);
 
 // Configure the HTTP request pipeline.
@@ -80,6 +117,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
