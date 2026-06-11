@@ -112,9 +112,13 @@ such that easy to move to the persistant DBMS
 -  GET  /api/trainees?search=value
 
     
+    
 ### To Run Project
 - git clone https://github.com/ujasmakwana19/trainee-management-api
 - dotnet restore
+- dotnet clean
+- dotnet build
+- dotnet ef database update (if incase you have not tools use (dotnet tool install --global dotnet-ef) before this)
 - dotnet run
 - https://localhost:<port>/swagger
 

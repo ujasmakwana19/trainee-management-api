@@ -3,7 +3,7 @@ using TraineeManagement.Api.UserDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using TraineeManagement.Api.JwtServices;
 
 namespace TraineeManagement.Api.UserServices;
 
@@ -15,16 +15,20 @@ public class UserService : IUserService
 
     // This is for the inMemory Database Instance
     private readonly AppDbContext _context;
-    public UserService(AppDbContext context)
+    private readonly IJwtService _jwtService;
+    private readonly IConfiguration _config;
+    public UserService(AppDbContext context, IJwtService jwtService, IConfiguration config)
     {
         _context = context;
+        _jwtService = jwtService;
+        _config = config;
     }
 
-    private static LoginUserResponse ToResponse(String Token,User userInfo)
+    private static LoginUserResponse ToResponse(String Token,User userInfo, int expiryMinutes)
     {   
         return new LoginUserResponse(
             Token,
-            3600,
+            expiryMinutes * 60,
             new UserRecord
             (
                 userInfo.Id,
@@ -77,7 +81,8 @@ public class UserService : IUserService
 
         if(result == PasswordVerificationResult.Success)
         {
-            return ToResponse("ujas",u);
+            string token = _jwtService.GenerateToken(u);
+            return ToResponse(token, u, int.Parse(_config["Jwt:ExpiryMinutes"]!));
         }
         return null;
     }
