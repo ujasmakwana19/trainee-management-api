@@ -15,9 +15,9 @@ The project demonstrates:
 - Validation
 - Swagger
  
-
-## Day 1:
-### Goal
+## Phase 1
+### Day 1:
+#### Goal
 - Create the Health endpoint to get the status of there server
 - Create the Trainee class with the following fields
 Id - Unique & AUTO Generate
@@ -31,8 +31,8 @@ UpdatedDate - AUTO Generate
 - Create the apis to (getall , getbyid , add) trainee 
 - Get the swagger running and test apis
 
-## Day 2:
-### Goal
+### Day 2:
+#### Goal
 - Add Data Validations to the fields
 - Add Proper Error Messages and Error Codes
 - Create the update API
@@ -40,13 +40,18 @@ UpdatedDate - AUTO Generate
 - Use the DTOs to send Response and the Data communication between controllers and services
 - Use the services to write the modular code so that code remains losely coupled
 
-## Day 3:
-### Goal
+### Day 3:
+#### Goal
 - Use the EF Core Framework & Connect the Inmemory storage
 - Create the AppDbContext using DbContext and the Dbset
 such that easy to move to the persistant DBMS
 - Create the search api /api/trainees?search=value
 - Complete the task , upload to github and documentation
+
+## Phase 2
+### Day 1:
+- 
+
 
 ## Technology Stack
  

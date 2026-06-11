@@ -1,32 +1,40 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.TraineeServices;
 
 namespace TraineeManagement.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/trainees")]
 public class TraineesController : ControllerBase
 {
   // Instance of the service create when the HTTP request is made
   private readonly ITraineeService _service;
-  public TraineesController(ITraineeService traineeService)
+  private readonly ILogger<TraineesController> _logger;
+  public TraineesController(ITraineeService traineeService, ILogger<TraineesController> logger)
   {
     _service = traineeService;
+    _logger = logger;
   }
 
   // Get all the Trainees
   // GET /api/trainees
-  [Authorize]
   [HttpGet("/getall")]
   public async Task<ActionResult<IEnumerable<TraineeResponse>>> GetTrainee()
   {
     IEnumerable<TraineeResponse>? traineesVal = await _service.GetAllTraineesService();
-
-    if (traineesVal is null)
+    traineesVal = [];
+    if(traineesVal is null)
     {
       return NotFound();
+    }
+    if (traineesVal.Count() == 0)
+    {
+      return NotFound(new {data = traineesVal ,Message = $"No. Records Found"});
     }
 
     else
@@ -103,6 +111,22 @@ public class TraineesController : ControllerBase
     IEnumerable<TraineeResponse>? traineeDto = await _service.SearchTraineeService(search);
     if (traineeDto == null)
       return NotFound(new { Message = $"No Trainees Found with the search :{search}" });
+    return Ok(traineeDto);
+  }
+
+  // To search the substring in FirstName, LastName, TechStack, Email
+  // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
+  [HttpGet("/getSearch")]
+  public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber,int pageSize, String search, String status)
+  {
+    if (search == null || status == null)
+    {
+      return BadRequest(new { Message = "Provide proper query parameters" });
+    }
+
+    TraineeInfoPagination? traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
+    if (traineeDto == null)
+      return NotFound(new { Message = $"No Trainees Found with the search :{search} or page {pageNumber}" });
     return Ok(traineeDto);
   }
 

@@ -56,3 +56,10 @@ public record TraineeResponse
     String? TechStack,
     StatusValue? Status
 );
+
+public record TraineeInfoPagination(
+    int? pageNumber,
+    int? pageSize,
+    int? totalRecords,
+    List<TraineeResponse>? data
+);

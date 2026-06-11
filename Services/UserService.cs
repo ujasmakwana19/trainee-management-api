@@ -13,22 +13,24 @@ public class UserService : IUserService
     // readonly makes sure that the list of trainees cannot be reassigned to a different list, but we can still add or remove items from the list. This is useful for maintaining the integrity of the data structure while allowing for modifications to the contents of the list.
     // private readonly List<Trainee> _trainees = new();
 
-    // This is for the inMemory Database Instance
+    // This is for the Database Instance
     private readonly AppDbContext _context;
     private readonly IJwtService _jwtService;
     private readonly IConfiguration _config;
-    public UserService(AppDbContext context, IJwtService jwtService, IConfiguration config)
+    private readonly ILogger<UserService> _logger; 
+    public UserService(AppDbContext context, IJwtService jwtService, IConfiguration config, ILogger<UserService> logger)
     {
         _context = context;
         _jwtService = jwtService;
         _config = config;
+        _logger = logger;
     }
 
     private static LoginUserResponse ToResponse(String Token,User userInfo, int expiryMinutes)
     {   
         return new LoginUserResponse(
             Token,
-            expiryMinutes * 60,
+            expiryMinutes * 60, // Convert to seconds
             new UserRecord
             (
                 userInfo.Id,
@@ -47,42 +49,39 @@ public class UserService : IUserService
         }
         return u;
     }
-    private string? CreateHash(User user, String password)
-    {
-        PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
-        String passwordHash = passwordHasher.HashPassword(user,password);
-        if(passwordHash is null)
-        {
-            return null;
-        }
-        return passwordHash;
-    }
+    
     private PasswordVerificationResult VerifyPassword(User user, String hashPass,String password)
     {
         PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
         PasswordVerificationResult result = passwordHasher.VerifyHashedPassword(user,hashPass,password);
-        
         return result;
     }
 
     public async Task<LoginUserResponse?> Login(LoginUserRequest userInfo)
     {
-        if(userInfo is null || userInfo.Username is null || userInfo.Password is null)
+        
+        User? user = await FetchUser(userInfo.Username!);
+
+        if(user is null)
         {
             return null;
         }
-        User? u = await FetchUser(userInfo.Username);
-        if(u is null || u.PasswordHash is null)
+        if (userInfo.Password is null)
         {
+            _logger.LogDebug($"User : {userInfo.Username} exists but does not has the hash password ");
             return null;
         }
 
-        PasswordVerificationResult result = VerifyPassword(u, u.PasswordHash,userInfo.Password); 
+        PasswordVerificationResult result = VerifyPassword(user, user.PasswordHash,userInfo.Password); 
 
         if(result == PasswordVerificationResult.Success)
         {
-            string token = _jwtService.GenerateToken(u);
-            return ToResponse(token, u, int.Parse(_config["Jwt:ExpiryMinutes"]!));
+            string? token = _jwtService.GenerateToken(user);
+            if(token is null)
+            {
+                return null;
+            }
+            return ToResponse(token, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
         }
         return null;
     }

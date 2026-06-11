@@ -2,9 +2,7 @@ using TraineeManagement.Api.TraineeModel;
 using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
-using System.Threading.Tasks;
-using Namotion.Reflection;
+
 
 namespace TraineeManagement.Api.TraineeServices;
 
@@ -140,6 +138,44 @@ public class TraineeService : ITraineeService
         }
         
         return trainees.Select(u => ToResponse(u));
+    }
+
+    public async Task<TraineeInfoPagination?> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
+    {
+        if(pageNumber < 1) pageNumber = 1;
+        if(pageSize < 1) pageSize = 10;
+
+        int rowToSkip = (pageNumber-1)*pageSize; 
+
+        List<Trainee>trainees = await _context.Trainees
+        .OrderBy(u => u.Id)
+        .Skip(rowToSkip)
+        .Where(
+            u => u.FirstName!.ToLower().Contains(search) &&
+            u.Status.ToString()!.ToLower().Contains(status)
+        ).Take(pageSize)
+        .ToListAsync();
+
+        int totalRecords = await _context.Trainees
+        .Where(
+            u => u.FirstName!.ToLower().Equals(search) &&
+            u.Status.ToString()!.ToLower().Equals(status)
+        ).CountAsync();
+
+        if (trainees.Count == 0)
+        {
+            return null;
+        }
+        
+        List<TraineeResponse> tr = trainees.Select(trainees => ToResponse(trainees)).ToList();
+
+        TraineeInfoPagination t = new TraineeInfoPagination(
+            pageNumber,
+            trainees.Count,
+            totalRecords,
+            tr
+        );
+        return t;
     }
 };
 

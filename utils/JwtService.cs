@@ -8,24 +8,26 @@ namespace TraineeManagement.Api.JwtServices;
 
 public interface IJwtService
 {
-    string GenerateToken(User user);
-    ClaimsPrincipal? ValidateToken(string token);
+    string? GenerateToken(User user);
+    // ClaimsPrincipal? ValidateToken(string token);
 }
 
 public class JwtService : IJwtService
 {
     private readonly IConfiguration _config;
     private readonly SymmetricSecurityKey _key;
+    private readonly ILogger<JwtService> _logger ;
 
-    public JwtService(IConfiguration config)
+    public JwtService(IConfiguration config , ILogger<JwtService> logger)
     {
         _config = config;
         _key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!)
         );
+        _logger = logger;
     }
 
-    public string GenerateToken(User user)
+    public string? GenerateToken(User user)
     {
         var claims = new[]
         {
@@ -45,33 +47,38 @@ public class JwtService : IJwtService
             ),
             signingCredentials: credentials 
         );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    public ClaimsPrincipal? ValidateToken(string token)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        try
+        string jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+        if(jwtToken is null)
         {
-            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _config["Jwt:Issuer"],
-                ValidAudience = _config["Jwt:Audience"],
-                IssuerSigningKey = _key,
-                ClockSkew = TimeSpan.Zero  // exact expiry, no grace period
-            }, out _);
-
-            return principal;
-        }
-        catch
-        {
+            _logger.LogError("Failed to created the jwt token");
             return null;
         }
+        return jwtToken;
     }
+
+    // public ClaimsPrincipal? ValidateToken(string token)
+    // {
+    //     var tokenHandler = new JwtSecurityTokenHandler();
+
+    //     try
+    //     {
+    //         var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+    //         {
+    //             ValidateIssuer = true,
+    //             ValidateAudience = true,
+    //             ValidateLifetime = true,
+    //             ValidateIssuerSigningKey = true,
+    //             ValidIssuer = _config["Jwt:Issuer"],
+    //             ValidAudience = _config["Jwt:Audience"],
+    //             IssuerSigningKey = _key,
+    //             ClockSkew = TimeSpan.Zero  // exact expiry, no grace period
+    //         }, out _);
+
+    //         return principal;
+    //     }
+    //     catch
+    //     {
+    //         return null;
+    //     }
+    // }
 }
