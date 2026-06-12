@@ -140,6 +140,22 @@ public class TraineeService : ITraineeService
 
         int rowToSkip = (pageNumber-1)*pageSize; 
 
+        int totalRecords = await _context.Trainees
+        .Where(
+            u => u.FirstName!.ToLower().Equals(search) &&
+            u.Status.ToString()!.ToLower().Equals(status)
+        ).CountAsync();
+
+        if (totalRecords == 0)
+        {
+            return new TraineeInfoPagination(
+                pageNumber,
+                pageSize,
+                totalRecords,
+                []
+            );
+        }
+        
         List<Trainee>trainees = await _context.Trainees
         .OrderBy(u => u.Id)
         .Skip(rowToSkip)
@@ -149,21 +165,15 @@ public class TraineeService : ITraineeService
         ).Take(pageSize)
         .ToListAsync();
 
-        int totalRecords = await _context.Trainees
-        .Where(
-            u => u.FirstName!.ToLower().Equals(search) &&
-            u.Status.ToString()!.ToLower().Equals(status)
-        ).CountAsync();
         
         List<TraineeResponse> tr = trainees.Select(trainees => ToResponse(trainees)).ToList();
 
-        TraineeInfoPagination t = new TraineeInfoPagination(
+        return new TraineeInfoPagination(
             pageNumber,
             trainees.Count,
             totalRecords,
             tr
-        );
-        return t;
+        );;
     }
 };
 

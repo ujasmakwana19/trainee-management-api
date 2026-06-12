@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.TraineeModel;
 using TraineeManagement.Api.UserModel;
 using TraineeManagement.Api.IDateTimeAutoService;
+using TraineeManagement.Api.MentorModel;
+using TraineeManagement.Api.TaskModel;
 namespace TraineeManagement.Api.Data;
 
 public class AppDbContext : DbContext
@@ -19,6 +21,14 @@ public class AppDbContext : DbContext
         .HasConversion<string>();
 
         builder.Entity<Trainee>()
+        .Property(u => u.Status)
+        .HasConversion<string>();
+
+        builder.Entity<Mentor>()
+        .Property(u => u.Status)
+        .HasConversion<string>();
+
+        builder.Entity<LearningTask>()
         .Property(u => u.Status)
         .HasConversion<string>();
 
@@ -50,5 +60,7 @@ public class AppDbContext : DbContext
     
     public DbSet<Trainee> Trainees { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Mentor> Mentors {get; set;}
+    public DbSet<LearningTask> LearningTasks {get; set;}
 
 }

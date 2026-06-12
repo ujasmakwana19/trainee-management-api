@@ -3,6 +3,7 @@ using TraineeManagement.Api.UserModel;
 using Microsoft.AspNetCore.Identity;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 public static class SeederService
 {
     public static async Task CreateAdminUser(IServiceProvider serviceProvider)
@@ -21,8 +22,8 @@ public static class SeederService
 
         u.PasswordHash = hashPass;
 
-        var scope = serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         try
         {
             if (!await context.Users.AnyAsync(u => u.Username == "admin"))

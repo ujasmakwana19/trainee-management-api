@@ -6,44 +6,44 @@ public record CreateTraineeRequest
 (
     [Required(ErrorMessage = "First Name is required")]
     [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
-    String? FirstName,
+    String FirstName,
 
     [Required(ErrorMessage = "Last Name is required")]
     [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
-    String? LastName,
+    String LastName,
 
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress]
-    String? Email,
+    String Email,
 
     [Required]
-    String? TechStack,
+    String TechStack,
 
     [Required]
     [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Selected among the following Active , Inactive or Completed")]
-    StatusValue? Status
+    StatusValue Status
 );
 
 public record UpdateTraineeRequest
 (
     [Required(ErrorMessage = "First Name is required")]
     [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
-    String? FirstName,
+    String FirstName,
 
     [Required(ErrorMessage = "Last Name is required")]
     [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
-    String? LastName,
+    String LastName,
 
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress]
-    String? Email,
+    String Email,
 
     [Required]
-    String? TechStack,
+    String TechStack,
 
     [Required]
     [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Selected among the following Active , Inactive or Completed")]
-    StatusValue? Status
+    StatusValue Status
 );
 
 

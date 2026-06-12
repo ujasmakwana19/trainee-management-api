@@ -63,25 +63,44 @@ such that easy to move to the persistant DBMS
 - Swagger
 
 ## Project Structure
- 
-├── Controllers
-│   ├── HealthController.cs
-│   └── TraineesController.cs
-├── DTOs
-│   └── TraineeDTO.cs
-├── Data
-│   └── AppDbContext.cs
-├── Models
-│   └── Traniee.cs
-├── Program.cs
-├── Readme.md
-├── Services
-│   ├── ITraineeService.cs
-│   └── TraineeService.cs
-├── TraineeManagement.Api.csproj
-├── TraineeManagement.Api.http
-├── appsettings.Development.json
-├── appsettings.json 
+```text
+├── Controllers/
+│   ├── HealthController.cs               
+│   ├── TraineesController.cs              
+│   └── UsersController.cs                 
+├── DTOs/
+│   ├── TraineeDTO.cs                     
+│   └── UserDTO.cs                        
+├── Data/
+│   └── AppDbContext.cs                   
+├── Interfaces/
+│   ├── IDateTimeAuto.cs                  
+│   ├── ITraineeService.cs                
+│   └── IUserService.cs                   
+├── Middlewares/
+│   └── GlobalExceptionMiddleware.cs      
+├── Migrations/                          
+│   ├── 20260612054008_Phase2Task2Completed.Designer.cs
+│   ├── 20260612054008_Phase2Task2Completed.cs
+│   └── AppDbContextModelSnapshot.cs
+├── Models/
+│   ├── Traniee.cs                     
+│   └── User.cs                           
+├── Properties/
+│   └── launchSettings.json               
+├── utils/
+│   ├── AppException.cs                   
+│   ├── JwtService.cs                     
+│   └── SeedService.cs                    
+├── Program.cs                            
+├── TraineeManagement.Api.csproj        
+├── TraineeManagement.Api.http            
+├── appsettings.json                      
+└── appsettings.Development.json         
+```
+
+---
+
 
 ## API ENDPOINTS
 - GET /api/health 
@@ -127,6 +146,9 @@ such that easy to move to the persistant DBMS
 - dotnet run
 - https://localhost:<port>/swagger
 
+
+
+Phase 1:
 Day 1:
 Created Dotnet project
 Install Required Package
@@ -175,26 +197,4 @@ Completed the assignment & uploaded to github
     "status": "Active"
   }
 ]
-
-## Sample Validation Error
- {
-  "firstName": "string",
-  "lastName": "string",
-  "email": "string",
-  "techStack": "string",
-  "status": 0
-}
-
-Error on post above body
-"errors": {
-    "Email": [
-      "The Email field is not a valid e-mail address."
-    ]
-  },
-
-### Limitation:
-- We are using InMemory so its not persistant , and cleans when the server restarts 
-
-### Future Scope
-- Connect the DBMS to maintain persistant storage of the data
-- Create the endpoint to handle the media files.
+ 

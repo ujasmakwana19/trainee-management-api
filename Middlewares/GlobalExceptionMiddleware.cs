@@ -1,3 +1,4 @@
+using System.Formats.Asn1;
 using TraineeManagement.Api.ExceptionUtils;
 namespace TraineeManagement.Api.ExceptionMiddlewares;
 public class GlobalExceptionMiddleware
@@ -41,6 +42,7 @@ public class GlobalExceptionMiddleware
         {
             _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
                 context.Request.Method, context.Request.Path);
+            await WriteResponse(context,StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
         }
     }
 

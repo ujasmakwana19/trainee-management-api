@@ -10,17 +10,17 @@ namespace TraineeManagement.Api.TraineeModel
         public long Id { get; set; }
         [Required(ErrorMessage = "First Name is required")]
         [StringLength(50, ErrorMessage = "Must be less than or equals to 50 character")]
-        public string? FirstName { get; set; }
+        public string FirstName { get; set; } = string.Empty;
         [Required(ErrorMessage = "Last Name is required")]
         [StringLength(50, ErrorMessage = "Must be less than or equals to 50 character")]
-        public string? LastName { get; set; }
+        public string LastName { get; set; } = string.Empty;
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress]
-        public string? Email { get; set; }
+        public string Email { get; set; } = string.Empty;
         [Required]
-        public string? TechStack { get; set; }
+        public string TechStack { get; set; } = string.Empty;
         [Required]
-        [AllowedValues(StatusValue.Active, StatusValue.Inactive, StatusValue.Completed)]
+        [AllowedValues(StatusValue.Active, StatusValue.Inactive, StatusValue.Completed, ErrorMessage = "Status must be Active, Inactive or Completed")]
         public StatusValue? Status { get; set; }
     }
 

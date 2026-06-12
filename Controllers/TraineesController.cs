@@ -22,7 +22,7 @@ public class TraineesController : ControllerBase
 
   // Get all the Trainees
   // GET /api/trainees
-  [HttpGet("/getall")]
+  [HttpGet("/api/trainees/getall")]
   public async Task<ActionResult<IEnumerable<TraineeResponse>>> GetTrainee()
   {
     IEnumerable<TraineeResponse> traineesVal = await _service.GetAllTraineesService();
@@ -84,7 +84,7 @@ public class TraineesController : ControllerBase
 
   // To search the substring in FirstName, LastName, TechStack, Email
   // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
-  [HttpGet("/getSearch")]
+  [HttpGet("api/trainees/getSearch")]
   public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber,int pageSize, String search, String status)
   {
     if (search == null || status == null)

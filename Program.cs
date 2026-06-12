@@ -7,11 +7,13 @@ using TraineeManagement.Api.JwtServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using TraineeManagement.Api.ExceptionMiddlewares;
+using TraineeManagement.Api.MentorServices;
+using TraineeManagement.Api.LearningTaskServices;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 // Setup phase builder
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // 
 builder.Services.AddCors(options =>
@@ -83,8 +85,8 @@ builder.Services.AddOpenApi("v1", options =>
 //     options.UseInMemoryDatabase("TraineeApp"));
 
 //  To get the connection creditials of the MySql
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
+string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion));
@@ -116,6 +118,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<ITraineeService, TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IMentorService, MentorService>();
+builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 
 
 builder.Logging.ClearProviders();
@@ -123,7 +127,7 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Seeder Function
 await SeederService.CreateAdminUser(app.Services);
