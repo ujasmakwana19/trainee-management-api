@@ -3,12 +3,13 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using TraineeManagement.Api.UserModel;
+using TraineeManagement.Api.ExceptionUtils;
 
 namespace TraineeManagement.Api.JwtServices;
 
 public interface IJwtService
 {
-    string? GenerateToken(User user);
+    string GenerateToken(User user);
     // ClaimsPrincipal? ValidateToken(string token);
 }
 
@@ -27,7 +28,7 @@ public class JwtService : IJwtService
         _logger = logger;
     }
 
-    public string? GenerateToken(User user)
+    public string GenerateToken(User user)
     {
         var claims = new[]
         {
@@ -51,7 +52,7 @@ public class JwtService : IJwtService
         if(jwtToken is null)
         {
             _logger.LogError("Failed to created the jwt token");
-            return null;
+            throw new JwtOperationException();
         }
         return jwtToken;
     }

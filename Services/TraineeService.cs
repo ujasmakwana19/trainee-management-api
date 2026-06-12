@@ -2,6 +2,7 @@ using TraineeManagement.Api.TraineeModel;
 using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using TraineeManagement.Api.ExceptionUtils;
 
 
 namespace TraineeManagement.Api.TraineeServices;
@@ -14,9 +15,11 @@ public class TraineeService : ITraineeService
 
     // This is for the inMemory Database Instance
     private readonly AppDbContext _context;
-    public TraineeService(AppDbContext context)
+    private readonly ILogger<TraineeService> _logger;
+    public TraineeService(AppDbContext context, ILogger<TraineeService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // Helper Method
@@ -32,55 +35,51 @@ public class TraineeService : ITraineeService
         );
     }
 
-    public async Task<Trainee?> FetchTrainee(long id)
+    public async Task<Trainee> FetchTrainee(long id)
     {
         Trainee? trainee = await _context.Trainees.FirstOrDefaultAsync(u => u.Id == id);
 
-        if (trainee == null)
+        if (trainee is null)
         {
-            return null;
+            throw new NotFoundException("Trainee not found");
         }
         return trainee;
     }
 
     // DELETE
-    public async Task<bool> DeleteTraineeService(long id)
+    public async Task DeleteTraineeService(long id)
     {
-        Trainee? t = await FetchTrainee(id);
+        Trainee t = await FetchTrainee(id);
         if (t is null)
         {
-            return false;
+            throw new NotFoundException("Trainee not found");
         }
         _context.Trainees.Remove(t);
         await _context.SaveChangesAsync();
-        return true;
+        _logger.LogInformation($"Trainee with id {id} deleted successfully");
+        return;
     }
 
     // GETALL
-    public async Task<IEnumerable<TraineeResponse>?> GetAllTraineesService()
+    public async Task<IEnumerable<TraineeResponse>> GetAllTraineesService()
     {
         List<Trainee> trainees = await _context.Trainees.ToListAsync();
-        if (trainees.Count == 0)
-        {
-            return null;
-        }
-
         return trainees.Select(t => ToResponse(t));
     }
 
     // GET by ID
-    public async Task<TraineeResponse?> GetTraineeResponseByIdService(long id)
+    public async Task<TraineeResponse> GetTraineeResponseByIdService(long id)
     {
-        Trainee? trainee = await FetchTrainee(id);
+        Trainee trainee = await FetchTrainee(id);
         if (trainee is null)
         {
-            return null;
+            throw new NotFoundException("Trainee not found");
         }
         return ToResponse(trainee);
     }
 
     // CREATE
-    public async Task<TraineeResponse?> CreateTraineeService(CreateTraineeRequest trainee)
+    public async Task<TraineeResponse> CreateTraineeService(CreateTraineeRequest trainee)
     {
 
         Trainee u = new Trainee
@@ -89,58 +88,52 @@ public class TraineeService : ITraineeService
             LastName = trainee.LastName,
             Email = trainee.Email,
             TechStack = trainee.TechStack,
-            Status = trainee.Status,
-            CreatedDate = DateTime.UtcNow,
-            UpdatedDate = DateTime.UtcNow
+            Status = trainee.Status
         };
 
         _context.Trainees.Add(u);
         await _context.SaveChangesAsync();
-
+        _logger.LogInformation($"Trainee created successfully"); 
         return ToResponse(u);
     }
 
     // UPDATE
-    public async Task<TraineeResponse?> UpdateTraineeService(long id, UpdateTraineeRequest trainee)
+    public async Task<TraineeResponse> UpdateTraineeService(long id, UpdateTraineeRequest trainee)
     {
         Trainee? user = await FetchTrainee(id);
         if (user is null)
         {
-            return null;
+            throw new NotFoundException("Trainee not found");
         }
+        
 
         user.FirstName = trainee.FirstName;
         user.LastName = trainee.LastName;
         user.Email = trainee.Email;
         user.TechStack = trainee.TechStack;
         user.Status = trainee.Status;
-        user.UpdatedDate = DateTime.UtcNow;
 
         _context.Trainees.Update(user);
         await _context.SaveChangesAsync();
+        _logger.LogInformation($"Trainee with id {id} updated successfully");
 
         return ToResponse(user);
     }
 
     // SEARCH
-    public async Task<IEnumerable<TraineeResponse>?> SearchTraineeService(String s)
+    public async Task<IEnumerable<TraineeResponse>> SearchTraineeService(String s)
     {
-        s.ToLower();
+        s = s.ToLower();
         List<Trainee>trainees = await _context.Trainees.Where(
             u => u.FirstName!.ToLower().Contains(s)
             || u.LastName!.ToLower().Contains(s)
             || u.TechStack!.ToLower().Contains(s)
             || u.Email!.ToLower().Contains(s)).ToListAsync();
-
-        if (trainees.Count == 0)
-        {
-            return null;
-        }
         
         return trainees.Select(u => ToResponse(u));
     }
 
-    public async Task<TraineeInfoPagination?> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
+    public async Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
     {
         if(pageNumber < 1) pageNumber = 1;
         if(pageSize < 1) pageSize = 10;
@@ -151,8 +144,8 @@ public class TraineeService : ITraineeService
         .OrderBy(u => u.Id)
         .Skip(rowToSkip)
         .Where(
-            u => u.FirstName!.ToLower().Contains(search) &&
-            u.Status.ToString()!.ToLower().Contains(status)
+            u => u.FirstName!.ToLower().Equals(search) &&
+            u.Status.ToString()!.ToLower().Equals(status)
         ).Take(pageSize)
         .ToListAsync();
 
@@ -161,11 +154,6 @@ public class TraineeService : ITraineeService
             u => u.FirstName!.ToLower().Equals(search) &&
             u.Status.ToString()!.ToLower().Equals(status)
         ).CountAsync();
-
-        if (trainees.Count == 0)
-        {
-            return null;
-        }
         
         List<TraineeResponse> tr = trainees.Select(trainees => ToResponse(trainees)).ToList();
 

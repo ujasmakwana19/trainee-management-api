@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using TraineeManagement.Api.UserDTO;
 using TraineeManagement.Api.UserServices;
-
+using TraineeManagement.Api.ExceptionUtils;
 namespace TraineeManagement.Api.UserController;
 
 [ApiController]
@@ -21,20 +20,9 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LoginUserResponse>> LoginUser([FromBody] LoginUserRequest user)
     {
-
-        if(user is null || user.Username is null || user.Password is null)
-        {
-            return BadRequest(new {Message = $"Please provide the username and password"});
-        }
-
         _logger.LogInformation($"User {user.Username} Hit the Login Route");
 
-        LoginUserResponse? u = await _service.Login(user);
-
-        if (u is null)
-        {
-            return Unauthorized(new {Message = $"Invalid Credintials or User not Found, Try Forgot Password"} );
-        }
+        LoginUserResponse u = await _service.Login(user);
 
         _logger.LogInformation($"User {user.Username} Logged in successfully\t");
         return Ok(u);

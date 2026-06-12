@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
-using Microsoft.Extensions.Options;
+using TraineeManagement.Api.ExceptionMiddlewares;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+// Setup phase builder
 var builder = WebApplication.CreateBuilder(args);
 
-
+// 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
@@ -30,7 +32,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
             // This method JsonStringEnumConverter adds string support on top — it doesn't remove int support.
             // new System.Text.Json.Serialization.JsonStringEnumConverter()
 
-            // For only string support from the Frontent
+            // For only string support from the Frontend
             new System.Text.Json.Serialization.JsonStringEnumConverter(
                 System.Text.Json.JsonNamingPolicy.CamelCase,
                 allowIntegerValues: false
@@ -120,6 +122,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
+
 var app = builder.Build();
 
 // Seeder Function
@@ -137,7 +140,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
-
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

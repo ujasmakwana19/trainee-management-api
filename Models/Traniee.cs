@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
+using TraineeManagement.Api.IDateTimeAutoService;
 namespace TraineeManagement.Api.TraineeModel
 {
-    public class Trainee
+    public class Trainee : IDateTimeAuto
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -22,8 +22,6 @@ namespace TraineeManagement.Api.TraineeModel
         [Required]
         [AllowedValues(StatusValue.Active, StatusValue.Inactive, StatusValue.Completed)]
         public StatusValue? Status { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public DateTime? UpdatedDate { get; set; }
     }
 
     public enum StatusValue

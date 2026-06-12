@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.TraineeServices;
+using TraineeManagement.Api.ExceptionUtils;
 
 namespace TraineeManagement.Api.Controllers;
 
@@ -26,21 +25,8 @@ public class TraineesController : ControllerBase
   [HttpGet("/getall")]
   public async Task<ActionResult<IEnumerable<TraineeResponse>>> GetTrainee()
   {
-    IEnumerable<TraineeResponse>? traineesVal = await _service.GetAllTraineesService();
-    traineesVal = [];
-    if(traineesVal is null)
-    {
-      return NotFound();
-    }
-    if (traineesVal.Count() == 0)
-    {
-      return NotFound(new {data = traineesVal ,Message = $"No. Records Found"});
-    }
-
-    else
-    {
-      return Ok(traineesVal);
-    }
+    IEnumerable<TraineeResponse> traineesVal = await _service.GetAllTraineesService();
+    return Ok(traineesVal);
   }
 
   // Get Trainee by unique ID
@@ -48,9 +34,7 @@ public class TraineesController : ControllerBase
   [HttpGet("{id}")]
   public async Task<ActionResult<TraineeResponse>> GetTraineeById(long id)
   {
-    TraineeResponse? traineeDto = await _service.GetTraineeResponseByIdService(id);
-    if (traineeDto == null)
-      return NotFound();
+    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(id);
     return Ok(traineeDto);
   }
 
@@ -59,12 +43,8 @@ public class TraineesController : ControllerBase
   [HttpPost]
   public async Task<ActionResult<TraineeResponse>> CreateTrainee([FromBody] CreateTraineeRequest trainee)
   {
-    TraineeResponse? traineeDto = await _service.CreateTraineeService(trainee);
+    TraineeResponse traineeDto = await _service.CreateTraineeService(trainee);
 
-    if (traineeDto is null)
-    {
-      return NotFound();
-    }
     // The nameof use to give compile-time safety to the action name, so if we rename the GetTraineeById method, this will not lead to a runtime error.
 
     // CreatedAtAction is used to return a 201 Created response, along with a Location header that points to the newly created resource. The first parameter is the name of the action to which the client can make a GET request to retrieve the created resource, the second parameter is an anonymous object that contains the route values (in this case, the id of the created trainee), and the third parameter is the created trainee object itself.
@@ -76,27 +56,17 @@ public class TraineesController : ControllerBase
   [HttpPut("{id}")]
   public async Task<ActionResult<TraineeResponse>> UpdateTrainee(long id, [FromBody] UpdateTraineeRequest trainee)
   {
-    TraineeResponse? traineeDto = await _service.UpdateTraineeService(id, trainee);
-    if (traineeDto is null)
-    {
-      return NotFound();
-    }
+    TraineeResponse traineeDto = await _service.UpdateTraineeService(id, trainee);
     return CreatedAtAction(nameof(GetTraineeById), new { id = traineeDto.Id }, traineeDto);
   }
 
   // To Delete the Trainee
   // DELETE /api/Trainee/:is
   [HttpDelete("{id}")]
-  public async Task<ActionResult<TraineeResponse>> DeleteTrainee(long id)
+  public async Task<ActionResult> DeleteTrainee(long id)
   {
-    if (!await _service.DeleteTraineeService(id))
-    {
-      return NotFound();
-    }
-    else
-    {
-      return NoContent();
-    }
+    await _service.DeleteTraineeService(id);
+    return NoContent();
   }
 
   // To search the substring in FirstName, LastName, TechStack, Email
@@ -106,11 +76,9 @@ public class TraineesController : ControllerBase
   {
     if (search == null)
     {
-      return NotFound(new { Message = "No Trainees Found" });
+      throw new BadRequestException("Please provide a search query parameter");
     }
     IEnumerable<TraineeResponse>? traineeDto = await _service.SearchTraineeService(search);
-    if (traineeDto == null)
-      return NotFound(new { Message = $"No Trainees Found with the search :{search}" });
     return Ok(traineeDto);
   }
 
@@ -121,12 +89,10 @@ public class TraineesController : ControllerBase
   {
     if (search == null || status == null)
     {
-      return BadRequest(new { Message = "Provide proper query parameters" });
+      throw new BadRequestException("Please provide a all search query parameter");
     }
 
-    TraineeInfoPagination? traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
-    if (traineeDto == null)
-      return NotFound(new { Message = $"No Trainees Found with the search :{search} or page {pageNumber}" });
+    TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
     return Ok(traineeDto);
   }
 

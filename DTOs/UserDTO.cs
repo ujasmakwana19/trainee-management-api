@@ -5,9 +5,9 @@ namespace TraineeManagement.Api.UserDTO;
 public record LoginUserRequest
 (
     [Required(ErrorMessage = "User Name is required")]
-    String? Username,
+    String Username,
     [Required(ErrorMessage = "Password is required")]
-    String? Password
+    String Password
 );
 
 public record LoginUserResponse

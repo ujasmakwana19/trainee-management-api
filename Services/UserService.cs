@@ -4,7 +4,7 @@ using TraineeManagement.Api.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
-
+using TraineeManagement.Api.ExceptionUtils;
 namespace TraineeManagement.Api.UserServices;
 
 
@@ -40,12 +40,12 @@ public class UserService : IUserService
         );
     } 
 
-    private async Task<User?> FetchUser(String username)
+    private async Task<User> FetchUser(String username)
     {
         User? u = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         if(u is null)
         {
-            return null;
+            throw new UnauthorizedException("Invalid credentials");
         }
         return u;
     }
@@ -57,33 +57,27 @@ public class UserService : IUserService
         return result;
     }
 
-    public async Task<LoginUserResponse?> Login(LoginUserRequest userInfo)
+    public async Task<LoginUserResponse> Login(LoginUserRequest userInfo)
     {
         
-        User? user = await FetchUser(userInfo.Username!);
+        User user = await FetchUser(userInfo.Username!);
 
-        if(user is null)
+        if (user.PasswordHash is null)
         {
-            return null;
-        }
-        if (userInfo.Password is null)
-        {
-            _logger.LogDebug($"User : {userInfo.Username} exists but does not has the hash password ");
-            return null;
+            _logger.LogDebug($"User : {user.Username} exists but does not has the hash password ");
+            throw new UnauthorizedException("Invalid credentials");
         }
 
-        PasswordVerificationResult result = VerifyPassword(user, user.PasswordHash,userInfo.Password); 
+        PasswordVerificationResult result = VerifyPassword(user, user.PasswordHash,userInfo.Password!); 
 
         if(result == PasswordVerificationResult.Success)
         {
-            string? token = _jwtService.GenerateToken(user);
-            if(token is null)
-            {
-                return null;
-            }
+            string token = _jwtService.GenerateToken(user);
+            
             return ToResponse(token, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
         }
-        return null;
+        throw new UnauthorizedException("Invalid credentials");
+        
     }
 };
 

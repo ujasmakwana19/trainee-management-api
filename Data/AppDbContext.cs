@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.TraineeModel;
 using TraineeManagement.Api.UserModel;
+using TraineeManagement.Api.IDateTimeAutoService;
 namespace TraineeManagement.Api.Data;
 
 public class AppDbContext : DbContext
@@ -22,6 +23,31 @@ public class AppDbContext : DbContext
         .HasConversion<string>();
 
     }
+    
+
+    // This runs on every INSERT and UPDATE
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var entries = ChangeTracker.Entries<IDateTimeAuto>();
+
+        foreach (var entry in entries)
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedDate = DateTime.UtcNow;
+                entry.Entity.UpdatedDate = DateTime.UtcNow;
+            }
+
+            if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedDate = DateTime.UtcNow;
+            }
+        }
+
+        return base.SaveChangesAsync(cancellationToken);
+    
+    }
+    
     public DbSet<Trainee> Trainees { get; set; }
     public DbSet<User> Users { get; set; }
 

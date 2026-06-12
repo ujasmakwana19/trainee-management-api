@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
+using TraineeManagement.Api.IDateTimeAutoService;
 namespace TraineeManagement.Api.UserModel
 {
-    public class User
+    public class User : IDateTimeAuto
     {
         [Key] 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
@@ -25,13 +25,6 @@ namespace TraineeManagement.Api.UserModel
         [AllowedValues(UserRole.Admin, UserRole.Mentor, UserRole.Trainee, ErrorMessage = "Role must be Admin, Mentor, or Trainee.")]
         public UserRole Role { get; set; }
 
-        [Required]
-        [DataType(DataType.DateTime)]
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-        [Required]
-        [DataType(DataType.DateTime)]
-        public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
     }
 
     public enum UserRole
