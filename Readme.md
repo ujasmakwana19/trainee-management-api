@@ -7,7 +7,7 @@ TraineeManagement.Api is an ASP.NET Core Web API developed for managing trainee 
 The project demonstrates:
  
 - ASP.NET Core Web API
-- Controllers
+- Controllers  
 - DTOs
 - Service Layer
 - EF Core InMemory Database
