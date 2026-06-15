@@ -30,16 +30,16 @@ public class JwtService : IJwtService
 
     public string GenerateToken(User user)
     {
-        var claims = new[]
+        Claim[] claims = 
         {
             new Claim("userId", user.Id.ToString()),
             new Claim("userName", user.Username),
             new Claim("role", user.Role.ToString())
         };
 
-        var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
+        SigningCredentials credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken(
+        SecurityToken token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: claims,

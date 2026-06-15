@@ -42,6 +42,7 @@ public class GlobalExceptionMiddleware
         catch (Exception ex)
         {
             if(ex.InnerException is MySqlException mysqlEx){
+                _logger.LogError($"ERROR CODE::::{mysqlEx.Number}::::::::::");
                 if(mysqlEx.Number == 1451) // Foreign key constraint failure
                 {
                     _logger.LogWarning("Foreign key constraint failure on Delete: {Message}", mysqlEx.Message);
@@ -51,6 +52,10 @@ public class GlobalExceptionMiddleware
                 {
                     _logger.LogWarning("Foreign key constraint failure on Insert or Update: {Message}", mysqlEx.Message);
                     await WriteResponse(context,StatusCodes.Status400BadRequest, "Related data not found, Please ensure referenced data exists..");
+                }
+                if(mysqlEx.Number == 1062) // Foreign key constraint failure on insert or update
+                {
+                    await WriteResponse(context,StatusCodes.Status400BadRequest, "Username Already Exists");
                 }
                     
             }

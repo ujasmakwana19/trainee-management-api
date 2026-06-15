@@ -70,7 +70,7 @@ public class TrackTaskService : ITrackTaskService
 
     public async Task<IEnumerable<TrackTaskResponse>> GetAllTasks()
     {
-        List<TrackTask> trackTasks = await _context.TrackTasks.ToListAsync();
+        IEnumerable<TrackTask> trackTasks = await _context.TrackTasks.ToListAsync();
         return trackTasks.Select(t => ToResponse(t));
     }
 

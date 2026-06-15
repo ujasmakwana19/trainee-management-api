@@ -5,6 +5,8 @@ using TraineeManagement.Api.IDateTimeAutoService;
 using TraineeManagement.Api.MentorModel;
 using TraineeManagement.Api.TaskModel;
 using TraineeManagement.Api.TrackTaskModel;
+using TraineeManagement.Api.SubmissionModel;
+using TraineeManagement.Api.ReviewModel;
 namespace TraineeManagement.Api.Data;
 
 public class AppDbContext : DbContext
@@ -16,7 +18,12 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        
         // Store the Enum as a String "Admin" as defined in the Enum
+        builder.Entity<User>()
+        .HasIndex(u => u.Username)
+        .IsUnique();
+
         builder.Entity<User>()
         .Property(u => u.Role)
         .HasConversion<string>();
@@ -54,6 +61,33 @@ public class AppDbContext : DbContext
                 .HasConversion<string>();
         });
 
+        builder.Entity<Submission>(entity =>
+        {
+            entity.HasOne(t => t.TrackTask)
+                .WithMany()
+                .HasForeignKey(t => t.TaskAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(u => u.Status)
+                .HasConversion<string>();
+        });
+
+        builder.Entity<Review>(entity =>
+        {
+            entity.HasOne(t => t.Submission)
+                .WithMany()
+                .HasForeignKey(t => t.SubmissionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.Mentor)
+                .WithMany()
+                .HasForeignKey(t => t.MentorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(u => u.ReviewStatus)
+                .HasConversion<string>();
+        });
+
     }
     
 
@@ -85,5 +119,7 @@ public class AppDbContext : DbContext
     public DbSet<Mentor> Mentors {get; set;}
     public DbSet<LearningTask> LearningTasks {get; set;}
     public DbSet<TrackTask> TrackTasks {get; set;}
+    public DbSet<Submission> Submissions {get; set;}
+    public DbSet<Review> Reviews {get; set;}
 
 }

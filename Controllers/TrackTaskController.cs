@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.TrackTaskDTO;
 using TraineeManagement.Api.TrackTaskService;
+using TraineeManagement.Api.TraineeDTO;
 namespace TraineeManagement.Api.TrackTaskController;
 
 [Authorize]
@@ -21,7 +22,7 @@ public class TrackTaskController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TrackTaskResponse>> CreateTrackTask([FromBody] TrackTaskRequestBody body)
     {
-        var createdTrackTask = await _trackTaskService.CreateTrackTaskAsync(body);
+        TrackTaskResponse createdTrackTask = await _trackTaskService.CreateTrackTaskAsync(body);
         return CreatedAtAction(nameof(GetTrackTaskById), new { id = createdTrackTask.Id }, createdTrackTask);
     }
 
@@ -29,20 +30,20 @@ public class TrackTaskController : ControllerBase
     public async Task<ActionResult<TrackTaskPopulatedResponseBody>> GetTrackTaskById(long id)
     {
         TrackTaskPopulatedResponseBody trackTask = await _trackTaskService.GetTrackTaskByIdAsync(id);
-        return Ok(trackTask);
+        return trackTask;
     }
 
     [HttpGet("/api/task-assignments/getall")]
     public async Task<ActionResult<IEnumerable<TrackTaskResponse>>> GetAllTasks()
     {
-        var tasks = await _trackTaskService.GetAllTasks();
+        IEnumerable<TrackTaskResponse> tasks = await _trackTaskService.GetAllTasks();
         return Ok(tasks);
     }
 
     [HttpPut("/api/task-assignments/{id}/status")]
     public async Task<ActionResult<TrackTaskResponse>> UpdateTrackTask(long id, [FromBody] TrackTaskUpdateRequestBody body)
     {
-        var updatedTrackTask = await _trackTaskService.UpdateTrackTaskAsync(id, body);
+        TrackTaskResponse updatedTrackTask = await _trackTaskService.UpdateTrackTaskAsync(id, body);
         return Ok(updatedTrackTask);
     }
 }

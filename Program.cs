@@ -10,6 +10,9 @@ using TraineeManagement.Api.ExceptionMiddlewares;
 using TraineeManagement.Api.MentorServices;
 using TraineeManagement.Api.LearningTaskServices;
 using TraineeManagement.Api.TrackTaskService;
+using TraineeManagement.Api.SubmissionService;
+using TraineeManagement.Api.ReviewService;
+using Microsoft.OpenApi.Models;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -51,26 +54,26 @@ builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        var scheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        OpenApiSecurityScheme scheme = new OpenApiSecurityScheme
         {
-            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            In = ParameterLocation.Header,
             Description = "Enter your JWT token directly"
         };
 
-        document.Components ??= new Microsoft.OpenApi.Models.OpenApiComponents();
+        document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes.Add("Bearer", scheme);
 
         // 2. Apply it globally to all endpoints
-        document.SecurityRequirements.Add(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        document.SecurityRequirements.Add(new OpenApiSecurityRequirement
         {
-            [new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            [new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             }] = Array.Empty<string>()
@@ -122,6 +125,8 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<ITrackTaskService, TrackTaskService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 
 builder.Logging.ClearProviders();

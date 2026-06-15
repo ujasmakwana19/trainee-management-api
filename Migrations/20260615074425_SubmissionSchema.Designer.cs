@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TraineeManagement.Api.Data;
 
@@ -11,9 +12,11 @@ using TraineeManagement.Api.Data;
 namespace TraineeManagement.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615074425_SubmissionSchema")]
+    partial class SubmissionSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,43 +64,6 @@ namespace TraineeManagement.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Mentors");
-                });
-
-            modelBuilder.Entity("TraineeManagement.Api.ReviewModel.Review", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Feedback")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("MentorId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("ReviewStatus")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateOnly>("ReviewedDate")
-                        .HasColumnType("date");
-
-                    b.Property<long>("Score")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("SubmissionId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MentorId");
-
-                    b.HasIndex("SubmissionId");
-
-                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("TraineeManagement.Api.SubmissionModel.Submission", b =>
@@ -288,29 +254,7 @@ namespace TraineeManagement.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Username")
-                        .IsUnique();
-
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("TraineeManagement.Api.ReviewModel.Review", b =>
-                {
-                    b.HasOne("TraineeManagement.Api.MentorModel.Mentor", "Mentor")
-                        .WithMany()
-                        .HasForeignKey("MentorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TraineeManagement.Api.SubmissionModel.Submission", "Submission")
-                        .WithMany()
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Mentor");
-
-                    b.Navigation("Submission");
                 });
 
             modelBuilder.Entity("TraineeManagement.Api.SubmissionModel.Submission", b =>
