@@ -4,6 +4,7 @@ using TraineeManagement.Api.UserModel;
 using TraineeManagement.Api.IDateTimeAutoService;
 using TraineeManagement.Api.MentorModel;
 using TraineeManagement.Api.TaskModel;
+using TraineeManagement.Api.TrackTaskModel;
 namespace TraineeManagement.Api.Data;
 
 public class AppDbContext : DbContext
@@ -31,6 +32,27 @@ public class AppDbContext : DbContext
         builder.Entity<LearningTask>()
         .Property(u => u.Status)
         .HasConversion<string>();
+
+        builder.Entity<TrackTask>(entity =>
+        {
+            entity.HasOne(t => t.Trainee)
+                .WithMany()
+                .HasForeignKey(t => t.TraineeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.Mentor)
+                .WithMany()
+                .HasForeignKey(t => t.MentorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.LearningTask)
+                .WithMany()
+                .HasForeignKey(t => t.LearningTaskId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(u => u.Status)
+                .HasConversion<string>();
+        });
 
     }
     
@@ -62,5 +84,6 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Mentor> Mentors {get; set;}
     public DbSet<LearningTask> LearningTasks {get; set;}
+    public DbSet<TrackTask> TrackTasks {get; set;}
 
 }

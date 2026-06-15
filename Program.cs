@@ -9,6 +9,7 @@ using System.Text;
 using TraineeManagement.Api.ExceptionMiddlewares;
 using TraineeManagement.Api.MentorServices;
 using TraineeManagement.Api.LearningTaskServices;
+using TraineeManagement.Api.TrackTaskService;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -120,6 +121,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
 builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
+builder.Services.AddScoped<ITrackTaskService, TrackTaskService>();
 
 
 builder.Logging.ClearProviders();

@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.IDateTimeAutoService;
 using TraineeManagement.Api.TraineeModel;
+using TraineeManagement.Api.MentorModel;
+using TraineeManagement.Api.TaskModel;
 
 namespace TraineeManagement.Api.TrackTaskModel;
 public class TrackTask
@@ -11,25 +12,37 @@ public class TrackTask
     public long Id {get; set;}
 
     [Required(ErrorMessage = "TraineeId is required")]
-    public Trainee TraineeId { get; set; } = new Trainee();
+    public long TraineeId { get; set; } 
     
-    [Required(ErrorMessage = "Description is required")]
-    public string Description { get; set; } = string.Empty;
+    [Required(ErrorMessage = "MentorId is required")]
+    public long MentorId { get; set; } 
+
+    [Required(ErrorMessage = "TaskId is required")]
+    public long LearningTaskId { get; set; } 
     
-    [Required(ErrorMessage = "Tech Stack is required")]
-    public string ExpectedTechStack { get; set; } = string.Empty;
+    // Navigation Properties
+    public Trainee Trainee { get; set; } = null!;
+    public Mentor Mentor { get; set; } = null!;
+    public LearningTask LearningTask { get; set; } = null!;
+
+    [Required(ErrorMessage = "Assigned Date is required")]
+    public DateOnly AssignedDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     
     [Required(ErrorMessage = "Due Date is required")]
-    public DateTime DueDate { get; set; } = DateTime.UtcNow;
-
+    public DateOnly DueDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    
     [Required]
-    [AllowedValues(TaskStatusValue.Draft,TaskStatusValue.Published,TaskStatusValue.Closed , ErrorMessage = "Status must be Draft, Published or Closed")]
-    public TaskStatusValue Status {get; set;}
+    [AllowedValues(TaskAssignmentValue.Assigned, TaskAssignmentValue.Inprogess, TaskAssignmentValue.Submitted, TaskAssignmentValue.Reviewed, TaskAssignmentValue.Completed , ErrorMessage = "Status must be Assigned, Inprogess, Submitted, Reviewed or Completed")]
+    public TaskAssignmentValue Status {get; set;}
+    public string Remark { get; set; } = string.Empty;
+
 }
 
-public enum TaskStatusValue
+public enum TaskAssignmentValue
 {
-    Draft,
-    Published,
-    Closed
+    Assigned,
+    Inprogess,
+    Submitted,
+    Reviewed,
+    Completed
 }

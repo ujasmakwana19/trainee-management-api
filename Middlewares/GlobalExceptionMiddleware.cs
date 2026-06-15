@@ -1,4 +1,5 @@
 using System.Formats.Asn1;
+using MySqlConnector;
 using TraineeManagement.Api.ExceptionUtils;
 namespace TraineeManagement.Api.ExceptionMiddlewares;
 public class GlobalExceptionMiddleware
@@ -40,9 +41,24 @@ public class GlobalExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
-                context.Request.Method, context.Request.Path);
-            await WriteResponse(context,StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
+            if(ex.InnerException is MySqlException mysqlEx){
+                if(mysqlEx.Number == 1451) // Foreign key constraint failure
+                {
+                    _logger.LogWarning("Foreign key constraint failure on Delete: {Message}", mysqlEx.Message);
+                    await WriteResponse(context,StatusCodes.Status400BadRequest, "Cannot delete or update because of related data. Please remove related data first or change reference");
+                }
+                if(mysqlEx.Number == 1452) // Foreign key constraint failure on insert or update
+                {
+                    _logger.LogWarning("Foreign key constraint failure on Insert or Update: {Message}", mysqlEx.Message);
+                    await WriteResponse(context,StatusCodes.Status400BadRequest, "Related data not found, Please ensure referenced data exists..");
+                }
+                    
+            }
+            else{
+                _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
+                await WriteResponse(context,StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
+            }
         }
     }
 
