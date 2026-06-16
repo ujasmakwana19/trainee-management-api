@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.ReviewModel;
-
+using Mapster;
 namespace TraineeManagement.Api.ReviewService;
 public class ReviewService : IReviewService
 {   
@@ -51,6 +51,7 @@ public class ReviewService : IReviewService
         };
         _context.Add(review);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Review {ReviewId} created successfully", review.Id);
         return ToResponse(review);
     }
 
@@ -62,7 +63,9 @@ public class ReviewService : IReviewService
 
     public async Task<IEnumerable<ReviewResponse>> GetAll()
     {
-        List<Review> reviews = await _context.Reviews.ToListAsync();
-        return reviews.Select(t => ToResponse(t));
+        IEnumerable<ReviewResponse> reviews = await _context.Reviews
+                                .ProjectToType<ReviewResponse>()
+                                .ToListAsync();
+        return reviews;
     }
 }

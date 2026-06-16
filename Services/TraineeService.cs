@@ -3,7 +3,7 @@ using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.ExceptionUtils;
-
+using Mapster;
 
 namespace TraineeManagement.Api.TraineeServices;
 
@@ -63,8 +63,8 @@ public class TraineeService : ITraineeService
     // GETALL
     public async Task<IEnumerable<TraineeResponse>> GetAllTraineesService()
     {
-        List<Trainee> trainees = await _context.Trainees.ToListAsync();
-        return trainees.Select(t => ToResponse(t));
+        List<TraineeResponse> trainees = await _context.Trainees.ProjectToType<TraineeResponse>().ToListAsync();
+        return trainees;
     }
 
     // GET by ID
@@ -124,27 +124,39 @@ public class TraineeService : ITraineeService
     public async Task<IEnumerable<TraineeResponse>> SearchTraineeService(String s)
     {
         s = s.ToLower();
-        List<Trainee>trainees = await _context.Trainees.Where(
+        List<TraineeResponse>trainees = await _context.Trainees.
+                                ProjectToType<TraineeResponse>().Where(
             u => u.FirstName!.ToLower().Contains(s)
             || u.LastName!.ToLower().Contains(s)
             || u.TechStack!.ToLower().Contains(s)
             || u.Email!.ToLower().Contains(s)).ToListAsync();
         
-        return trainees.Select(u => ToResponse(u));
+        return trainees;
     }
 
     public async Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
     {
+        // Parse status enum once, not inside the query
+        StatusValue? parsedStatus = null;
+        if (!Enum.TryParse<StatusValue>(status, ignoreCase: true, out var s))
+            throw new BadRequestException("Invalid status value");
+        parsedStatus = s;
+        
+
         if(pageNumber < 1) pageNumber = 1;
         if(pageSize < 1) pageSize = 10;
 
         int rowToSkip = (pageNumber-1)*pageSize; 
 
-        int totalRecords = await _context.Trainees
-        .Where(
-            u => u.FirstName!.ToLower().Equals(search) &&
-            u.Status.ToString()!.ToLower().Equals(status)
-        ).CountAsync();
+
+        IQueryable<Trainee> query = _context.Trainees.AsNoTracking();
+
+        query = query.Where(u =>
+            u.FirstName == search &&
+            u.Status == parsedStatus.Value
+        );
+
+        int totalRecords = await query.CountAsync();
 
         if (totalRecords == 0)
         {
@@ -156,24 +168,22 @@ public class TraineeService : ITraineeService
             );
         }
         
-        List<Trainee>trainees = await _context.Trainees
+        List<TraineeResponse>trainees = await query
         .OrderBy(u => u.Id)
         .Skip(rowToSkip)
-        .Where(
-            u => u.FirstName!.ToLower().Equals(search) &&
-            u.Status.ToString()!.ToLower().Equals(status)
-        ).Take(pageSize)
+        .Take(pageSize)
+        .ProjectToType<TraineeResponse>()
         .ToListAsync();
 
         
-        List<TraineeResponse> tr = trainees.Select(trainees => ToResponse(trainees)).ToList();
+        
 
         return new TraineeInfoPagination(
             pageNumber,
             trainees.Count,
             totalRecords,
-            tr
-        );;
+            trainees
+        );
     }
 };
 

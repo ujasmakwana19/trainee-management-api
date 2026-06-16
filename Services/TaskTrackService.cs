@@ -7,6 +7,7 @@ using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Api.ExceptionUtils;
+using Mapster;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService
@@ -64,14 +65,16 @@ public class TrackTaskService : ITrackTaskService
 
         _context.TrackTasks.Add(trackTask);
         await _context.SaveChangesAsync();
-
+        _logger.LogInformation("TrackTask {TrackTaskId} created successfully", trackTask.Id);
         return ToResponse(trackTask);
     }
 
     public async Task<IEnumerable<TrackTaskResponse>> GetAllTasks()
     {
-        IEnumerable<TrackTask> trackTasks = await _context.TrackTasks.ToListAsync();
-        return trackTasks.Select(t => ToResponse(t));
+        IEnumerable<TrackTaskResponse> trackTasks = await _context.TrackTasks
+                                            .ProjectToType<TrackTaskResponse>()
+                                            .ToListAsync();
+        return trackTasks;
     }
 
     public async Task<TrackTaskPopulatedResponseBody> GetTrackTaskByIdAsync(long id)
@@ -108,7 +111,7 @@ public class TrackTaskService : ITrackTaskService
         trackTask.Status = body.Status;
 
         await _context.SaveChangesAsync();
-
+        _logger.LogInformation("TrackTask {TrackTaskId} updated successfully", trackTask.Id);
         return ToResponse(trackTask);
     }
 }

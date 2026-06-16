@@ -3,7 +3,7 @@ using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.MentorModel;
-
+using Mapster;
 namespace TraineeManagement.Api.MentorServices;
 
 public class MentorService : IMentorService
@@ -42,18 +42,16 @@ public class MentorService : IMentorService
     // GETALL
     public async Task<IEnumerable<MentorResponse>> GetAll()
     {
-        List<Mentor> mentors = await _context.Mentors.ToListAsync();
-        return mentors.Select(m => ToResponse(m));
+        IEnumerable<MentorResponse> mentors = await _context.Mentors
+                                .ProjectToType<MentorResponse>()
+                                .ToListAsync();
+        return mentors;
     }
 
     // GET by ID
     public async Task<MentorResponse> GetById(long id)
     {
         Mentor mentor = await FetchMentor(id);
-        if (mentor is null)
-        {
-            throw new NotFoundException("Mentor not found");
-        }
         return ToResponse(mentor);
     }
 
@@ -72,7 +70,7 @@ public class MentorService : IMentorService
 
         _context.Mentors.Add(mentor);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Mentor created successfully"); 
+        _logger.LogInformation("Mentor {MentorId} created successfully", mentor.Id);
         return ToResponse(mentor);
     }
 
@@ -90,7 +88,7 @@ public class MentorService : IMentorService
 
         _context.Mentors.Update(mentor);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Mentor Updated successfully"); 
+        _logger.LogInformation("Mentor {MentorId} updated successfully", mentor.Id);
         return ToResponse(mentor);
     }
 
@@ -101,7 +99,7 @@ public class MentorService : IMentorService
 
         _context.Mentors.Remove(mentor);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Mentor with id {id} deleted successfully");
+        _logger.LogInformation("Mentor {MentorId} deleted successfully", mentor.Id);
         return;
     }
 }

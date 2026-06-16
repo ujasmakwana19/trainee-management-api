@@ -3,7 +3,7 @@ using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TaskModel;
-
+using Mapster;
 namespace TraineeManagement.Api.LearningTaskServices;
 
 public class LearningTaskService : ILearningTaskService
@@ -32,7 +32,7 @@ public class LearningTaskService : ILearningTaskService
     private async Task<LearningTask> FetchTask(long id)
     {
         LearningTask? task = await _context.LearningTasks.FirstOrDefaultAsync(t => t.Id == id);
-        if(task is null)
+        if (task is null)
         {
             throw new NotFoundException("Task Not Found");
         }
@@ -42,16 +42,24 @@ public class LearningTaskService : ILearningTaskService
     // GETALL
     public async Task<IEnumerable<TaskResponseData>> GetAll()
     {
-        List<LearningTask> tasks = await _context.LearningTasks.ToListAsync();
+        IEnumerable<TaskResponseData> tasks = await _context.LearningTasks
+                                        .ProjectToType<TaskResponseData>()
+                                        .ToListAsync();
 
-        return tasks.Select(m => ToResponse(m));
+        return tasks;
     }
 
     // GET by ID
     public async Task<TaskResponseData> GetById(long id)
     {
-        LearningTask task = await FetchTask(id);
-        return ToResponse(task);
+        TaskResponseData? task = await _context.LearningTasks
+                                .ProjectToType<TaskResponseData>()
+                                .FirstOrDefaultAsync(t => t.Id == id);
+        if (task is null)
+        {
+            throw new NotFoundException("Task Not Found");
+        }
+        return task;
     }
 
     // CREATE
@@ -69,25 +77,25 @@ public class LearningTaskService : ILearningTaskService
 
         _context.LearningTasks.Add(taskData);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Task created successfully"); 
+        _logger.LogInformation("Task {TaskId} created successfully", taskData.Id);
         return ToResponse(taskData);
     }
 
     // UPDATE
-    public async Task<TaskResponseData> UpdateTask(long Id,TaskRequestBody taskInfo)
+    public async Task<TaskResponseData> UpdateTask(long Id, TaskRequestBody taskInfo)
     {
         LearningTask taskData = await FetchTask(Id);
-        
+
         taskData.Title = taskInfo.Title;
         taskData.Description = taskInfo.Description;
         taskData.ExpectedTechStack = taskInfo.ExpectedTechStack;
         taskData.DueDate = taskInfo.DueDate;
         taskData.Status = taskInfo.Status;
-        
+
 
         _context.LearningTasks.Update(taskData);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Task Updated successfully"); 
+        _logger.LogInformation("Task {TaskId} updated successfully", taskData.Id);
         return ToResponse(taskData);
     }
 
@@ -98,7 +106,7 @@ public class LearningTaskService : ILearningTaskService
 
         _context.LearningTasks.Remove(taskData);
         await _context.SaveChangesAsync();
-        _logger.LogInformation($"Task with id {id} deleted successfully");
+        _logger.LogInformation("Task {TaskId} deleted successfully", taskData.Id);
         return;
     }
 }

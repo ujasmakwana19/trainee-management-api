@@ -1,3 +1,4 @@
+using Mapster;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
@@ -52,6 +53,7 @@ public class SubmissionService : ISubmissionService
         };
         _context.Submissions.Add(s);
         await _context.SaveChangesAsync();
+        _logger.LogInformation("Submission {SubmissionId} created successfully", s.Id);
         return ToResponse(s);
     }
 
@@ -63,8 +65,10 @@ public class SubmissionService : ISubmissionService
 
     public async Task<IEnumerable<SubmissionResponse>> GetAll()
     {
-        List<Submission> submissions = await _context.Submissions.ToListAsync();
+        List<SubmissionResponse> submissions = await _context.Submissions
+                                        .ProjectToType<SubmissionResponse>()
+                                        .ToListAsync();
 
-        return submissions.Select(t => ToResponse(t));
+        return submissions;
     }
 }

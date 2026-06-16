@@ -28,9 +28,12 @@ public class AppDbContext : DbContext
         .Property(u => u.Role)
         .HasConversion<string>();
 
+        // builder.Entity<Trainee>()
+        // .Property(u => u.Status)
+        // .HasConversion<string>();
+
         builder.Entity<Trainee>()
-        .Property(u => u.Status)
-        .HasConversion<string>();
+        .HasIndex(u => new { u.FirstName, u.Status });
 
         builder.Entity<Mentor>()
         .Property(u => u.Status)
