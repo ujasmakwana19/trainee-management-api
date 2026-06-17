@@ -3,7 +3,6 @@ using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.MentorModel;
-using Mapster;
 namespace TraineeManagement.Api.MentorServices;
 
 public class MentorService : IMentorService
@@ -43,7 +42,14 @@ public class MentorService : IMentorService
     public async Task<IEnumerable<MentorResponse>> GetAll()
     {
         IEnumerable<MentorResponse> mentors = await _context.Mentors
-                                .ProjectToType<MentorResponse>()
+                                .Select(t => new MentorResponse(
+                                    t.Id,
+                                    t.FirstName,
+                                    t.LastName,
+                                    t.Email,
+                                    t.Expertise,
+                                    t.Status
+                                ))
                                 .ToListAsync();
         return mentors;
     }
@@ -51,8 +57,19 @@ public class MentorService : IMentorService
     // GET by ID
     public async Task<MentorResponse> GetById(long id)
     {
-        Mentor mentor = await FetchMentor(id);
-        return ToResponse(mentor);
+        MentorResponse? mentor = await _context.Mentors
+                                .Select(t => new MentorResponse(
+                                    t.Id,
+                                    t.FirstName,
+                                    t.LastName,
+                                    t.Email,
+                                    t.Expertise,
+                                    t.Status
+                                ))
+                                .FirstOrDefaultAsync(t => t.Id == id);
+        if(mentor is null)
+            throw new NotFoundException("Mentor Not Found");
+        return mentor;
     }
 
     // CREATE

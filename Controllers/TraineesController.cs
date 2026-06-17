@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.TraineeServices;
 using TraineeManagement.Api.ExceptionUtils;
+using Microsoft.AspNetCore.Http.HttpResults;
+using TraineeManagement.Api.ResponseHandlerUtil;
+using TraineeManagement.Api.ErrorCodesUtils;
 
 namespace TraineeManagement.Api.Controllers;
 
@@ -22,7 +25,7 @@ public class TraineesController : ControllerBase
 
   // Get all the Trainees
   // GET /api/trainees
-  [HttpGet("/api/trainees/getall")]
+  [HttpGet("getall")]
   public async Task<ActionResult<IEnumerable<TraineeResponse>>> GetTrainee()
   {
     IEnumerable<TraineeResponse> traineesVal = await _service.GetAllTraineesService();
@@ -34,8 +37,10 @@ public class TraineesController : ControllerBase
   [HttpGet("{id}")]
   public async Task<ActionResult<TraineeResponse>> GetTraineeById(long id)
   {
+    
     TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(id);
-    return Ok(traineeDto);
+    // return ResponseHandler.CreateResponse(HttpContext, StatusCodes.Status400BadRequest,  ErrorCodes.INVALID_MODEL, ["aa","error","chhe"]);
+    return ResponseHandler.SuccessResponse(HttpContext , traineeDto ,ErrorCodes.SUCCESS);
   }
 
   // To add the Trainee
@@ -43,6 +48,11 @@ public class TraineesController : ControllerBase
   [HttpPost]
   public async Task<ActionResult<TraineeResponse>> CreateTrainee([FromBody] CreateTraineeRequest trainee)
   {
+    System.Console.WriteLine("Ram");
+    if (!ModelState.IsValid)
+    {
+      return Ok(new {message = "Nathi valid"});
+    }
     TraineeResponse traineeDto = await _service.CreateTraineeService(trainee);
 
     // The nameof use to give compile-time safety to the action name, so if we rename the GetTraineeById method, this will not lead to a runtime error.
@@ -84,7 +94,7 @@ public class TraineesController : ControllerBase
 
   // To search the substring in FirstName, LastName, TechStack, Email
   // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
-  [HttpGet("api/trainees/getSearch")]
+  [HttpGet("getSearch")]
   public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber,int pageSize, String search, String status)
   {
     if (search == null || status == null)

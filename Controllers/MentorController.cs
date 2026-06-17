@@ -19,7 +19,7 @@ public class MentorController : ControllerBase
     }
 
     // api/mentors/getall
-    [HttpGet("/api/mentors/getall")]
+    [HttpGet("getall")]
     public async Task<ActionResult<IEnumerable<MentorResponse>>> GetAllMentors()
     {
         return Ok(await _service.GetAll());

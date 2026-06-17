@@ -16,12 +16,12 @@ public record CreateTraineeRequest
     [EmailAddress]
     String Email,
 
-    [Required]
+    [Required(ErrorMessage = "Tech Stack is Required")]
     String TechStack,
 
-    [Required]
-    [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Selected among the following Active , Inactive or Completed")]
-    StatusValue Status
+    [Required(ErrorMessage ="Status is required")]
+    [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Invalid Value")]
+    StatusValue? Status
 );
 
 public record UpdateTraineeRequest
@@ -43,23 +43,23 @@ public record UpdateTraineeRequest
 
     [Required]
     [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Selected among the following Active , Inactive or Completed")]
-    StatusValue Status
+    StatusValue? Status
 );
 
 
 public record TraineeResponse
 (
     long Id,
-    String? FirstName,
-    String? LastName,
-    String? Email,
-    String? TechStack,
+    String FirstName,
+    String LastName,
+    String Email,
+    String TechStack,
     StatusValue? Status
 );
 
 public record TraineeInfoPagination(
-    int? pageNumber,
-    int? pageSize,
-    int? totalRecords,
-    List<TraineeResponse>? data
+    int pageNumber,
+    int pageSize,
+    int totalRecords,
+    List<TraineeResponse> data
 );

@@ -32,19 +32,28 @@ builder.Services.AddCors(options =>
 
 
 // System.Text.Json deserializes enums from their integer value by default.
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddControllers()
+.ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    })
+.AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.Converters.Add(
-            // This method JsonStringEnumConverter adds string support on top — it doesn't remove int support.
-            // new System.Text.Json.Serialization.JsonStringEnumConverter()
+    // options.JsonSerializerOptions.Converters.Add(
+    //         // This method JsonStringEnumConverter adds string support on top — it doesn't remove int support.
+    //         // new System.Text.Json.Serialization.JsonStringEnumConverter()
 
-            // For only string support from the Frontend
-            new System.Text.Json.Serialization.JsonStringEnumConverter(
-                System.Text.Json.JsonNamingPolicy.CamelCase,
-                allowIntegerValues: false
-            )
-        );
-});
+    //         // For only string support from the Frontend
+    //         // new System.Text.Json.Serialization.JsonStringEnumConverter(
+    //         //     System.Text.Json.JsonNamingPolicy.CamelCase,
+    //         //     allowIntegerValues: false
+    //         // )
+    //     );
+})
+.AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow;
+    });;
 
 
 

@@ -33,14 +33,14 @@ public class TrackTaskController : ControllerBase
         return trackTask;
     }
 
-    [HttpGet("/api/task-assignments/getall")]
+    [HttpGet("getall")]
     public async Task<ActionResult<IEnumerable<TrackTaskResponse>>> GetAllTasks()
     {
         IEnumerable<TrackTaskResponse> tasks = await _trackTaskService.GetAllTasks();
         return Ok(tasks);
     }
 
-    [HttpPut("/api/task-assignments/{id}/status")]
+    [HttpPut("{id}/status")]
     public async Task<ActionResult<TrackTaskResponse>> UpdateTrackTask(long id, [FromBody] TrackTaskUpdateRequestBody body)
     {
         TrackTaskResponse updatedTrackTask = await _trackTaskService.UpdateTrackTaskAsync(id, body);

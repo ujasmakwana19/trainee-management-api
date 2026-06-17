@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.UserDTO;
 using TraineeManagement.Api.UserServices;
 using TraineeManagement.Api.ExceptionUtils;
+using TraineeManagement.Api.ResponseHandlerUtil;
+using TraineeManagement.Api.ErrorCodesUtils;
 namespace TraineeManagement.Api.UserController;
 
 [ApiController]
@@ -18,8 +20,12 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<LoginUserResponse>> LoginUser([FromBody] LoginUserRequest user)
+    public async Task<ActionResult> LoginUser([FromBody] LoginUserRequest user)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(HttpContext,StatusCodes.Status400BadRequest,ErrorCodes.INVALID_MODEL,UtilityHelper.GetInvalidModelStateErrors(ModelState));
+        }
         _logger.LogInformation($"User {user.Username} Hit the Login Route");
 
         LoginUserResponse u = await _service.Login(user);

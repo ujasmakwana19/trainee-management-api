@@ -3,7 +3,6 @@ using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TaskModel;
-using Mapster;
 namespace TraineeManagement.Api.LearningTaskServices;
 
 public class LearningTaskService : ILearningTaskService
@@ -43,7 +42,14 @@ public class LearningTaskService : ILearningTaskService
     public async Task<IEnumerable<TaskResponseData>> GetAll()
     {
         IEnumerable<TaskResponseData> tasks = await _context.LearningTasks
-                                        .ProjectToType<TaskResponseData>()
+                                        .Select(t => new TaskResponseData(
+                                            t.Id,
+                                            t.Title,
+                                            t.Description,
+                                            t.ExpectedTechStack,
+                                            t.DueDate,
+                                            t.Status
+                                        ))
                                         .ToListAsync();
 
         return tasks;
@@ -53,7 +59,15 @@ public class LearningTaskService : ILearningTaskService
     public async Task<TaskResponseData> GetById(long id)
     {
         TaskResponseData? task = await _context.LearningTasks
-                                .ProjectToType<TaskResponseData>()
+                                .Where(t => t.Id == id)
+                                .Select(t => new TaskResponseData(
+                                            t.Id,
+                                            t.Title,
+                                            t.Description,
+                                            t.ExpectedTechStack,
+                                            t.DueDate,
+                                            t.Status
+                                        ))
                                 .FirstOrDefaultAsync(t => t.Id == id);
         if (task is null)
         {

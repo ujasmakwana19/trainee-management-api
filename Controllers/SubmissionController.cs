@@ -32,7 +32,7 @@ public class SubmitController : ControllerBase
         return Ok(await _service.GetSubmissionById(id));
     }
 
-    [HttpGet("/api/submissions/getall")]
+    [HttpGet("getall")]
     public async Task<ActionResult<IEnumerable<SubmissionResponse>>> GetAll()
     {
         return Ok(await _service.GetAll());

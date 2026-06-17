@@ -21,7 +21,7 @@ public class LearningTaskController : ControllerBase
     }
 
     // /api/learning-tasks/getall
-    [HttpGet("/api/learning-tasks/getall")]
+    [HttpGet("getall")]
     public async Task<ActionResult<IEnumerable<TaskResponseData>>> GetAllTasks()
     {
         return Ok(await _service.GetAll());

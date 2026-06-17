@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.IDateTimeAutoService;
+using TraineeManagement.Api.ValidationConstantUtils;
 namespace TraineeManagement.Api.UserModel
 {
     public class User : IDateTimeAuto
@@ -9,20 +10,21 @@ namespace TraineeManagement.Api.UserModel
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
         public long Id { get; set; }
 
-        [Required(ErrorMessage = "Username is required.")]
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters.")]
+        [Required]
+        [StringLength(ValidationConstant.MAX_LENTH_GENERIC_INPUT , 
+        MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
         public string Username { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email address format.")]
+        [Required]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(255)] // Large length to safely store long cryptographic hashes
+        [StringLength(ValidationConstant.PASSWORD_INPUT)] // Large length to safely store long cryptographic hashes
         public string PasswordHash { get; set; } = string.Empty;
 
         [Required]
-        [AllowedValues(UserRole.Admin, UserRole.Mentor, UserRole.Trainee, ErrorMessage = "Role must be Admin, Mentor, or Trainee.")]
+        [EnumDataType(typeof(UserRole))]
         public UserRole Role { get; set; }
 
     }

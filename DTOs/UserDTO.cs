@@ -4,21 +4,21 @@ namespace TraineeManagement.Api.UserDTO;
 
 public record LoginUserRequest
 (
-    [Required(ErrorMessage = "User Name is required")]
+    [Required]
     String Username,
-    [Required(ErrorMessage = "Password is required")]
+    [Required]
     String Password
 );
 
 public record LoginUserResponse
 (
-    String? Token,
-    long? ExpiriesIn,
+    String Token,
+    long ExpiriesIn,
     UserRecord User
 );
 
 public record UserRecord(
-    long? Id,
-    String? Username,
-    UserRole? Role
+    long Id,
+    String Username,
+    UserRole Role
 );

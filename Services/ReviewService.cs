@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.ReviewModel;
-using Mapster;
 namespace TraineeManagement.Api.ReviewService;
 public class ReviewService : IReviewService
 {   
@@ -57,14 +56,34 @@ public class ReviewService : IReviewService
 
     public async Task<ReviewResponse> GetById(long Id)
     {
-        Review review = await FetchReview(Id);
-        return ToResponse(review);
+        ReviewResponse? review = await _context.Reviews
+                                .Select(t => new ReviewResponse(
+                                    t.Id,
+                                    t.SubmissionId,
+                                    t.MentorId,
+                                    t.Feedback,
+                                    t.Score,
+                                    t.ReviewStatus,
+                                    t.ReviewedDate
+                                ))
+                                .FirstOrDefaultAsync(t => t.Id == Id);
+        if(review is null)
+            throw new NotFoundException("Review Not Found");
+        return review;
     }
 
     public async Task<IEnumerable<ReviewResponse>> GetAll()
     {
         IEnumerable<ReviewResponse> reviews = await _context.Reviews
-                                .ProjectToType<ReviewResponse>()
+                                .Select(t => new ReviewResponse(
+                                    t.Id,
+                                    t.SubmissionId,
+                                    t.MentorId,
+                                    t.Feedback,
+                                    t.Score,
+                                    t.ReviewStatus,
+                                    t.ReviewedDate
+                                ))
                                 .ToListAsync();
         return reviews;
     }

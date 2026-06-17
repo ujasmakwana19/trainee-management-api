@@ -3,8 +3,6 @@ using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.ExceptionUtils;
-using Mapster;
-
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -63,25 +61,43 @@ public class TraineeService : ITraineeService
     // GETALL
     public async Task<IEnumerable<TraineeResponse>> GetAllTraineesService()
     {
-        List<TraineeResponse> trainees = await _context.Trainees.ProjectToType<TraineeResponse>().ToListAsync();
+        IEnumerable<TraineeResponse> trainees = await _context.Trainees
+                                                .Select(t => new TraineeResponse(
+                                                    t.Id,
+                                                    t.FirstName,
+                                                    t.LastName,
+                                                    t.Email,
+                                                    t.TechStack,
+                                                    t.Status
+                                                ))
+                                                .ToListAsync();
         return trainees;
     }
 
     // GET by ID
     public async Task<TraineeResponse> GetTraineeResponseByIdService(long id)
     {
-        Trainee trainee = await FetchTrainee(id);
+        TraineeResponse? trainee = await _context.Trainees
+                                                .Where(t => t.Id == id)
+                                                .Select(t => new TraineeResponse(
+                                                    t.Id,
+                                                    t.FirstName,
+                                                    t.LastName,
+                                                    t.Email,
+                                                    t.TechStack,
+                                                    t.Status
+                                                ))
+                                                .FirstOrDefaultAsync(t => t.Id == id);
         if (trainee is null)
         {
             throw new NotFoundException("Trainee not found");
         }
-        return ToResponse(trainee);
+        return trainee;
     }
 
     // CREATE
     public async Task<TraineeResponse> CreateTraineeService(CreateTraineeRequest trainee)
     {
-
         Trainee u = new Trainee
         {
             FirstName = trainee.FirstName,
@@ -124,8 +140,15 @@ public class TraineeService : ITraineeService
     public async Task<IEnumerable<TraineeResponse>> SearchTraineeService(String s)
     {
         s = s.ToLower();
-        List<TraineeResponse>trainees = await _context.Trainees.
-                                ProjectToType<TraineeResponse>().Where(
+        List<TraineeResponse>trainees = await _context.Trainees
+                                            .Select(t => new TraineeResponse(
+                                                t.Id,
+                                                t.FirstName,
+                                                t.LastName,
+                                                t.Email,
+                                                t.TechStack,
+                                                t.Status
+                                            )).Where(
             u => u.FirstName!.ToLower().Contains(s)
             || u.LastName!.ToLower().Contains(s)
             || u.TechStack!.ToLower().Contains(s)
@@ -172,7 +195,14 @@ public class TraineeService : ITraineeService
         .OrderBy(u => u.Id)
         .Skip(rowToSkip)
         .Take(pageSize)
-        .ProjectToType<TraineeResponse>()
+        .Select(t => new TraineeResponse(
+                    t.Id,
+                    t.FirstName,
+                    t.LastName,
+                    t.Email,
+                    t.TechStack,
+                    t.Status
+        ))
         .ToListAsync();
 
         

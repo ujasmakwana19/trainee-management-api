@@ -30,7 +30,7 @@ public class ReviewController : ControllerBase
         return Ok(await _service.GetById(id));
     }
 
-    [HttpGet("/api/reviews/getall")]
+    [HttpGet("getall")]
     public async Task<ActionResult<IEnumerable<ReviewResponse>>> GetAllTasks()
     {
         return Ok(await _service.GetAll());

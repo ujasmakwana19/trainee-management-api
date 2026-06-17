@@ -7,7 +7,6 @@ using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Api.ExceptionUtils;
-using Mapster;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService
@@ -72,7 +71,16 @@ public class TrackTaskService : ITrackTaskService
     public async Task<IEnumerable<TrackTaskResponse>> GetAllTasks()
     {
         IEnumerable<TrackTaskResponse> trackTasks = await _context.TrackTasks
-                                            .ProjectToType<TrackTaskResponse>()
+                                            .Select(t => new TrackTaskResponse(
+                                                t.Id,
+                                                t.TraineeId,
+                                                t.MentorId,
+                                                t.LearningTaskId,
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            ))
                                             .ToListAsync();
         return trackTasks;
     }

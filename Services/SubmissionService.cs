@@ -1,5 +1,3 @@
-using Mapster;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ExceptionUtils;
@@ -59,14 +57,33 @@ public class SubmissionService : ISubmissionService
 
     public async Task<SubmissionResponse> GetSubmissionById(long id)
     {
-        Submission s = await FetchSubmission(id);
-        return ToResponse(s);
+        SubmissionResponse? s = await _context.Submissions
+                                        .Where(t => t.Id == id)
+                                        .Select(t => new SubmissionResponse(
+                                            t.Id,
+                                            t.TaskAssignmentId,
+                                            t.SubmissionUrl,
+                                            t.Notes,
+                                            t.SubmittedDate,
+                                            t.Status
+                                        ))
+                                        .FirstOrDefaultAsync(t => t.Id == id);
+        if(s is null)
+            throw new NotFoundException("Submission not Found");
+        return s;
     }
 
     public async Task<IEnumerable<SubmissionResponse>> GetAll()
     {
         List<SubmissionResponse> submissions = await _context.Submissions
-                                        .ProjectToType<SubmissionResponse>()
+                                        .Select(t => new SubmissionResponse(
+                                            t.Id,
+                                            t.TaskAssignmentId,
+                                            t.SubmissionUrl,
+                                            t.Notes,
+                                            t.SubmittedDate,
+                                            t.Status
+                                        ))
                                         .ToListAsync();
 
         return submissions;
