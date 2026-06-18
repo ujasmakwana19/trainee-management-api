@@ -26,21 +26,24 @@ public class TraineesController : ControllerBase
   // Get all the Trainees
   // GET /api/trainees
   [HttpGet("getall")]
-  public async Task<ActionResult<IEnumerable<TraineeResponse>>> GetTrainee()
+  public async Task<ActionResult> GetTrainee()
   {
     IEnumerable<TraineeResponse> traineesVal = await _service.GetAllTraineesService();
-    return Ok(traineesVal);
+    return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, traineesVal);
   }
 
   // Get Trainee by unique ID
   // GET /api/trainees/:id
   [HttpGet("{id}")]
-  public async Task<ActionResult<TraineeResponse>> GetTraineeById(long id)
+  public async Task<ActionResult> GetTraineeById(string id)
   {
-    
-    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(id);
-    // return ResponseHandler.CreateResponse(HttpContext, StatusCodes.Status400BadRequest,  ErrorCodes.INVALID_MODEL, ["aa","error","chhe"]);
-    return ResponseHandler.SuccessResponse(HttpContext , traineeDto ,ErrorCodes.SUCCESS);
+    long parsedId = UtilityHelper.isValidTypeLong(id);
+    if (parsedId == 0)
+    {
+      throw new BadRequestException(ErrorCodes.INVALID_PARAMS);
+    }
+    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(parsedId);
+    return ResponseHandler.SuccessResponse(HttpContext , ErrorCodes.SUCCESS, traineeDto );
   }
 
   // To add the Trainee
@@ -84,27 +87,27 @@ public class TraineesController : ControllerBase
   [HttpGet]
   public async Task<ActionResult<TraineeResponse>> GetSearch([FromQuery] String? search)
   {
-    if (search == null)
-    {
-      throw new BadRequestException("Please provide a search query parameter");
-    }
+    // if (search == null)
+    // {
+    //   throw new BadRequestException("Please provide a search query parameter");
+    // }
     IEnumerable<TraineeResponse>? traineeDto = await _service.SearchTraineeService(search);
     return Ok(traineeDto);
   }
 
   // To search the substring in FirstName, LastName, TechStack, Email
   // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
-  [HttpGet("getSearch")]
-  public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber,int pageSize, String search, String status)
-  {
-    if (search == null || status == null)
-    {
-      throw new BadRequestException("Please provide a all search query parameter");
-    }
+  // [HttpGet("getSearch")]
+  // public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber,int pageSize, String search, String status)
+  // {
+  //   // if (search == null || status == null)
+  //   // {
+  //   //   throw new BadRequestException("Please provide a all search query parameter");
+  //   // }
 
-    TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
-    return Ok(traineeDto);
-  }
+  //   TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
+  //   return Ok(traineeDto);
+  // }
 
 }
 

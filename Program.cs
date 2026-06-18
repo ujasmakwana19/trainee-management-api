@@ -19,7 +19,7 @@ String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 // Setup phase builder
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// 
+// Cors Setup
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
@@ -30,26 +30,29 @@ builder.Services.AddCors(options =>
                       });
 });
 
-
-// System.Text.Json deserializes enums from their integer value by default.
+// Controller and JSON Options Setup
 builder.Services.AddControllers()
+// This is to suppress the default model state validation behavior of ASP.NET Core, which automatically returns a 400 Bad Request response if the model state is invalid. By setting SuppressModelStateInvalidFilter to true, you can handle model validation errors manually in your controller actions, allowing for more customized error responses or additional processing before returning a response to the client.
 .ConfigureApiBehaviorOptions(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
     })
-.AddJsonOptions(options =>
-{
-    // options.JsonSerializerOptions.Converters.Add(
-    //         // This method JsonStringEnumConverter adds string support on top — it doesn't remove int support.
-    //         // new System.Text.Json.Serialization.JsonStringEnumConverter()
 
-    //         // For only string support from the Frontend
-    //         // new System.Text.Json.Serialization.JsonStringEnumConverter(
-    //         //     System.Text.Json.JsonNamingPolicy.CamelCase,
-    //         //     allowIntegerValues: false
-    //         // )
-    //     );
-})
+// System.Text.Json deserializes enums from their integer value by default.
+// .AddJsonOptions(options =>
+// {
+//     // options.JsonSerializerOptions.Converters.Add(
+//     //         // This method JsonStringEnumConverter adds string support on top — it doesn't remove int support.
+//     //         // new System.Text.Json.Serialization.JsonStringEnumConverter()
+
+//     //         // For only string support from the Frontend
+//     //         // new System.Text.Json.Serialization.JsonStringEnumConverter(
+//     //         //     System.Text.Json.JsonNamingPolicy.CamelCase,
+//     //         //     allowIntegerValues: false
+//     //         // )
+//     //     );
+// })
+// 
 .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow;
@@ -146,7 +149,7 @@ builder.Logging.AddDebug();
 WebApplication app = builder.Build();
 
 // Seeder Function
-await SeederService.CreateAdminUser(app.Services);
+await SeederService.SeedData(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

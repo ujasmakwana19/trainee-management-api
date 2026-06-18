@@ -27,12 +27,12 @@ public class GlobalExceptionMiddleware
         catch (UnauthorizedException ex)
         {
             _logger.LogWarning("Unauthorized: {Message}", ex.Message);
-            await WriteResponse(context, StatusCodes.Status401Unauthorized, ex.Message);
+            await WriteResponse(context, StatusCodes.Status401Unauthorized, ex._code, ex._message);
         }
         catch (BadRequestException ex)
         {
             _logger.LogWarning("Bad request: {Message}", ex.Message);
-            await WriteResponse(context, StatusCodes.Status400BadRequest, ex.Message);
+            await WriteResponse(context, StatusCodes.Status400BadRequest, ex._code, ex._message);
         }
         catch (JwtOperationException ex)
         {
@@ -71,6 +71,12 @@ public class GlobalExceptionMiddleware
     {
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { Message = message });
+        await context.Response.WriteAsJsonAsync(new { message = message});
+    }
+    private static async Task WriteResponse(HttpContext context, int statusCode, int code,string message)
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { message = message , errorCode = code});
     }
 }

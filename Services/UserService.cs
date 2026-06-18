@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
 using TraineeManagement.Api.ExceptionUtils;
+using TraineeManagement.Api.ErrorMessageUtils;
+using TraineeManagement.Api.ErrorCodesUtils;
 namespace TraineeManagement.Api.UserServices;
 
 
@@ -45,7 +47,7 @@ public class UserService : IUserService
         User? u = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
         if(u is null)
         {
-            throw new UnauthorizedException("Invalid credentials");
+            throw new UnauthorizedException(ErrorCodes.INVALID_CREDENTIALS);
         }
         return u;
     }
@@ -65,7 +67,7 @@ public class UserService : IUserService
         if (user.PasswordHash is null)
         {
             _logger.LogDebug($"User : {user.Username} exists but does not has the hash password ");
-            throw new UnauthorizedException("Invalid credentials");
+            throw new UnauthorizedException(ErrorCodes.INVALID_CREDENTIALS);
         }
 
         PasswordVerificationResult result = VerifyPassword(user, user.PasswordHash,userInfo.Password!); 
@@ -76,7 +78,7 @@ public class UserService : IUserService
             
             return ToResponse(token, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
         }
-        throw new UnauthorizedException("Invalid credentials");
+        throw new UnauthorizedException(ErrorCodes.INVALID_CREDENTIALS);
         
     }
 };

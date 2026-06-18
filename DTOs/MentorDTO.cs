@@ -17,6 +17,7 @@ public record MentorRequestBody
     String Email,
 
     [Required(ErrorMessage = "Technical Expertise Details is Required")]
+    [StringLength(200,ErrorMessage ="Must be less than or equals to 200 character")]
     String Expertise,
 
     [Required]

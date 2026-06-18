@@ -1,51 +1,50 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagement.Api.TraineeModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 namespace TraineeManagement.Api.TraineeDTO;
 
 public record CreateTraineeRequest
 (
-    [Required(ErrorMessage = "First Name is required")]
-    [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String FirstName,
 
-    [Required(ErrorMessage = "Last Name is required")]
-    [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String LastName,
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress]
+    [RequiredField]
+    [EmailField]
     String Email,
 
-    [Required(ErrorMessage = "Tech Stack is Required")]
+    [RequiredField]
     String TechStack,
 
-    [Required(ErrorMessage ="Status is required")]
-    [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Invalid Value")]
-    StatusValue? Status
+    [RequiredField]
+    [EnumDataTypeField(typeof(StatusValue))]
+    StatusValue Status
 );
-
 public record UpdateTraineeRequest
 (
-    [Required(ErrorMessage = "First Name is required")]
-    [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String FirstName,
 
-    [Required(ErrorMessage = "Last Name is required")]
-    [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String LastName,
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress]
+    [RequiredField]
+    [EmailField]
     String Email,
 
-    [Required]
+    [RequiredField]
     String TechStack,
 
-    [Required]
-    [AllowedValues(StatusValue.Active,StatusValue.Inactive,StatusValue.Completed, ErrorMessage = "Selected among the following Active , Inactive or Completed")]
-    StatusValue? Status
+    [RequiredField]
+    [EnumDataTypeField(typeof(StatusValue))]
+    StatusValue Status
 );
-
 
 public record TraineeResponse
 (
@@ -54,7 +53,7 @@ public record TraineeResponse
     String LastName,
     String Email,
     String TechStack,
-    StatusValue? Status
+    StatusValue Status
 );
 
 public record TraineeInfoPagination(

@@ -8,7 +8,7 @@ using TraineeManagement.Api.MentorModel;
 using TraineeManagement.Api.TaskModel;
 public static class SeederService
 {
-    public static async Task CreateAdminUser(IServiceProvider serviceProvider)
+    public static async Task SeedData(IServiceProvider serviceProvider)
     {
         PasswordHasher<User> ph = new PasswordHasher<User>();
         User u = new User

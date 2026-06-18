@@ -12,5 +12,5 @@ public interface ITraineeService
     Task<TraineeResponse> CreateTraineeService(CreateTraineeRequest trainee);
     Task<TraineeResponse> UpdateTraineeService(long id, UpdateTraineeRequest trainee);
     Task<IEnumerable<TraineeResponse>> SearchTraineeService(String s);
-    Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status);
+    // Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status);
 }

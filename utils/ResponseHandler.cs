@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.ErrorCodesUtils;
-
 namespace TraineeManagement.Api.ResponseHandlerUtil;
 
 public static class ResponseHandler
 {
-    public static ActionResult SuccessResponse(HttpContext context, object value, int ErrorCode)
+    public static ActionResult SuccessResponse(HttpContext context, ErrorCode errorCode, object value)
     {
         object body = new
         {
-            data = value,
-            ErrorCode = ErrorCode
+            ErrorMessage = errorCode.Message,
+            ErrorCode = errorCode.Code,
+            data = value
         };
         return new ObjectResult(body)
         {
@@ -19,12 +19,13 @@ public static class ResponseHandler
         
     }
 
-    public static ActionResult CreateResponse(HttpContext context, int statusCode, int ErrorCode, Dictionary<string, string[]> errorsArray)
+    public static ActionResult CreateResponse(int statusCode, ErrorCode errorCode, Dictionary<string, string[]> errorsDict)
     {
         object body = new
         {
-            errorCode = ErrorCode,
-            errors = errorsArray
+            message = errorCode.Message,
+            errorCode = errorCode.Code,
+            errors = errorsDict
         };
 
         return new ObjectResult(body)

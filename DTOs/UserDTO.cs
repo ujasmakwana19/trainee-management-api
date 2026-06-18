@@ -4,9 +4,9 @@ namespace TraineeManagement.Api.UserDTO;
 
 public record LoginUserRequest
 (
-    [Required]
+    [RequiredField]
     String Username,
-    [Required]
+    [RequiredField]
     String Password
 );
 

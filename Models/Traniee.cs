@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.IDateTimeAutoService;
+using TraineeManagement.Api.ValidationConstantUtils;
 namespace TraineeManagement.Api.TraineeModel
 {
     public class Trainee : IDateTimeAuto
@@ -8,20 +9,24 @@ namespace TraineeManagement.Api.TraineeModel
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long Id { get; set; }
-        [Required(ErrorMessage = "First Name is required")]
-        [StringLength(50, ErrorMessage = "Must be less than or equals to 50 character")]
+        [RequiredField]
+        [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
         public string FirstName { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Last Name is required")]
-        [StringLength(50, ErrorMessage = "Must be less than or equals to 50 character")]
+        
+        [RequiredField]
+        [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
         public string LastName { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress]
+
+        [RequiredField]
+        [EmailField]
         public string Email { get; set; } = string.Empty;
-        [Required]
+
+        [RequiredField]
         public string TechStack { get; set; } = string.Empty;
-        [Required]
-        [AllowedValues(StatusValue.Active, StatusValue.Inactive, StatusValue.Completed, ErrorMessage = "Status must be Active, Inactive or Completed")]
-        public StatusValue? Status { get; set; }
+
+        [RequiredField]
+        [EnumDataTypeField(typeof(StatusValue))]
+        public StatusValue Status { get; set; }
     }
 
     public enum StatusValue

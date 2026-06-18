@@ -157,63 +157,63 @@ public class TraineeService : ITraineeService
         return trainees;
     }
 
-    public async Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
-    {
-        // Parse status enum once, not inside the query
-        StatusValue? parsedStatus = null;
-        if (!Enum.TryParse<StatusValue>(status, ignoreCase: true, out var s))
-            throw new BadRequestException("Invalid status value");
-        parsedStatus = s;
+    // public async Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
+    // {
+    //     // Parse status enum once, not inside the query
+    //     StatusValue? parsedStatus = null;
+    //     if (!Enum.TryParse<StatusValue>(status, ignoreCase: true, out var s))
+    //         throw new BadRequestException("Invalid status value");
+    //     parsedStatus = s;
         
 
-        if(pageNumber < 1) pageNumber = 1;
-        if(pageSize < 1) pageSize = 10;
+    //     if(pageNumber < 1) pageNumber = 1;
+    //     if(pageSize < 1) pageSize = 10;
 
-        int rowToSkip = (pageNumber-1)*pageSize; 
+    //     int rowToSkip = (pageNumber-1)*pageSize; 
 
 
-        IQueryable<Trainee> query = _context.Trainees.AsNoTracking();
+    //     IQueryable<Trainee> query = _context.Trainees.AsNoTracking();
 
-        query = query.Where(u =>
-            u.FirstName == search &&
-            u.Status == parsedStatus.Value
-        );
+    //     query = query.Where(u =>
+    //         u.FirstName == search &&
+    //         u.Status == parsedStatus.Value
+    //     );
 
-        int totalRecords = await query.CountAsync();
+    //     int totalRecords = await query.CountAsync();
 
-        if (totalRecords == 0)
-        {
-            return new TraineeInfoPagination(
-                pageNumber,
-                pageSize,
-                totalRecords,
-                []
-            );
-        }
+    //     if (totalRecords == 0)
+    //     {
+    //         return new TraineeInfoPagination(
+    //             pageNumber,
+    //             pageSize,
+    //             totalRecords,
+    //             []
+    //         );
+    //     }
         
-        List<TraineeResponse>trainees = await query
-        .OrderBy(u => u.Id)
-        .Skip(rowToSkip)
-        .Take(pageSize)
-        .Select(t => new TraineeResponse(
-                    t.Id,
-                    t.FirstName,
-                    t.LastName,
-                    t.Email,
-                    t.TechStack,
-                    t.Status
-        ))
-        .ToListAsync();
+    //     List<TraineeResponse>trainees = await query
+    //     .OrderBy(u => u.Id)
+    //     .Skip(rowToSkip)
+    //     .Take(pageSize)
+    //     .Select(t => new TraineeResponse(
+    //                 t.Id,
+    //                 t.FirstName,
+    //                 t.LastName,
+    //                 t.Email,
+    //                 t.TechStack,
+    //                 t.Status
+    //     ))
+    //     .ToListAsync();
 
         
         
 
-        return new TraineeInfoPagination(
-            pageNumber,
-            trainees.Count,
-            totalRecords,
-            trainees
-        );
-    }
+    //     return new TraineeInfoPagination(
+    //         pageNumber,
+    //         trainees.Count,
+    //         totalRecords,
+    //         trainees
+    //     );
+    // }
 };
 

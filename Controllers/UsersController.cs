@@ -20,17 +20,25 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> LoginUser([FromBody] LoginUserRequest user)
+    public async Task<ActionResult> LoginUser([FromBody] LoginUserRequest userInfo)
     {
         if (!ModelState.IsValid)
         {
-            return ResponseHandler.CreateResponse(HttpContext,StatusCodes.Status400BadRequest,ErrorCodes.INVALID_MODEL,UtilityHelper.GetInvalidModelStateErrors(ModelState));
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_MODEL,
+                UtilityHelper.GetInvalidModelStateErrors(ModelState, nameof(userInfo)));
         }
-        _logger.LogInformation($"User {user.Username} Hit the Login Route");
 
-        LoginUserResponse u = await _service.Login(user);
+        _logger.LogInformation($"User {userInfo.Username} Hit the Login Route");
 
-        _logger.LogInformation($"User {user.Username} Logged in successfully\t");
-        return Ok(u);
+        LoginUserResponse user = await _service.Login(userInfo);
+
+        _logger.LogInformation($"User {userInfo.Username} Logged in successfully\t");
+        
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            user);
     }
 }
