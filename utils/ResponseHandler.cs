@@ -19,13 +19,12 @@ public static class ResponseHandler
         
     }
 
-    public static ActionResult CreateResponse(int statusCode, ErrorCode errorCode, Dictionary<string, string[]> errorsDict)
+    public static ActionResult CreateResponse(int statusCode, ErrorCode errorCode)
     {
         object body = new
         {
             message = errorCode.Message,
-            errorCode = errorCode.Code,
-            errors = errorsDict
+            errorCode = errorCode.Code
         };
 
         return new ObjectResult(body)

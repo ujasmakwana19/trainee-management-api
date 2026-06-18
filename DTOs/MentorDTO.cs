@@ -1,27 +1,31 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagement.Api.MentorModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 namespace TraineeManagement.Api.MentorDTO;
 
 public record MentorRequestBody
 (
-    [Required(ErrorMessage = "First Name is required")]
-    [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String FirstName,
 
-    [Required(ErrorMessage = "Last Name is required")]
-    [StringLength(50,ErrorMessage ="Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT,
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String LastName,
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress]
+    [RequiredField]
+    [EmailField]
     String Email,
 
-    [Required(ErrorMessage = "Technical Expertise Details is Required")]
-    [StringLength(200,ErrorMessage ="Must be less than or equals to 200 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT,
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String Expertise,
 
     [Required]
-    [AllowedValues(MentorStatus.Active, MentorStatus.Inactive, ErrorMessage = "Status must be Active, or Inactive")]
+    [EnumDataTypeField(typeof(MentorStatus))]
     MentorStatus Status
 );
 

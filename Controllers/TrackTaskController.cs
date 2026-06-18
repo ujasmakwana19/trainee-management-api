@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.ResponseHandlerUtil;
 using TraineeManagement.Api.TrackTaskDTO;
 using TraineeManagement.Api.TrackTaskService;
 using TraineeManagement.Api.TraineeDTO;
@@ -20,30 +22,55 @@ public class TrackTaskController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TrackTaskResponse>> CreateTrackTask([FromBody] TrackTaskRequestBody body)
+    public async Task<ActionResult> CreateTrackTask([FromBody] TrackTaskRequestBody body)
     {
+        if (!ModelState.IsValid )
+        {
+        return ResponseHandler.CreateResponse(
+            StatusCodes.Status400BadRequest,
+            ErrorCodes.INVALID_MODEL);
+        }
         TrackTaskResponse createdTrackTask = await _trackTaskService.CreateTrackTaskAsync(body);
-        return CreatedAtAction(nameof(GetTrackTaskById), new { id = createdTrackTask.Id }, createdTrackTask);
+        return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, createdTrackTask);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TrackTaskPopulatedResponseBody>> GetTrackTaskById(long id)
+    public async Task<ActionResult> GetTrackTaskById(long id)
     {
+        if (!ModelState.IsValid || id < 1)
+        {
+        return ResponseHandler.CreateResponse(
+            StatusCodes.Status400BadRequest,
+            ErrorCodes.INVALID_PARAMS_QUERY);
+        }
         TrackTaskPopulatedResponseBody trackTask = await _trackTaskService.GetTrackTaskByIdAsync(id);
-        return trackTask;
+        return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, trackTask);
     }
 
     [HttpGet("getall")]
-    public async Task<ActionResult<IEnumerable<TrackTaskResponse>>> GetAllTasks()
+    public async Task<ActionResult> GetAllTasks()
     {
         IEnumerable<TrackTaskResponse> tasks = await _trackTaskService.GetAllTasks();
-        return Ok(tasks);
+        return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, tasks);
     }
 
     [HttpPut("{id}/status")]
     public async Task<ActionResult<TrackTaskResponse>> UpdateTrackTask(long id, [FromBody] TrackTaskUpdateRequestBody body)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.INVALID_MODEL);
+        }
+        if(id < 1)
+        {
+        return ResponseHandler.CreateResponse(
+            StatusCodes.Status400BadRequest,
+            ErrorCodes.INVALID_PARAMS_QUERY
+        ); 
+        }
         TrackTaskResponse updatedTrackTask = await _trackTaskService.UpdateTrackTaskAsync(id, body);
-        return Ok(updatedTrackTask);
+        return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, updatedTrackTask);
     }
 }

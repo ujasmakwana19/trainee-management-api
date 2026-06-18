@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
+using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TaskModel;
@@ -33,7 +34,7 @@ public class LearningTaskService : ILearningTaskService
         LearningTask? task = await _context.LearningTasks.FirstOrDefaultAsync(t => t.Id == id);
         if (task is null)
         {
-            throw new NotFoundException("Task Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK);
         }
         return task;
     }
@@ -68,10 +69,10 @@ public class LearningTaskService : ILearningTaskService
                                             t.DueDate,
                                             t.Status
                                         ))
-                                .FirstOrDefaultAsync(t => t.Id == id);
+                                .FirstOrDefaultAsync();
         if (task is null)
         {
-            throw new NotFoundException("Task Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK);
         }
         return task;
     }

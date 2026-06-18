@@ -24,9 +24,9 @@ public class AppDbContext : DbContext
         .HasIndex(u => u.Username)
         .IsUnique();
 
-        builder.Entity<User>()
-        .Property(u => u.Role)
-        .HasConversion<string>();
+        // builder.Entity<User>()
+        // .Property(u => u.Role)
+        // .HasConversion<string>();
 
         // builder.Entity<Trainee>()
         // .Property(u => u.Status)
@@ -35,13 +35,13 @@ public class AppDbContext : DbContext
         builder.Entity<Trainee>()
         .HasIndex(u => new { u.FirstName, u.Status });
 
-        builder.Entity<Mentor>()
-        .Property(u => u.Status)
-        .HasConversion<string>();
+        // builder.Entity<Mentor>()
+        // .Property(u => u.Status)
+        // .HasConversion<string>();
 
-        builder.Entity<LearningTask>()
-        .Property(u => u.Status)
-        .HasConversion<string>();
+        // builder.Entity<LearningTask>()
+        // .Property(u => u.Status)
+        // .HasConversion<string>();
 
         builder.Entity<TrackTask>(entity =>
         {
@@ -60,8 +60,8 @@ public class AppDbContext : DbContext
                 .HasForeignKey(t => t.LearningTaskId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.Property(u => u.Status)
-                .HasConversion<string>();
+            // entity.Property(u => u.Status)
+            //     .HasConversion<string>();
         });
 
         builder.Entity<Submission>(entity =>
@@ -71,8 +71,8 @@ public class AppDbContext : DbContext
                 .HasForeignKey(t => t.TaskAssignmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.Property(u => u.Status)
-                .HasConversion<string>();
+            // entity.Property(u => u.Status)
+            //     .HasConversion<string>();
         });
 
         builder.Entity<Review>(entity =>
@@ -87,8 +87,8 @@ public class AppDbContext : DbContext
                 .HasForeignKey(t => t.MentorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.Property(u => u.ReviewStatus)
-                .HasConversion<string>();
+            // entity.Property(u => u.ReviewStatus)
+            //     .HasConversion<string>();
         });
 
     }

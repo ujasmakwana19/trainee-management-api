@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.ResponseHandlerUtil;
 using TraineeManagement.Api.SubmissionDTO;
 using TraineeManagement.Api.SubmissionService;
 
@@ -20,21 +22,47 @@ public class SubmitController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<SubmissionResponse>> CreateSubmission([FromBody] SubmissionRequestBody body)
+    public async Task<ActionResult> CreateSubmission([FromBody] SubmissionRequestBody body)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.INVALID_MODEL);
+        }
         SubmissionResponse submission = await _service.CreateSubmission(body);
-        return CreatedAtAction(nameof(GetById), new { id = submission.Id }, submission);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            submission
+        );
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<SubmissionResponse>> GetById(long id)
+    public async Task<ActionResult> GetById(long id)
     {
-        return Ok(await _service.GetSubmissionById(id));
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCodes.INVALID_PARAMS_QUERY);
+        }
+        SubmissionResponse submission = await _service.GetSubmissionById(id);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            submission
+        );
     }
 
     [HttpGet("getall")]
-    public async Task<ActionResult<IEnumerable<SubmissionResponse>>> GetAll()
+    public async Task<ActionResult> GetAll()
     {
-        return Ok(await _service.GetAll());
+        IEnumerable<SubmissionResponse> submissions = await _service.GetAll();
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            submissions
+        );
     }
 }

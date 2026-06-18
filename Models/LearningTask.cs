@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.IDateTimeAutoService;
+using TraineeManagement.Api.ValidationConstantUtils;
 
 namespace TraineeManagement.Api.TaskModel;
 public class LearningTask : IDateTimeAuto
@@ -9,20 +10,27 @@ public class LearningTask : IDateTimeAuto
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
 
-    [Required(ErrorMessage = "Title is required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]    
     public string Title { get; set; } = string.Empty;
     
-    [Required(ErrorMessage = "Description is required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_LARGE_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]    
     public string Description { get; set; } = string.Empty;
     
-    [Required(ErrorMessage = "Tech Stack is required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]    
     public string ExpectedTechStack { get; set; } = string.Empty;
     
-    [Required(ErrorMessage = "Due Date is required")]
+    
+    [RequiredField]
     public DateTime DueDate { get; set; } = DateTime.UtcNow;
 
-    [Required]
-    [AllowedValues(TaskStatusValue.Draft,TaskStatusValue.Published,TaskStatusValue.Closed , ErrorMessage = "Status must be Draft, Published or Closed")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(TaskStatusValue))]
     public TaskStatusValue Status {get; set;}
 }
 

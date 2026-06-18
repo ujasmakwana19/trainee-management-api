@@ -7,6 +7,7 @@ using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Api.ExceptionUtils;
+using TraineeManagement.Api.ErrorCodesUtils;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService
@@ -39,7 +40,7 @@ public class TrackTaskService : ITrackTaskService
         TrackTask? t = await _context.TrackTasks.FirstOrDefaultAsync(t => t.Id == id); 
         if(t is null)
         {
-            throw new NotFoundException($"Task Assignment not found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
         }
         return t;
     }
@@ -48,7 +49,7 @@ public class TrackTaskService : ITrackTaskService
     {
         if(body.DueDate < body.AssignedDate)
         {
-            throw new BadRequestException("Due date cannot be earlier than assigned date");
+            throw new BadRequestException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
         }
 
         TrackTask trackTask = new TrackTask
@@ -91,11 +92,11 @@ public class TrackTaskService : ITrackTaskService
             .Include(t => t.Trainee)
             .Include(t => t.Mentor)
             .Include(t => t.LearningTask)
-            .FirstOrDefaultAsync(t => t.Id == id) ; 
+            .FirstOrDefaultAsync() ; 
         
         if(trackTask is null)
         {
-            throw new NotFoundException($"Task Assignment not found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
         }
 
         return new TrackTaskPopulatedResponseBody

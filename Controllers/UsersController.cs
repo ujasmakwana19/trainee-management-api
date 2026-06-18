@@ -19,6 +19,7 @@ public class UserController : ControllerBase
         _logger = logger;
     }
 
+    // POST api/trainee/
     [HttpPost]
     public async Task<ActionResult> LoginUser([FromBody] LoginUserRequest userInfo)
     {
@@ -26,8 +27,7 @@ public class UserController : ControllerBase
         {
             return ResponseHandler.CreateResponse(
                 StatusCodes.Status400BadRequest,
-                ErrorCodes.INVALID_MODEL,
-                UtilityHelper.GetInvalidModelStateErrors(ModelState, nameof(userInfo)));
+                ErrorCodes.INVALID_MODEL);
         }
 
         _logger.LogInformation($"User {userInfo.Username} Hit the Login Route");
@@ -39,6 +39,7 @@ public class UserController : ControllerBase
         return ResponseHandler.SuccessResponse(
             HttpContext,
             ErrorCodes.SUCCESS,
-            user);
+            user
+        );
     }
 }

@@ -1,23 +1,26 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagement.Api.ReviewModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 
 public record ReviewRequestBody(
-    [Required(ErrorMessage = "Submission is required")]
+    [RequiredField]
     long SubmissionId,
 
-    [Required(ErrorMessage = "Reviewing Mentor is required")]
+    [RequiredField]
     long MentorId,
 
-    [Required(ErrorMessage = "Mentor Feedback is required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     string Feedback,
 
     long Score,
 
-    [Required]
-    [AllowedValues(ReviewStatusValue.Accepted, ReviewStatusValue.ChangesRequired, ReviewStatusValue.Rejected, ErrorMessage = "Status must be Accepted, ChangesRequired or Rejected")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(ReviewStatusValue))]
     ReviewStatusValue ReviewStatus,
 
-    [Required(ErrorMessage = "Review Date is required")]
+    [RequiredField]
     DateOnly ReviewedDate
 );
 

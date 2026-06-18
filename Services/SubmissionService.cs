@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
+using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.SubmissionDTO;
 using TraineeManagement.Api.SubmissionModel;
@@ -22,7 +23,7 @@ public class SubmissionService : ISubmissionService
         Submission? s = await _context.Submissions.FirstOrDefaultAsync(t => t.Id == id);
 
         if(s is null)
-            throw new NotFoundException("Submission Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_SUBMISSION);
 
         return s;
     }
@@ -67,9 +68,9 @@ public class SubmissionService : ISubmissionService
                                             t.SubmittedDate,
                                             t.Status
                                         ))
-                                        .FirstOrDefaultAsync(t => t.Id == id);
+                                        .FirstOrDefaultAsync();
         if(s is null)
-            throw new NotFoundException("Submission not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_SUBMISSION);
         return s;
     }
 

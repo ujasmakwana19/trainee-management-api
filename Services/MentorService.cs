@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
+using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.MentorModel;
@@ -33,7 +34,7 @@ public class MentorService : IMentorService
         Mentor? mentor = await _context.Mentors.FirstOrDefaultAsync(m => m.Id == id);
         if(mentor is null)
         {
-            throw new NotFoundException("Mentor Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_MENTOR);
         }
         return mentor;
     }
@@ -57,7 +58,8 @@ public class MentorService : IMentorService
     // GET by ID
     public async Task<MentorResponse> GetById(long id)
     {
-        MentorResponse? mentor = await _context.Mentors
+        MentorResponse?  mentor = await _context.Mentors
+                                .Where(t => t.Id == id)
                                 .Select(t => new MentorResponse(
                                     t.Id,
                                     t.FirstName,
@@ -66,9 +68,9 @@ public class MentorService : IMentorService
                                     t.Expertise,
                                     t.Status
                                 ))
-                                .FirstOrDefaultAsync(t => t.Id == id);
+                                .FirstOrDefaultAsync();
         if(mentor is null)
-            throw new NotFoundException("Mentor Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_MENTOR);
         return mentor;
     }
 

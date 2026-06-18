@@ -15,7 +15,7 @@ public class UserService : IUserService
     // readonly makes sure that the list of trainees cannot be reassigned to a different list, but we can still add or remove items from the list. This is useful for maintaining the integrity of the data structure while allowing for modifications to the contents of the list.
     // private readonly List<Trainee> _trainees = new();
 
-    // This is for the Database Instance
+    //  Database Instance
     private readonly AppDbContext _context;
     private readonly IJwtService _jwtService;
     private readonly IConfiguration _config;

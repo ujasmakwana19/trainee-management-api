@@ -7,23 +7,23 @@ namespace TraineeManagement.Api.TrackTaskDTO;
 
 public record TrackTaskRequestBody
 (
-    [Required(ErrorMessage = "TraineeId is required")]
+    [RequiredField]
     long TraineeId,
 
-    [Required(ErrorMessage = "MentorId is required")]
+    [RequiredField]
     long MentorId,
     
-    [Required(ErrorMessage = "LearningTaskId is required")]
+    [RequiredField]
     long LearningTaskId,
     
-    [Required(ErrorMessage = "AssignedDate is required")]
+    [RequiredField]
     DateOnly AssignedDate,
     
-    [Required(ErrorMessage = "DueDate is required")]
+    [RequiredField]
     DateOnly DueDate,
     
-    [Required]
-    [AllowedValues(TaskAssignmentValue.Assigned, TaskAssignmentValue.Inprogess, TaskAssignmentValue.Submitted, TaskAssignmentValue.Reviewed, TaskAssignmentValue.Completed , ErrorMessage = "Status must be Assigned, Inprogess, Submitted, Reviewed or Completed")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(TaskAssignmentValue))]
     TaskAssignmentValue Status,
     
     string Remark
@@ -31,8 +31,8 @@ public record TrackTaskRequestBody
 
 public record TrackTaskUpdateRequestBody
 (
-    [Required]
-    [AllowedValues(TaskAssignmentValue.Assigned, TaskAssignmentValue.Inprogess, TaskAssignmentValue.Submitted, TaskAssignmentValue.Reviewed, TaskAssignmentValue.Completed , ErrorMessage = "Status must be Assigned, Inprogess, Submitted, Reviewed or Completed")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(TaskAssignmentValue))]
     TaskAssignmentValue Status
 );
 

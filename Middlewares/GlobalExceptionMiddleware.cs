@@ -1,5 +1,6 @@
 using System.Formats.Asn1;
 using MySqlConnector;
+using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 namespace TraineeManagement.Api.ExceptionMiddlewares;
 public class GlobalExceptionMiddleware
@@ -21,8 +22,8 @@ public class GlobalExceptionMiddleware
         }
         catch (NotFoundException ex)
         {
-            _logger.LogWarning("Not found: {Message}", ex.Message);
-            await WriteResponse(context, StatusCodes.Status404NotFound, ex.Message);
+            _logger.LogWarning("Not found: {Message}", ex._message);
+            await WriteResponse(context, StatusCodes.Status404NotFound, ex._code, ex._message);
         }
         catch (UnauthorizedException ex)
         {
@@ -37,7 +38,9 @@ public class GlobalExceptionMiddleware
         catch (JwtOperationException ex)
         {
             _logger.LogError(ex, "Invalid operation: {Message}", ex.Message);
-            await WriteResponse(context, StatusCodes.Status500InternalServerError, "An unexpected error occurred while processing authentication please retry");
+            await WriteResponse(context, StatusCodes.Status500InternalServerError, 
+            ErrorCodes.JWT_OPERATION_FAILED.Code,
+            ErrorCodes.JWT_OPERATION_FAILED.Message);
         }
         catch (Exception ex)
         {
@@ -46,32 +49,32 @@ public class GlobalExceptionMiddleware
                 if(mysqlEx.Number == 1451) // Foreign key constraint failure
                 {
                     _logger.LogWarning("Foreign key constraint failure on Delete: {Message}", mysqlEx.Message);
-                    await WriteResponse(context,StatusCodes.Status400BadRequest, "Cannot delete or update because of related data. Please remove related data first or change reference");
+                    await WriteResponse(context,StatusCodes.Status400BadRequest, 
+                    ErrorCodes.DELETE_RESTRICT_REFERENCE.Code,
+                    ErrorCodes.DELETE_RESTRICT_REFERENCE.Message);
                 }
                 if(mysqlEx.Number == 1452) // Foreign key constraint failure on insert or update
                 {
                     _logger.LogWarning("Foreign key constraint failure on Insert or Update: {Message}", mysqlEx.Message);
-                    await WriteResponse(context,StatusCodes.Status400BadRequest, "Related data not found, Please ensure referenced data exists..");
+                    await WriteResponse(context,StatusCodes.Status400BadRequest, 
+                    ErrorCodes.REFERENCE_NOT_EXISTS.Code,
+                    ErrorCodes.REFERENCE_NOT_EXISTS.Message);
                 }
                 if(mysqlEx.Number == 1062) // Foreign key constraint failure on insert or update
                 {
-                    await WriteResponse(context,StatusCodes.Status400BadRequest, "Username Already Exists");
+                    await WriteResponse(context,StatusCodes.Status400BadRequest, 
+                    ErrorCodes.UNIQUE_USERNAME.Code,
+                    ErrorCodes.UNIQUE_USERNAME.Message);
                 }
                     
             }
             else{
                 _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
                     context.Request.Method, context.Request.Path);
-                await WriteResponse(context,StatusCodes.Status500InternalServerError, "Something Went Wrong, Please Try Again");
+                await WriteResponse(context,StatusCodes.Status500InternalServerError, 
+                ErrorCodes.SERVER_ERROR.Code, ErrorCodes.SERVER_ERROR.Message);
             }
         }
-    }
-
-    private static async Task WriteResponse(HttpContext context, int statusCode, string message)
-    {
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { message = message});
     }
     private static async Task WriteResponse(HttpContext context, int statusCode, int code,string message)
     {

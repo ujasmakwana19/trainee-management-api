@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.MentorDTO;
 using TraineeManagement.Api.MentorServices;
+using TraineeManagement.Api.ResponseHandlerUtil;
 namespace TraineeManagement.Api.MentorControllers;
 
 [Authorize]
@@ -20,35 +22,76 @@ public class MentorController : ControllerBase
 
     // api/mentors/getall
     [HttpGet("getall")]
-    public async Task<ActionResult<IEnumerable<MentorResponse>>> GetAllMentors()
+    public async Task<ActionResult> GetAllMentors()
     {
-        return Ok(await _service.GetAll());
+        IEnumerable<MentorResponse> mentors = await _service.GetAll();
+        return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, mentors);
     }
 
     // api/mentors/:id
     [HttpGet("{id}")]
-    public async Task<ActionResult<MentorResponse>> GetMentorById(long id)
+    public async Task<ActionResult> GetMentorById(long id)
     {
-        return Ok(await _service.GetById(id));
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_PARAMS_QUERY
+            );
+        }
+        System.Console.WriteLine(id);
+        MentorResponse mentor = await _service.GetById(id);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            mentor
+        );
     }
 
     [HttpPost]
     public async Task<ActionResult<MentorResponse>> CreateMentorRequest([FromBody] MentorRequestBody mentorInfo)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCodes.INVALID_MODEL);
+        }
         MentorResponse mentor = await _service.CreateMentor(mentorInfo);
-        return CreatedAtAction(nameof(GetMentorById), new {id = mentor.Id}, mentor);
+        return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,mentor);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<MentorResponse>> UpdateMentorRequest(long id, [FromBody] MentorRequestBody mentorInfo)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_MODEL
+            );
+        }
+        if(id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_PARAMS_QUERY
+            );
+        }
         MentorResponse mentor = await _service.UpdateMentor(id,mentorInfo);
-        return CreatedAtAction(nameof(GetMentorById), new {id = mentor.Id}, mentor);
+        return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,mentor);
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteMentorRequest(long id)
     {
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_PARAMS_QUERY
+            );
+        }
         await _service.DeleteMentor(id);
         return NoContent();
     }

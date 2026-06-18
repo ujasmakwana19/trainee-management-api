@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.ResponseHandlerUtil;
 using TraineeManagement.Api.ReviewService;
 namespace TraineeManagement.Api.ReviewControllers;
 
@@ -18,21 +20,49 @@ public class ReviewController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ReviewResponse>> CreateTrackTask([FromBody] ReviewRequestBody body)
+    public async Task<ActionResult> CreateTrackTask([FromBody] ReviewRequestBody body)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_MODEL
+            );
+        }
         ReviewResponse review = await _service.CreateReview(body);
-        return CreatedAtAction(nameof(GetReviewById), new { id = review.Id }, review);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            review
+        );
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ReviewResponse>> GetReviewById(long id)
     {
-        return Ok(await _service.GetById(id));
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_MODEL
+            );
+        }
+        ReviewResponse review = await _service.GetById(id);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            review
+        );
     }
 
     [HttpGet("getall")]
-    public async Task<ActionResult<IEnumerable<ReviewResponse>>> GetAllTasks()
+    public async Task<ActionResult> GetAllTasks()
     {
-        return Ok(await _service.GetAll());
+        IEnumerable<ReviewResponse> reviews = await _service.GetAll();
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            reviews
+        );
     }
 }

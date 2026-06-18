@@ -6,6 +6,8 @@ using TraineeManagement.Api.ExceptionUtils;
 using Microsoft.AspNetCore.Http.HttpResults;
 using TraineeManagement.Api.ResponseHandlerUtil;
 using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.TraineeModel;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace TraineeManagement.Api.Controllers;
 
@@ -35,15 +37,17 @@ public class TraineesController : ControllerBase
   // Get Trainee by unique ID
   // GET /api/trainees/:id
   [HttpGet("{id}")]
-  public async Task<ActionResult> GetTraineeById(string id)
+  public async Task<ActionResult> GetTraineeById(long id)
   {
-    long parsedId = UtilityHelper.isValidTypeLong(id);
-    if (parsedId == 0)
+    if (!ModelState.IsValid || id < 1)
     {
-      throw new BadRequestException(ErrorCodes.INVALID_PARAMS);
+      return ResponseHandler.CreateResponse(
+        StatusCodes.Status400BadRequest,
+        ErrorCodes.INVALID_PARAMS_QUERY);
     }
-    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(parsedId);
-    return ResponseHandler.SuccessResponse(HttpContext , ErrorCodes.SUCCESS, traineeDto );
+    
+    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(id);
+    return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, traineeDto);
   }
 
   // To add the Trainee
@@ -51,33 +55,52 @@ public class TraineesController : ControllerBase
   [HttpPost]
   public async Task<ActionResult<TraineeResponse>> CreateTrainee([FromBody] CreateTraineeRequest trainee)
   {
-    System.Console.WriteLine("Ram");
+
     if (!ModelState.IsValid)
     {
-      return Ok(new {message = "Nathi valid"});
+      return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_MODEL);
     }
+    
     TraineeResponse traineeDto = await _service.CreateTraineeService(trainee);
 
     // The nameof use to give compile-time safety to the action name, so if we rename the GetTraineeById method, this will not lead to a runtime error.
-
-    // CreatedAtAction is used to return a 201 Created response, along with a Location header that points to the newly created resource. The first parameter is the name of the action to which the client can make a GET request to retrieve the created resource, the second parameter is an anonymous object that contains the route values (in this case, the id of the created trainee), and the third parameter is the created trainee object itself.
-    return CreatedAtAction(nameof(GetTraineeById), new { id = traineeDto.Id }, traineeDto);
+    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
   }
 
-  // To Update the Trainee
-  // PUT /api/Trainee/:id
+  // PUT /api/trainees/:id
   [HttpPut("{id}")]
   public async Task<ActionResult<TraineeResponse>> UpdateTrainee(long id, [FromBody] UpdateTraineeRequest trainee)
   {
+    if (!ModelState.IsValid)
+      {
+        return ResponseHandler.CreateResponse(
+                  StatusCodes.Status400BadRequest,
+                  ErrorCodes.INVALID_MODEL);
+      }
+    if(id < 1)
+    {
+      return ResponseHandler.CreateResponse(
+        StatusCodes.Status400BadRequest,
+        ErrorCodes.INVALID_PARAMS_QUERY
+      ); 
+    }
     TraineeResponse traineeDto = await _service.UpdateTraineeService(id, trainee);
-    return CreatedAtAction(nameof(GetTraineeById), new { id = traineeDto.Id }, traineeDto);
+    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
   }
 
   // To Delete the Trainee
-  // DELETE /api/Trainee/:is
+  // DELETE /api/trainees/:id
   [HttpDelete("{id}")]
   public async Task<ActionResult> DeleteTrainee(long id)
   {
+      if (!ModelState.IsValid || id < 1)
+      {
+        return ResponseHandler.CreateResponse(
+                  StatusCodes.Status400BadRequest,
+                  ErrorCodes.INVALID_PARAMS_QUERY);
+      } 
     await _service.DeleteTraineeService(id);
     return NoContent();
   }
@@ -85,29 +108,31 @@ public class TraineesController : ControllerBase
   // To search the substring in FirstName, LastName, TechStack, Email
   // GET api/Trainee?search=value
   [HttpGet]
-  public async Task<ActionResult<TraineeResponse>> GetSearch([FromQuery] String? search)
+  public async Task<ActionResult<TraineeResponse>> GetSearch([FromQuery] string search)
   {
-    // if (search == null)
-    // {
-    //   throw new BadRequestException("Please provide a search query parameter");
-    // }
-    IEnumerable<TraineeResponse>? traineeDto = await _service.SearchTraineeService(search);
-    return Ok(traineeDto);
+    if (search == null)
+    {
+      throw new BadRequestException(ErrorCodes.INVALID_PARAMS_QUERY);
+    }
+    IEnumerable<TraineeResponse> traineeDto = await _service.SearchTraineeService(search);
+    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
   }
 
   // To search the substring in FirstName, LastName, TechStack, Email
   // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
-  // [HttpGet("getSearch")]
-  // public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber,int pageSize, String search, String status)
-  // {
-  //   // if (search == null || status == null)
-  //   // {
-  //   //   throw new BadRequestException("Please provide a all search query parameter");
-  //   // }
-
-  //   TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
-  //   return Ok(traineeDto);
-  // }
+  [HttpGet("getSearch")]
+  public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string search, [FromQuery] StatusValue status)
+  {
+    if (!ModelState.IsValid || pageNumber < 1 || pageSize < 1)
+    {
+      return ResponseHandler.CreateResponse(
+        StatusCodes.Status400BadRequest,
+        ErrorCodes.INVALID_PARAMS_QUERY);
+    }
+  
+    TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
+    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
+  }
 
 }
 

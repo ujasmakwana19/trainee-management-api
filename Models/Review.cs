@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.MentorModel;
 using TraineeManagement.Api.SubmissionModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 
 namespace TraineeManagement.Api.ReviewModel;
 
@@ -11,24 +12,27 @@ public class Review
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
 
-    [Required(ErrorMessage = "Submission is required")]
+    [RequiredField]
+    
     public long SubmissionId {get; set;}
     public Submission Submission {get; set;} = null!;
 
-    [Required(ErrorMessage = "Reviewing Mentor is required")]
+    [RequiredField]
     public long MentorId {get; set;} 
     public Mentor Mentor {get; set;} = null!;
 
-    [Required(ErrorMessage = "Mentor Feedback is required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     public string Feedback {get; set;} = string.Empty;
 
     public long Score {get; set;} 
 
-    [Required]
-    [AllowedValues(ReviewStatusValue.Accepted, ReviewStatusValue.ChangesRequired, ReviewStatusValue.Rejected, ErrorMessage = "Status must be Accepted, ChangesRequired or Rejected")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(ReviewStatusValue))]
     public ReviewStatusValue ReviewStatus {get; set;}
 
-    [Required(ErrorMessage = "Review Date is required")]
+    [RequiredField]
     public DateOnly ReviewedDate {get; set;} = DateOnly.FromDateTime(DateTime.UtcNow);
     
 }

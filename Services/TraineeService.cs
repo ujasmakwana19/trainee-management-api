@@ -3,6 +3,7 @@ using TraineeManagement.Api.TraineeDTO;
 using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.ExceptionUtils;
+using TraineeManagement.Api.ErrorCodesUtils;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -39,7 +40,7 @@ public class TraineeService : ITraineeService
 
         if (trainee is null)
         {
-            throw new NotFoundException("Trainee not found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
         }
         return trainee;
     }
@@ -50,7 +51,7 @@ public class TraineeService : ITraineeService
         Trainee t = await FetchTrainee(id);
         if (t is null)
         {
-            throw new NotFoundException("Trainee not found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
         }
         _context.Trainees.Remove(t);
         await _context.SaveChangesAsync();
@@ -87,10 +88,10 @@ public class TraineeService : ITraineeService
                                                     t.TechStack,
                                                     t.Status
                                                 ))
-                                                .FirstOrDefaultAsync(t => t.Id == id);
+                                                .FirstOrDefaultAsync();
         if (trainee is null)
         {
-            throw new NotFoundException("Trainee not found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
         }
         return trainee;
     }
@@ -119,7 +120,7 @@ public class TraineeService : ITraineeService
         Trainee? user = await FetchTrainee(id);
         if (user is null)
         {
-            throw new NotFoundException("Trainee not found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
         }
         
 
@@ -141,6 +142,11 @@ public class TraineeService : ITraineeService
     {
         s = s.ToLower();
         List<TraineeResponse>trainees = await _context.Trainees
+                                            .Where(
+                                                u => u.FirstName!.ToLower().Contains(s)
+                                                || u.LastName!.ToLower().Contains(s)
+                                                || u.TechStack!.ToLower().Contains(s)
+                                                || u.Email!.ToLower().Contains(s))
                                             .Select(t => new TraineeResponse(
                                                 t.Id,
                                                 t.FirstName,
@@ -148,72 +154,55 @@ public class TraineeService : ITraineeService
                                                 t.Email,
                                                 t.TechStack,
                                                 t.Status
-                                            )).Where(
-            u => u.FirstName!.ToLower().Contains(s)
-            || u.LastName!.ToLower().Contains(s)
-            || u.TechStack!.ToLower().Contains(s)
-            || u.Email!.ToLower().Contains(s)).ToListAsync();
+                                            )).ToListAsync();
         
         return trainees;
     }
 
-    // public async Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, String status)
-    // {
-    //     // Parse status enum once, not inside the query
-    //     StatusValue? parsedStatus = null;
-    //     if (!Enum.TryParse<StatusValue>(status, ignoreCase: true, out var s))
-    //         throw new BadRequestException("Invalid status value");
-    //     parsedStatus = s;
+    public async Task<TraineeInfoPagination> SearchTraineePaginationService(int pageNumber, int pageSize, String search, StatusValue status)
+    {
+        int rowToSkip = (pageNumber-1)*pageSize; 
+
+
+        IQueryable<Trainee> query = _context.Trainees.AsNoTracking();
+
+        query = query.Where(u =>
+            u.FirstName == search &&
+            u.Status == status
+        );
+
+        int totalRecords = await query.CountAsync();
+
+        if (totalRecords == 0)
+        {
+            return new TraineeInfoPagination(
+                pageNumber,
+                pageSize,
+                totalRecords,
+                []
+            );
+        }
         
+        List<TraineeResponse>trainees = await query
+        .OrderBy(u => u.Id)
+        .Skip(rowToSkip)
+        .Take(pageSize)
+        .Select(t => new TraineeResponse(
+                    t.Id,
+                    t.FirstName,
+                    t.LastName,
+                    t.Email,
+                    t.TechStack,
+                    t.Status
+        ))
+        .ToListAsync();
 
-    //     if(pageNumber < 1) pageNumber = 1;
-    //     if(pageSize < 1) pageSize = 10;
-
-    //     int rowToSkip = (pageNumber-1)*pageSize; 
-
-
-    //     IQueryable<Trainee> query = _context.Trainees.AsNoTracking();
-
-    //     query = query.Where(u =>
-    //         u.FirstName == search &&
-    //         u.Status == parsedStatus.Value
-    //     );
-
-    //     int totalRecords = await query.CountAsync();
-
-    //     if (totalRecords == 0)
-    //     {
-    //         return new TraineeInfoPagination(
-    //             pageNumber,
-    //             pageSize,
-    //             totalRecords,
-    //             []
-    //         );
-    //     }
-        
-    //     List<TraineeResponse>trainees = await query
-    //     .OrderBy(u => u.Id)
-    //     .Skip(rowToSkip)
-    //     .Take(pageSize)
-    //     .Select(t => new TraineeResponse(
-    //                 t.Id,
-    //                 t.FirstName,
-    //                 t.LastName,
-    //                 t.Email,
-    //                 t.TechStack,
-    //                 t.Status
-    //     ))
-    //     .ToListAsync();
-
-        
-        
-
-    //     return new TraineeInfoPagination(
-    //         pageNumber,
-    //         trainees.Count,
-    //         totalRecords,
-    //         trainees
-    //     );
-    // }
+        return new TraineeInfoPagination(
+            pageNumber,
+            trainees.Count,
+            totalRecords,
+            trainees
+        );
+    }
 };
 

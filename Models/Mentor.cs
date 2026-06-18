@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.IDateTimeAutoService;
+using TraineeManagement.Api.ValidationConstantUtils;
 namespace TraineeManagement.Api.MentorModel;
 
 public class Mentor : IDateTimeAuto
@@ -9,24 +10,28 @@ public class Mentor : IDateTimeAuto
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
 
-    [Required(ErrorMessage = "First Name is required")]
-    [StringLength(50, ErrorMessage = "Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT, 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     public string FirstName { get; set; } = string.Empty;
         
     
-    [Required(ErrorMessage = "Last Name is required")]
-    [StringLength(50, ErrorMessage = "Must be less than or equals to 50 character")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_NAME_INPUT,
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     public string LastName { get; set; } = string.Empty;
     
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress]
+    [RequiredField]
+    [EmailField]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Technical Expertise Details is Required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT,
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     public string Expertise {get; set;} = string.Empty;
 
     [Required]
-    [AllowedValues(MentorStatus.Active, MentorStatus.Inactive, ErrorMessage = "Status must be Active, or Inactive")]
+    [EnumDataTypeField(typeof(MentorStatus))]
     public MentorStatus Status{get; set;} 
 
 }

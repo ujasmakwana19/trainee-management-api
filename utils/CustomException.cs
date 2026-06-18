@@ -3,7 +3,13 @@ using TraineeManagement.Api.ErrorCodesUtils;
 namespace TraineeManagement.Api.ExceptionUtils;
 public class NotFoundException : Exception
 {
-    public NotFoundException(string message) : base(message) { }
+    public readonly int _code;
+    public readonly string _message;
+    public NotFoundException(ErrorCode message) 
+    {
+        _code = message.Code;
+        _message = message.Message;
+    }
 }
 
 public class UnauthorizedException : Exception

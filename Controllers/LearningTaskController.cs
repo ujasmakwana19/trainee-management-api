@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.TaskModel;
 using TraineeManagement.Api.LearningTaskServices;
 using TraineeManagement.Api.TaskDTO;
+using TraineeManagement.Api.ResponseHandlerUtil;
+using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.MentorDTO;
 
 namespace TraineeManagement.Api.LearningTaskControllers;
 
@@ -22,35 +25,84 @@ public class LearningTaskController : ControllerBase
 
     // /api/learning-tasks/getall
     [HttpGet("getall")]
-    public async Task<ActionResult<IEnumerable<TaskResponseData>>> GetAllTasks()
+    public async Task<ActionResult> GetAllTasks()
     {
-        return Ok(await _service.GetAll());
+        IEnumerable<TaskResponseData> tasks = await _service.GetAll();
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            tasks
+        );
     }
 
     // /api/learning-tasks/:id
     [HttpGet("{id}")]
-    public async Task<ActionResult<TaskResponseData>> GetTaskById(long id)
+    public async Task<ActionResult> GetTaskById(long id)
     {
-        return Ok(await _service.GetById(id));
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_PARAMS_QUERY);
+        }
+        TaskResponseData task = await _service.GetById(id);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            task
+        );
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskResponseData>> CreateTaskRequest([FromBody] TaskRequestBody taskInfo)
+    public async Task<ActionResult> CreateTaskRequest([FromBody] TaskRequestBody taskInfo)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCodes.INVALID_MODEL);
+        }
+
         TaskResponseData taskData = await _service.CreateTask(taskInfo);
-        return CreatedAtAction(nameof(GetTaskById), new {id = taskData.Id}, taskData);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            taskData
+        );
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<TaskResponseData>> UpdateTaskRequest(long id, [FromBody] TaskRequestBody taskInfo)
+    public async Task<ActionResult> UpdateTaskRequest(long id, [FromBody] TaskRequestBody taskInfo)
     {
+        if (!ModelState.IsValid)
+        {
+            return ResponseHandler.CreateResponse(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCodes.INVALID_MODEL);
+        }
+        if(id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCodes.INVALID_PARAMS_QUERY);
+        }
         TaskResponseData taskData = await _service.UpdateTask(id,taskInfo);
-        return CreatedAtAction(nameof(GetTaskById), new {id = taskData.Id}, taskData);
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            taskData
+        );
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteTaskRequest(long id)
     {
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest,
+                ErrorCodes.INVALID_PARAMS_QUERY);
+        }
         await _service.DeleteTask(id);
         return NoContent();
     }

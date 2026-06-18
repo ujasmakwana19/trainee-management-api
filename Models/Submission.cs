@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.TrackTaskModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 
 namespace TraineeManagement.Api.SubmissionModel;
 
@@ -10,23 +11,27 @@ public class Submission
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
 
-    [Required(ErrorMessage = "Task Assignment Reference is Required")]
+    [RequiredField]
     public long TaskAssignmentId {get; set;}
 
 // Navigation Property
     public TrackTask TrackTask {get; set;} = null!;
 
-    [Required(ErrorMessage = "Submission Url is Required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT , 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     public string SubmissionUrl {get; set;} = string.Empty;
 
-    [Required(ErrorMessage = "Notes are Required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT , 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     public string Notes {get; set;} = string.Empty;
 
-    [Required(ErrorMessage = "Submission Date is required")]
+    [RequiredField]
     public DateOnly SubmittedDate {get; set;} = DateOnly.FromDateTime(DateTime.UtcNow);
 
-    [Required]
-    [AllowedValues(SubmissionStatus.Submitted, SubmissionStatus.Resubmitted , ErrorMessage = "Status must be Submitted or Resubmitted")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(SubmissionStatus))]
     public SubmissionStatus Status {get; set;}
 
 }

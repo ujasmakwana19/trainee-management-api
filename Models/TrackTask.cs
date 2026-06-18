@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Api.TraineeModel;
 using TraineeManagement.Api.MentorModel;
 using TraineeManagement.Api.TaskModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 
 namespace TraineeManagement.Api.TrackTaskModel;
 public class TrackTask
@@ -11,13 +12,13 @@ public class TrackTask
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long Id {get; set;}
 
-    [Required(ErrorMessage = "TraineeId is required")]
+    [RequiredField]
     public long TraineeId { get; set; } 
     
-    [Required(ErrorMessage = "MentorId is required")]
+    [RequiredField]
     public long MentorId { get; set; } 
 
-    [Required(ErrorMessage = "TaskId is required")]
+    [RequiredField]
     public long LearningTaskId { get; set; } 
     
     // Navigation Properties
@@ -25,14 +26,14 @@ public class TrackTask
     public Mentor Mentor { get; set; } = null!;
     public LearningTask LearningTask { get; set; } = null!;
 
-    [Required(ErrorMessage = "Assigned Date is required")]
+    [RequiredField]
     public DateOnly AssignedDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     
-    [Required(ErrorMessage = "Due Date is required")]
+    [RequiredField]
     public DateOnly DueDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     
-    [Required]
-    [AllowedValues(TaskAssignmentValue.Assigned, TaskAssignmentValue.Inprogess, TaskAssignmentValue.Submitted, TaskAssignmentValue.Reviewed, TaskAssignmentValue.Completed , ErrorMessage = "Status must be Assigned, Inprogess, Submitted, Reviewed or Completed")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(TaskAssignmentValue))]
     public TaskAssignmentValue Status {get; set;}
     public string Remark { get; set; } = string.Empty;
 

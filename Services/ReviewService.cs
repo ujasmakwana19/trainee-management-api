@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
+using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.ReviewModel;
 namespace TraineeManagement.Api.ReviewService;
@@ -19,7 +20,7 @@ public class ReviewService : IReviewService
         Review? t = await _context.Reviews.FirstOrDefaultAsync(t => t.Id == id);
         if(t is null)
         {
-            throw new NotFoundException("Review Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_REVIEW);
         }
         return t;
     }
@@ -57,6 +58,7 @@ public class ReviewService : IReviewService
     public async Task<ReviewResponse> GetById(long Id)
     {
         ReviewResponse? review = await _context.Reviews
+                                .Where(t => t.Id == Id)
                                 .Select(t => new ReviewResponse(
                                     t.Id,
                                     t.SubmissionId,
@@ -66,9 +68,9 @@ public class ReviewService : IReviewService
                                     t.ReviewStatus,
                                     t.ReviewedDate
                                 ))
-                                .FirstOrDefaultAsync(t => t.Id == Id);
+                                .FirstOrDefaultAsync();
         if(review is null)
-            throw new NotFoundException("Review Not Found");
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_REVIEW);
         return review;
     }
 

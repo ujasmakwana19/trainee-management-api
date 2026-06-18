@@ -1,23 +1,28 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagement.Api.SubmissionModel;
+using TraineeManagement.Api.ValidationConstantUtils;
 
 namespace TraineeManagement.Api.SubmissionDTO;
 
 public record SubmissionRequestBody (
-    [Required(ErrorMessage = "Task Assignment Reference is Required")]
+    [RequiredField]
     long TaskAssignmentId,
 
-    [Required(ErrorMessage = "Submission Url is Required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT , 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     string SubmissionUrl,
 
-    [Required(ErrorMessage = "Notes are Required")]
+    [RequiredField]
+    [StringLengthField(ValidationConstant.MAX_LENTH_GENERIC_INPUT , 
+    MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     string Notes,
 
-    [Required(ErrorMessage = "Submission Date is required")]
+    [RequiredField]
     DateOnly SubmittedDate,
 
-    [Required]
-    [AllowedValues(SubmissionStatus.Submitted, SubmissionStatus.Resubmitted , ErrorMessage = "Status must be Submitted or Resubmitted")]
+    [RequiredField]
+    [EnumDataTypeField(typeof(SubmissionStatus))]
     SubmissionStatus Status
 );
 

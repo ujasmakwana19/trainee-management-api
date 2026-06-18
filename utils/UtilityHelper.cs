@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TraineeManagement.Api.ErrorMessageUtils;
 using System.Text.Json;
 using Namotion.Reflection;
+using TraineeManagement.Api.TraineeModel;
+using System.Globalization;
 
 public static class UtilityHelper
 {
     public static Dictionary<string, string[]> GetInvalidModelStateErrors(ModelStateDictionary modelState, string modelName)
     {
-        System.Console.WriteLine(modelName);
         Dictionary<string, string[]> annotationErrors = new Dictionary<string, string[]>();
         bool hasSerializationError = false;
 
@@ -34,24 +35,34 @@ public static class UtilityHelper
                 .ToArray();
         }
 
-        // Collapse all serialization errors into one clean entry
+        // All serialization errors into one clean entry
         if (hasSerializationError)
             annotationErrors["body"] = new[] { ValidationErrorMessage.InvalidInput };
 
         return annotationErrors;
     }
 
-    public static long isValidTypeLong(string value)
+    
+
+    public static Dictionary<string, string[]> GetInvalidParamsQuery(ModelStateDictionary modelState)
     {
-        if(value is null)
-            return 0;
+        Dictionary<string, string[]> annotationErrors = new Dictionary<string, string[]>();
 
-        if (!long.TryParse(value, out long parsedValue) || parsedValue < 1)
+        List<string> errorsList = new List<string>();
+        foreach (KeyValuePair<string, ModelStateEntry> kvp in modelState)
         {
-            return 0;
-        }
-        return parsedValue;
-    }
+            if (kvp.Value == null || kvp.Value.Errors.Count == 0)
+                continue;
 
+
+            errorsList.AddRange(kvp.Value.Errors
+                .Select(e => !string.IsNullOrEmpty(e.ErrorMessage)
+                    ? e.ErrorMessage
+                    : ValidationErrorMessage.InvalidValue));
+
+        }
+        annotationErrors["body"] = errorsList.ToArray();
+        return annotationErrors;
+    }
 
 }
