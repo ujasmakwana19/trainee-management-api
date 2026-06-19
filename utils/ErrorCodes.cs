@@ -20,5 +20,5 @@ public static class ErrorCodes
     public static readonly ErrorCode DELETE_RESTRICT_REFERENCE = new ErrorCode(4000, ErrorMessage.DeleteNotPossibleReferenceExists);
     public static readonly ErrorCode UNIQUE_USERNAME = new ErrorCode(4000, ErrorMessage.UniqueUsername);
     public static readonly ErrorCode JWT_OPERATION_FAILED = new ErrorCode(5000, ErrorMessage.UniqueUsername);
-    public static readonly ErrorCode SERVER_ERROR = new ErrorCode(5000, ErrorMessage.UniqueUsername);
+    public static readonly ErrorCode SERVER_ERROR = new ErrorCode(5000, ErrorMessage.ServerError);
 }

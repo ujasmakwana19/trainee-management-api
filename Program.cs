@@ -13,6 +13,7 @@ using TraineeManagement.Api.TrackTaskService;
 using TraineeManagement.Api.SubmissionService;
 using TraineeManagement.Api.ReviewService;
 using Microsoft.OpenApi.Models;
+using TraineeManagement.Api.FileServices;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -139,6 +140,7 @@ builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<ITrackTaskService, TrackTaskService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<FileManagerService>();
 
 
 builder.Logging.ClearProviders();
