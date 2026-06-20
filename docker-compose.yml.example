@@ -1,0 +1,15 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: <container_name>
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: <root_password>
+      MYSQL_DATABASE: <database_name>
+    ports:
+      - "<host_port>:3306"
+    volumes:
+      - <folder_name>:/var/lib/mysql
+ 
+volumes:
+  <folder_name>:
