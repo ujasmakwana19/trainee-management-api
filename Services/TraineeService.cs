@@ -4,6 +4,8 @@ using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.CacheServices;
+using StackExchange.Redis;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -15,10 +17,12 @@ public class TraineeService : ITraineeService
     // This is for the inMemory Database Instance
     private readonly AppDbContext _context;
     private readonly ILogger<TraineeService> _logger;
-    public TraineeService(AppDbContext context, ILogger<TraineeService> logger)
+    private readonly ICacheService _cache;
+    public TraineeService(AppDbContext context, ILogger<TraineeService> logger, ICacheService cache)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
     }
 
     // Helper Method
@@ -78,20 +82,28 @@ public class TraineeService : ITraineeService
     // GET by ID
     public async Task<TraineeResponse> GetTraineeResponseByIdService(long id)
     {
-        TraineeResponse? trainee = await _context.Trainees
-                                                .Where(t => t.Id == id)
-                                                .Select(t => new TraineeResponse(
-                                                    t.Id,
-                                                    t.FirstName,
-                                                    t.LastName,
-                                                    t.Email,
-                                                    t.TechStack,
-                                                    t.Status
-                                                ))
-                                                .FirstOrDefaultAsync();
-        if (trainee is null)
+        string cacheKey = $"trainee:{id}";
+        TraineeResponse? trainee = await _cache.GetAsync<TraineeResponse>(cacheKey);
+        if(trainee is null)
         {
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
+            trainee = await _context.Trainees
+                        .Where(t => t.Id == id)
+                        .Select(t => new TraineeResponse(
+                            t.Id,
+                            t.FirstName,
+                            t.LastName,
+                            t.Email,
+                            t.TechStack,
+                            t.Status
+                        ))
+                        .FirstOrDefaultAsync();
+            if (trainee is null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
+            }
+
+            await _cache.SetAsync<TraineeResponse>(cacheKey, trainee, TimeSpan.FromMinutes(10));
+            
         }
         return trainee;
     }

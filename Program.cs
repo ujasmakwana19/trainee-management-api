@@ -12,9 +12,11 @@ using TraineeManagement.Api.LearningTaskServices;
 using TraineeManagement.Api.TrackTaskService;
 using TraineeManagement.Api.SubmissionService;
 using TraineeManagement.Api.ReviewService;
-using Microsoft.OpenApi.Models;
 using TraineeManagement.Api.FileServices;
 using TraineeManagement.Api.SubmissionFileService;
+using TraineeManagement.Api.CacheServices;
+using StackExchange.Redis;
+
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -61,10 +63,9 @@ builder.Services.AddControllers()
     });;
 
 
-
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // Swagger Configuration
-builder.Services.AddOpenApi("v1", options =>
+/* builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
@@ -95,7 +96,7 @@ builder.Services.AddOpenApi("v1", options =>
 
         return Task.CompletedTask;
     });
-});
+}); */
 // -----------------------------------------
 
 //--------------- DB ------------------------
@@ -133,7 +134,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Use AddSingleton when we are storing in the List 
 // For inMemory and the Persistant Database use the AddScoped
-builder.Services.AddScoped<ITraineeService, TraineeService>();
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    string configuration = builder.Configuration.GetConnectionString("RedisConnection")!;
+    return ConnectionMultiplexer.Connect(configuration);
+});
+ 
+
+builder.Services.AddScoped<ITraineeService,TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMentorService, MentorService>();
@@ -142,6 +151,7 @@ builder.Services.AddScoped<ITrackTaskService, TrackTaskService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
+builder.Services.AddScoped<ICacheService,CacheService>();
 builder.Services.AddSingleton<IFileStorageService, LocalStorageFileService>();
 
 
@@ -156,14 +166,14 @@ WebApplication app = builder.Build();
 await SeederService.SeedData(app.Services);
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwaggerUi(options =>
-    {
-        options.DocumentPath = "/openapi/v1.json";
-    });
-}
+// if (app.Environment.IsDevelopment())
+// {
+//     app.MapOpenApi();
+//     app.UseSwaggerUi(options =>
+//     {
+//         options.DocumentPath = "/openapi/v1.json";
+//     });
+// }
 
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);

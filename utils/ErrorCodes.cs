@@ -10,6 +10,7 @@ public static class ErrorCodes
     public static readonly ErrorCode INVALID_FILE = new ErrorCode(4000, ValidationErrorMessage.InvalidFile);
 
     public static readonly ErrorCode INVALID_CREDENTIALS = new ErrorCode(4001, ErrorMessage.InvalidCredentials);
+    public static readonly ErrorCode INVALID_TOKEN = new ErrorCode(4001, ErrorMessage.InvalidToken);
     public static readonly ErrorCode INVALID_PARAMS_QUERY = new ErrorCode(4000, ValidationErrorMessage.InvalidInputParamsQuery);
     public static readonly ErrorCode NOT_FOUND_TRAINEE = new ErrorCode(4040, ErrorMessage.TraineeNotFound);
     public static readonly ErrorCode NOT_FOUND_MENTOR = new ErrorCode(4040, ErrorMessage.MentorNotFound);

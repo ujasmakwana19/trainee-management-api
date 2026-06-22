@@ -25,7 +25,7 @@ public class SubmissionFileService : ISubmissionFileService
     public async Task<long> SaveMetadataAsync(
         long submissionId, long uploadedByUserId, SavedFileResult savedFile, CancellationToken cancellationToken)
     {
-        var entity = new SubmissionFile
+        SubmissionFile file = new SubmissionFile
         {
             SubmissionId = submissionId,
             OriginalFileName = savedFile.OriginalFileName,
@@ -36,16 +36,15 @@ public class SubmissionFileService : ISubmissionFileService
             UploadedByUserId = uploadedByUserId
         };
 
-        _context.SubmissionFiles.Add(entity);
+        _context.SubmissionFiles.Add(file);
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "Saved submission file metadata. SubmissionId={SubmissionId}, FileId={FileId}, Size={Size}",
-            submissionId, entity.Id, entity.SizeBytes);
-        // deliberately not logging OriginalFileName/StorageName/Checksum — no need to,
-        // and avoids leaking anything filesystem-shaped into logs.
+            submissionId, file.Id, file.SizeBytes);
+        
 
-        return entity.Id;
+        return file.Id;
     }
 
     public async Task<SubmissionFile?> GetByIdAsync(long fileId)
@@ -57,7 +56,7 @@ public class SubmissionFileService : ISubmissionFileService
 
     public async Task DeleteMetadataAsync(long fileId, CancellationToken cancellationToken)
     {
-        var entity = await _context.SubmissionFiles.FirstOrDefaultAsync(f => f.Id == fileId, cancellationToken);
+        SubmissionFile? entity = await _context.SubmissionFiles.FirstOrDefaultAsync(f => f.Id == fileId, cancellationToken);
         if (entity != null)
         {
             _context.SubmissionFiles.Remove(entity);

@@ -27,12 +27,12 @@ public class TraineesController : ControllerBase
 
   // Get all the Trainees
   // GET /api/trainees
-  [HttpGet("getall")]
-  public async Task<ActionResult> GetTrainee()
-  {
-    IEnumerable<TraineeResponse> traineesVal = await _service.GetAllTraineesService();
-    return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, traineesVal);
-  }
+  // [HttpGet("getall")]
+  // public async Task<ActionResult> GetTrainee()
+  // {
+  //   IEnumerable<TraineeResponse> traineesVal = await _service.GetAllTraineesService();
+  //   return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, traineesVal);
+  // }
 
   // Get Trainee by unique ID
   // GET /api/trainees/:id
@@ -52,87 +52,87 @@ public class TraineesController : ControllerBase
 
   // To add the Trainee
   // POST /api/trainees
-  [HttpPost]
-  public async Task<ActionResult<TraineeResponse>> CreateTrainee([FromBody] CreateTraineeRequest trainee)
-  {
+  // [HttpPost]
+  // public async Task<ActionResult<TraineeResponse>> CreateTrainee([FromBody] CreateTraineeRequest trainee)
+  // {
 
-    if (!ModelState.IsValid)
-    {
-      return ResponseHandler.CreateResponse(
-                StatusCodes.Status400BadRequest,
-                ErrorCodes.INVALID_MODEL);
-    }
+  //   if (!ModelState.IsValid)
+  //   {
+  //     return ResponseHandler.CreateResponse(
+  //               StatusCodes.Status400BadRequest,
+  //               ErrorCodes.INVALID_MODEL);
+  //   }
     
-    TraineeResponse traineeDto = await _service.CreateTraineeService(trainee);
+  //   TraineeResponse traineeDto = await _service.CreateTraineeService(trainee);
 
-    // The nameof use to give compile-time safety to the action name, so if we rename the GetTraineeById method, this will not lead to a runtime error.
-    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
-  }
+  //   // The nameof use to give compile-time safety to the action name, so if we rename the GetTraineeById method, this will not lead to a runtime error.
+  //   return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
+  // }
 
   // PUT /api/trainees/:id
-  [HttpPut("{id}")]
-  public async Task<ActionResult<TraineeResponse>> UpdateTrainee(long id, [FromBody] UpdateTraineeRequest trainee)
-  {
-    if (!ModelState.IsValid)
-      {
-        return ResponseHandler.CreateResponse(
-                  StatusCodes.Status400BadRequest,
-                  ErrorCodes.INVALID_MODEL);
-      }
-    if(id < 1)
-    {
-      return ResponseHandler.CreateResponse(
-        StatusCodes.Status400BadRequest,
-        ErrorCodes.INVALID_PARAMS_QUERY
-      ); 
-    }
-    TraineeResponse traineeDto = await _service.UpdateTraineeService(id, trainee);
-    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
-  }
+  // [HttpPut("{id}")]
+  // public async Task<ActionResult<TraineeResponse>> UpdateTrainee(long id, [FromBody] UpdateTraineeRequest trainee)
+  // {
+  //   if (!ModelState.IsValid)
+  //     {
+  //       return ResponseHandler.CreateResponse(
+  //                 StatusCodes.Status400BadRequest,
+  //                 ErrorCodes.INVALID_MODEL);
+  //     }
+  //   if(id < 1)
+  //   {
+  //     return ResponseHandler.CreateResponse(
+  //       StatusCodes.Status400BadRequest,
+  //       ErrorCodes.INVALID_PARAMS_QUERY
+  //     ); 
+  //   }
+  //   TraineeResponse traineeDto = await _service.UpdateTraineeService(id, trainee);
+  //   return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
+  // }
 
   // To Delete the Trainee
   // DELETE /api/trainees/:id
-  [HttpDelete("{id}")]
-  public async Task<ActionResult> DeleteTrainee(long id)
-  {
-      if (!ModelState.IsValid || id < 1)
-      {
-        return ResponseHandler.CreateResponse(
-                  StatusCodes.Status400BadRequest,
-                  ErrorCodes.INVALID_PARAMS_QUERY);
-      } 
-    await _service.DeleteTraineeService(id);
-    return NoContent();
-  }
+  // [HttpDelete("{id}")]
+  // public async Task<ActionResult> DeleteTrainee(long id)
+  // {
+  //     if (!ModelState.IsValid || id < 1)
+  //     {
+  //       return ResponseHandler.CreateResponse(
+  //                 StatusCodes.Status400BadRequest,
+  //                 ErrorCodes.INVALID_PARAMS_QUERY);
+  //     } 
+  //   await _service.DeleteTraineeService(id);
+  //   return NoContent();
+  // }
 
-  // To search the substring in FirstName, LastName, TechStack, Email
-  // GET api/Trainee?search=value
-  [HttpGet]
-  public async Task<ActionResult<TraineeResponse>> GetSearch([FromQuery] string search)
-  {
-    if (search == null)
-    {
-      throw new BadRequestException(ErrorCodes.INVALID_PARAMS_QUERY);
-    }
-    IEnumerable<TraineeResponse> traineeDto = await _service.SearchTraineeService(search);
-    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
-  }
+  // // To search the substring in FirstName, LastName, TechStack, Email
+  // // GET api/Trainee?search=value
+  // [HttpGet]
+  // public async Task<ActionResult<TraineeResponse>> GetSearch([FromQuery] string search)
+  // {
+  //   if (search == null)
+  //   {
+  //     throw new BadRequestException(ErrorCodes.INVALID_PARAMS_QUERY);
+  //   }
+  //   IEnumerable<TraineeResponse> traineeDto = await _service.SearchTraineeService(search);
+  //   return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
+  // }
 
-  // To search the substring in FirstName, LastName, TechStack, Email
-  // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
-  [HttpGet("getSearch")]
-  public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string search, [FromQuery] StatusValue status)
-  {
-    if (!ModelState.IsValid || pageNumber < 1 || pageSize < 1)
-    {
-      return ResponseHandler.CreateResponse(
-        StatusCodes.Status400BadRequest,
-        ErrorCodes.INVALID_PARAMS_QUERY);
-    }
+  // // To search the substring in FirstName, LastName, TechStack, Email
+  // // GET /api/trainees?pageNumber=1&pageSize=10&search=amit&status=Active
+  // [HttpGet("getSearch")]
+  // public async Task<ActionResult<TraineeInfoPagination>> GetSearchPagination([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] string search, [FromQuery] StatusValue status)
+  // {
+  //   if (!ModelState.IsValid || pageNumber < 1 || pageSize < 1)
+  //   {
+  //     return ResponseHandler.CreateResponse(
+  //       StatusCodes.Status400BadRequest,
+  //       ErrorCodes.INVALID_PARAMS_QUERY);
+  //   }
   
-    TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
-    return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
-  }
+  //   TraineeInfoPagination traineeDto = await _service.SearchTraineePaginationService(pageNumber, pageSize, search, status);
+  //   return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,traineeDto);
+  // }
 
 }
 

@@ -77,19 +77,21 @@ public class LocalStorageFileService : IFileStorageService
         MultipartReader reader = new MultipartReader(boundary, content);
         MultipartSection? section;
         SavedFileResult? result = null;
-        string? savedTargetPath = null; // tracks disk path of whatever we've saved so far, for rollback
+        string? savedTargetPath = null;
 
+        
         while ((section = await reader.ReadNextSectionAsync(cancellationToken)) != null)
         {
             ContentDispositionHeaderValue? contentDisposition = section.GetContentDispositionHeader();
-
-            // Not a file section (e.g. a form field) — skip it, don't reject the whole request.
+            
+            // Currently we are only use the files frm the form data , 
+            //  we can futher implement if we wanted to get the key - value paired data
             if (contentDisposition == null || !contentDisposition.IsFileDisposition())
             {
                 continue;
             }
 
-            // A second file section showed up — clean up the first save, then reject.
+            // Currently only one file upload
             if (result != null)
             {
                 if (savedTargetPath != null && File.Exists(savedTargetPath))
@@ -102,8 +104,9 @@ public class LocalStorageFileService : IFileStorageService
             string? rawFileName = HeaderUtilities.RemoveQuotes(contentDisposition.FileName).Value;
             string originalFileName = rawFileName ?? string.Empty;
             string fileExtension = Path.GetExtension(originalFileName).ToLowerInvariant();
+            System.Console.WriteLine(fileExtension + "->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<< ");
 
-            // Gate 1: extension allow-list. Must happen before we touch any bytes.
+            // Extension allow-list. Must happen before we touch any bytes.
             bool isAllowedExtension = AllowedSignatures.ContainsKey(fileExtension) || fileExtension == ".txt";
             if (string.IsNullOrEmpty(fileExtension) || !isAllowedExtension)
             {
@@ -112,18 +115,15 @@ public class LocalStorageFileService : IFileStorageService
 
             string storageName = GetUniqFileName(fileExtension);
             string targetPath = Path.Combine(_localStoragePath, storageName);
-
             try
             {
-                var (totalBytes, checksum) = await WriteSectionToDiskAsync(
+                (long  totalBytes, string checksum) = await WriteSectionToDiskAsync(
                     section.Body, targetPath, fileExtension, cancellationToken);
-
                 if (totalBytes == 0)
                 {
                     File.Delete(targetPath);
-                    throw new BadRequestException(ErrorCodes.INVALID_FILE); // empty file rejected
+                    throw new BadRequestException(ErrorCodes.INVALID_FILE);
                 }
-
                 string contentType = GetContentType(fileExtension);
                 result = new SavedFileResult(storageName, originalFileName, totalBytes, checksum, contentType);
                 savedTargetPath = targetPath;
@@ -139,9 +139,12 @@ public class LocalStorageFileService : IFileStorageService
                 throw;
             }
         }
-
-        // No file section found anywhere in the body — reject explicitly, never return null.
-        return result ?? throw new BadRequestException(ErrorCodes.INVALID_FILE);
+        
+        if(result is null)
+        {
+            throw new BadRequestException(ErrorCodes.INVALID_FILE);
+        }
+        return result;
     }
 
     private async Task<(long TotalBytes, string Checksum)> WriteSectionToDiskAsync(
@@ -150,7 +153,6 @@ public class LocalStorageFileService : IFileStorageService
         byte[] headerBuffer = new byte[HeaderPeekSize];
         int headerBytesRead = await ReadExactAsync(sectionBody, headerBuffer, cancellationToken);
 
-        // Gate 2: magic-byte check, for the types that actually have a signature.
         if (AllowedSignatures.TryGetValue(extension, out byte[][]? signatures))
         {
             bool matches = signatures.Any(sig =>
@@ -163,9 +165,6 @@ public class LocalStorageFileService : IFileStorageService
         }
         else if (extension == ".txt")
         {
-            // No real signature for plain text. Cheap heuristic instead:
-            // genuine text essentially never contains a null byte. A renamed
-            // binary will almost always fail this.
             if (headerBuffer.Take(headerBytesRead).Any(b => b == 0x00))
             {
                 throw new BadRequestException(ErrorCodes.INVALID_FILE);
@@ -173,18 +172,23 @@ public class LocalStorageFileService : IFileStorageService
         }
 
         using FileStream targetStream = new FileStream(
-            targetPath, FileMode.Create, FileAccess.Write, FileShare.None,
-            bufferSize: _bufferSize, useAsync: true);
+            targetPath, 
+            FileMode.Create, 
+            FileAccess.Write, 
+            FileShare.None,
+            bufferSize: _bufferSize, 
+            useAsync: true);
+
         using SHA256 sha256 = SHA256.Create();
 
-        // Hash and write the header bytes we already consumed during the peek —
-        // otherwise the saved file would be missing its own first 8 bytes.
+        
         sha256.TransformBlock(headerBuffer, 0, headerBytesRead, null, 0);
         await targetStream.WriteAsync(headerBuffer, 0, headerBytesRead, cancellationToken);
         long totalBytes = headerBytesRead;
 
         byte[] buffer = new byte[_bufferSize];
         int bytesRead;
+
         while ((bytesRead = await sectionBody.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
         {
             totalBytes += bytesRead;

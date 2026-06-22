@@ -32,42 +32,58 @@ public class SubmissionFileController : ControllerBase
 
     private long GetCurrentUserId()
     {
+        // The User here used is implict provided by the framework
+        // such that to get the data of the claim
         string? userIdClaim = User.FindFirst("userId")?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId))
         {
-            throw new UnauthorizedAccessException();
+            throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
         }
         return userId;
     }
 
+    [DisableFormValueModelBinding]
     [HttpPost("{id}/files")]
     public async Task<IActionResult> SaveSubmissionFile(long id)
     {
         if (!ModelState.IsValid || id < 1)
         {
-            return ResponseHandler.CreateResponse(StatusCodes.Status400BadRequest, ErrorCodes.INVALID_PARAMS_QUERY);
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest, 
+                ErrorCodes.INVALID_PARAMS_QUERY
+            );
         }
 
         if (!Request.ContentType?.StartsWith("multipart/form-data") ?? true)
         {
-            return ResponseHandler.CreateResponse(StatusCodes.Status400BadRequest, ErrorCodes.INVALID_MODEL);
+            return ResponseHandler.CreateResponse(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCodes.INVALID_MODEL
+                );
         }
-
+        
         string? boundary = HeaderUtilities.RemoveQuotes(MediaTypeHeaderValue.Parse(Request.ContentType).Boundary).Value;
         if (string.IsNullOrWhiteSpace(boundary))
         {
-            return ResponseHandler.CreateResponse(StatusCodes.Status400BadRequest, ErrorCodes.INVALID_MODEL);
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest, 
+                ErrorCodes.INVALID_MODEL
+            );
         }
 
         if (!await _submissionFileService.IsSubmissionExists(id))
         {
-            return ResponseHandler.CreateResponse(StatusCodes.Status400BadRequest, ErrorCodes.REFERENCE_NOT_EXISTS);
+            
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest, 
+                ErrorCodes.REFERENCE_NOT_EXISTS
+            );
         }
 
         long currentUserId = GetCurrentUserId();
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
-
+        
         SavedFileResult savedFile = await _fileStorageService.SaveAsync(Request.Body, boundary, cancellationToken);
 
         long fileId;

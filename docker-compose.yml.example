@@ -10,6 +10,11 @@ services:
       - "<host_port>:3306"
     volumes:
       - <folder_name>:/var/lib/mysql
- 
+  
+  redis-cache:mysql:8.0
+    container_name: dotnetrediscache
+    restart: always
+    ports:
+      - "6379:6379"
 volumes:
   <folder_name>:
