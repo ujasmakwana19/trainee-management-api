@@ -33,6 +33,16 @@ public class BadRequestException : Exception
         _message = message.Message;
     }
 }
+public class ServerCredentialException : Exception
+{
+    public readonly int _code;
+    public readonly string _message;
+    public ServerCredentialException(ErrorCode message) 
+    {
+        _code = message.Code;
+        _message = message.Message;
+    }
+}
 
 public class JwtOperationException : Exception
 {

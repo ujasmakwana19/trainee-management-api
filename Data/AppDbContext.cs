@@ -7,6 +7,7 @@ using TraineeManagement.Api.TaskModel;
 using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Api.SubmissionModel;
 using TraineeManagement.Api.ReviewModel;
+using TraineeManagement.Api.SubmissionFileModel;
 namespace TraineeManagement.Api.Data;
 
 public class AppDbContext : DbContext
@@ -24,24 +25,9 @@ public class AppDbContext : DbContext
         .HasIndex(u => u.Username)
         .IsUnique();
 
-        // builder.Entity<User>()
-        // .Property(u => u.Role)
-        // .HasConversion<string>();
-
-        // builder.Entity<Trainee>()
-        // .Property(u => u.Status)
-        // .HasConversion<string>();
-
         builder.Entity<Trainee>()
         .HasIndex(u => new { u.FirstName, u.Status });
 
-        // builder.Entity<Mentor>()
-        // .Property(u => u.Status)
-        // .HasConversion<string>();
-
-        // builder.Entity<LearningTask>()
-        // .Property(u => u.Status)
-        // .HasConversion<string>();
 
         builder.Entity<TrackTask>(entity =>
         {
@@ -60,8 +46,6 @@ public class AppDbContext : DbContext
                 .HasForeignKey(t => t.LearningTaskId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // entity.Property(u => u.Status)
-            //     .HasConversion<string>();
         });
 
         builder.Entity<Submission>(entity =>
@@ -71,8 +55,6 @@ public class AppDbContext : DbContext
                 .HasForeignKey(t => t.TaskAssignmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // entity.Property(u => u.Status)
-            //     .HasConversion<string>();
         });
 
         builder.Entity<Review>(entity =>
@@ -86,9 +68,20 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(t => t.MentorId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
 
-            // entity.Property(u => u.ReviewStatus)
-            //     .HasConversion<string>();
+        builder.Entity<SubmissionFile>(entity =>
+        {
+            entity.HasOne(t => t.Submission)
+                .WithMany()
+                .HasForeignKey(t => t.SubmissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UploadedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         });
 
     }
@@ -124,5 +117,6 @@ public class AppDbContext : DbContext
     public DbSet<TrackTask> TrackTasks {get; set;}
     public DbSet<Submission> Submissions {get; set;}
     public DbSet<Review> Reviews {get; set;}
+    public DbSet<SubmissionFile> SubmissionFiles {get; set;}
 
 }

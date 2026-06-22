@@ -7,6 +7,7 @@ public static class ErrorCodes
 {
     public static readonly ErrorCode SUCCESS = new ErrorCode(2000, ErrorMessage.Success);
     public static readonly ErrorCode INVALID_MODEL = new ErrorCode(4000, ValidationErrorMessage.InvalidInput);
+    public static readonly ErrorCode INVALID_FILE = new ErrorCode(4000, ValidationErrorMessage.InvalidFile);
 
     public static readonly ErrorCode INVALID_CREDENTIALS = new ErrorCode(4001, ErrorMessage.InvalidCredentials);
     public static readonly ErrorCode INVALID_PARAMS_QUERY = new ErrorCode(4000, ValidationErrorMessage.InvalidInputParamsQuery);
@@ -21,4 +22,5 @@ public static class ErrorCodes
     public static readonly ErrorCode UNIQUE_USERNAME = new ErrorCode(4000, ErrorMessage.UniqueUsername);
     public static readonly ErrorCode JWT_OPERATION_FAILED = new ErrorCode(5000, ErrorMessage.UniqueUsername);
     public static readonly ErrorCode SERVER_ERROR = new ErrorCode(5000, ErrorMessage.ServerError);
+    public static readonly ErrorCode SERVER_CREDENTIAL_FAILED = new ErrorCode(5001, ErrorMessage.ServerError);
 }

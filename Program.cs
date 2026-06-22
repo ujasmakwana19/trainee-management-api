@@ -14,6 +14,7 @@ using TraineeManagement.Api.SubmissionService;
 using TraineeManagement.Api.ReviewService;
 using Microsoft.OpenApi.Models;
 using TraineeManagement.Api.FileServices;
+using TraineeManagement.Api.SubmissionFileService;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -140,7 +141,8 @@ builder.Services.AddScoped<ILearningTaskService, LearningTaskService>();
 builder.Services.AddScoped<ITrackTaskService, TrackTaskService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<FileManagerService>();
+builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
+builder.Services.AddSingleton<IFileStorageService, LocalStorageFileService>();
 
 
 builder.Logging.ClearProviders();

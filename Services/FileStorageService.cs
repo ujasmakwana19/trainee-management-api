@@ -1,120 +1,243 @@
-using System.IO.Pipelines;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
+using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.ExceptionUtils;
 
-namespace TraineeManagement.Api.FileServices
+namespace TraineeManagement.Api.FileServices;
+
+public record SavedFileResult(string StorageName, string OriginalFileName, long SizeInBytes, string Checksum , string ContentType);
+
+public class LocalStorageFileService : IFileStorageService
 {
-    public class FileManagerService
+    private readonly string _localStoragePath;
+    private readonly int _bufferSize;
+    private readonly long _maxAllowedSize;
+
+    // One signature per extension. .docx and .zip share a signature on purpose —
+    // docx IS a zip container. We don't try to tell them apart at the byte level;
+    // the allow-list + claimed extension is what decides intent, magic bytes just
+    // confirm "this really is some zip-format file, not a renamed .exe".
+    private static readonly Dictionary<string, byte[][]> AllowedSignatures = new()
     {
-        private int BufferSize = 16777216; 
-        private string UploadFilePath;
-        private readonly ILogger<FileManagerService> _logger;
-        private readonly IConfiguration _config;
-
-        public FileManagerService(ILogger<FileManagerService> logger, IConfiguration config)
+        [".pdf"]  = new[] { new byte[] { 0x25, 0x50, 0x44, 0x46 } },                 // %PDF
+        [".png"]  = new[] { new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A } },
+        [".jpg"]  = new[]
         {
-            _logger = logger;
-            _config = config;
-            BufferSize = int.Parse(_config["StorageSettings:Buffer_Size"] ?? "16777216");
-            UploadFilePath = _config["StorageSettings:StorageRoot"] ?? "Uploadss";
+            new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 },
+            new byte[] { 0xFF, 0xD8, 0xFF, 0xE1 },
+            new byte[] { 0xFF, 0xD8, 0xFF, 0xE8 },
+            new byte[] { 0xFF, 0xD8, 0xFF, 0xDB }
+        },
+        [".zip"]  = new[] { new byte[] { 0x50, 0x4B, 0x03, 0x04 } },
+        [".docx"] = new[] { new byte[] { 0x50, 0x4B, 0x03, 0x04 } },                 // same as zip — expected
+        // .txt has no real signature — handled separately via null-byte sniffing below.
+    };
+
+    private static readonly Dictionary<string, string> ExtensionToContentType = new()
+    {
+        [".pdf"]  = "application/pdf",
+        [".png"]  = "image/png",
+        [".jpg"]  = "image/jpeg",
+        [".zip"]  = "application/zip",
+        [".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        [".txt"]  = "text/plain",
+    };
+
+    private static string GetContentType(string extension) =>
+        ExtensionToContentType.TryGetValue(extension, out var contentType)
+            ? contentType
+            : "application/octet-stream"; // shouldn't happen — extension already passed the allow-list
+
+    private const int HeaderPeekSize = 8;
+
+    public LocalStorageFileService(IConfiguration config)
+    {
+        _localStoragePath = config["StorageSettings:StorageRoot"]
+            ?? throw new ServerCredentialException(ErrorCodes.INVALID_CREDENTIALS);
+        _bufferSize = int.Parse(config["StorageSettings:Buffer_Size"]
+            ?? throw new ServerCredentialException(ErrorCodes.INVALID_CREDENTIALS));
+        _maxAllowedSize = long.Parse(config["StorageSettings:Max_Buffer_Size"]
+            ?? throw new ServerCredentialException(ErrorCodes.INVALID_CREDENTIALS));
+
+        if (!Directory.Exists(_localStoragePath))
+        {
+            Directory.CreateDirectory(_localStoragePath);
         }
+    }
 
-        public async Task<string> SaveViaMultipartReaderAsync(
-            string boundary, 
-            Stream contentStream, 
-            CancellationToken cancellationToken)
+    private static string GetUniqFileName(string extension)
+    {
+        string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+        return $"{timestamp}_{Guid.NewGuid()}{extension}";   
+    }
+
+    public async Task<SavedFileResult> SaveAsync(Stream content, string boundary, CancellationToken cancellationToken)
+    {
+        MultipartReader reader = new MultipartReader(boundary, content);
+        MultipartSection? section;
+        SavedFileResult? result = null;
+        string? savedTargetPath = null; // tracks disk path of whatever we've saved so far, for rollback
+
+        while ((section = await reader.ReadNextSectionAsync(cancellationToken)) != null)
         {
-            string directoryPath = Path.Combine(Directory.GetCurrentDirectory(), UploadFilePath);
-            // CheckAndRemoveLocalFile(targetFilePath);
-            if (!Directory.Exists(directoryPath))
+            ContentDispositionHeaderValue? contentDisposition = section.GetContentDispositionHeader();
+
+            // Not a file section (e.g. a form field) — skip it, don't reject the whole request.
+            if (contentDisposition == null || !contentDisposition.IsFileDisposition())
             {
-                Directory.CreateDirectory(directoryPath);
+                continue;
             }
-            string targetFilePath = Path.Combine(Path.Combine(Directory.GetCurrentDirectory(), UploadFilePath),"ram");
 
-
-            using FileStream outputFileStream = new FileStream(
-                path: targetFilePath,
-                mode: FileMode.Create,
-                access: FileAccess.Write,
-                share: FileShare.None,
-                bufferSize: BufferSize,
-                useAsync: true);
-
-            var reader = new MultipartReader(boundary, contentStream);
-            MultipartSection? section;
-            long totalBytesRead = 0;
-
-            // Process each section in the multipart body
-            while ((section = await reader.ReadNextSectionAsync(cancellationToken)) != null)
+            // A second file section showed up — clean up the first save, then reject.
+            if (result != null)
             {
-                // Check if the section is a file
-                var contentDisposition = section.GetContentDispositionHeader();
-                if (contentDisposition != null && contentDisposition.IsFileDisposition())
+                if (savedTargetPath != null && File.Exists(savedTargetPath))
                 {
-                    _logger.LogInformation($"Processing file: {contentDisposition.FileName.Value}");
-
-                    // Write the file content to the target file
-                    await section.Body.CopyToAsync(outputFileStream, cancellationToken);
-                    totalBytesRead += section.Body.Length;
+                    File.Delete(savedTargetPath);
                 }
-                else if (contentDisposition != null && contentDisposition.IsFormDisposition())
-                {
-                    // Handle metadata (form fields)
-                    string key = contentDisposition.Name.Value!;
-                    using var streamReader = new StreamReader(section.Body);
-                    string value = await streamReader.ReadToEndAsync(cancellationToken);
-                    _logger.LogInformation($"Received metadata: {key} = {value}");
-                }
+                throw new BadRequestException(ErrorCodes.INVALID_FILE);
             }
 
-            _logger.LogInformation($"File upload completed (via multipart). Total bytes read: {totalBytesRead} bytes.");
-            return targetFilePath;
-        }
+            string? rawFileName = HeaderUtilities.RemoveQuotes(contentDisposition.FileName).Value;
+            string originalFileName = rawFileName ?? string.Empty;
+            string fileExtension = Path.GetExtension(originalFileName).ToLowerInvariant();
 
-        private void CheckAndRemoveLocalFile(string filePath)
-        {
-            if (File.Exists(filePath))
+            // Gate 1: extension allow-list. Must happen before we touch any bytes.
+            bool isAllowedExtension = AllowedSignatures.ContainsKey(fileExtension) || fileExtension == ".txt";
+            if (string.IsNullOrEmpty(fileExtension) || !isAllowedExtension)
             {
-                File.Delete(filePath);
-                _logger.LogDebug($"Removed existing output file: {filePath}");
+                throw new BadRequestException(ErrorCodes.INVALID_FILE);
+            }
+
+            string storageName = GetUniqFileName(fileExtension);
+            string targetPath = Path.Combine(_localStoragePath, storageName);
+
+            try
+            {
+                var (totalBytes, checksum) = await WriteSectionToDiskAsync(
+                    section.Body, targetPath, fileExtension, cancellationToken);
+
+                if (totalBytes == 0)
+                {
+                    File.Delete(targetPath);
+                    throw new BadRequestException(ErrorCodes.INVALID_FILE); // empty file rejected
+                }
+
+                string contentType = GetContentType(fileExtension);
+                result = new SavedFileResult(storageName, originalFileName, totalBytes, checksum, contentType);
+                savedTargetPath = targetPath;
+            }
+            catch
+            {
+                // Any failure after this point (validation, size limit, disconnect) —
+                // don't leave a partial/invalid file sitting on disk.
+                if (File.Exists(targetPath))
+                {
+                    File.Delete(targetPath);
+                }
+                throw;
             }
         }
 
-        // public async Task<string?> SaveViaPipeReaderAsync(PipeReader contentReader, CancellationToken cancellationToken)
-        // {
-        //     string targetFilePath = Path.Combine(Directory.GetCurrentDirectory(), UploadFilePath);
-        //     CheckAndRemoveLocalFile(targetFilePath);
-        //     long totalBytesRead = 0;
+        // No file section found anywhere in the body — reject explicitly, never return null.
+        return result ?? throw new BadRequestException(ErrorCodes.INVALID_FILE);
+    }
 
-        //     using FileStream outputFileStream = new FileStream(
-        //         path: targetFilePath,
-        //         mode: FileMode.OpenOrCreate,
-        //         access: FileAccess.Write,
-        //         share: FileShare.None,
-        //         bufferSize: BufferSize,
-        //         useAsync: true);
+    private async Task<(long TotalBytes, string Checksum)> WriteSectionToDiskAsync(
+        Stream sectionBody, string targetPath, string extension, CancellationToken cancellationToken)
+    {
+        byte[] headerBuffer = new byte[HeaderPeekSize];
+        int headerBytesRead = await ReadExactAsync(sectionBody, headerBuffer, cancellationToken);
 
-        //     while (true)
-        //     {
-        //         var readResult = await contentReader.ReadAsync();
-        //         var buffer = readResult.Buffer;
+        // Gate 2: magic-byte check, for the types that actually have a signature.
+        if (AllowedSignatures.TryGetValue(extension, out byte[][]? signatures))
+        {
+            bool matches = signatures.Any(sig =>
+                headerBytesRead >= sig.Length && headerBuffer.Take(sig.Length).SequenceEqual(sig));
 
-        //         foreach (var memory in buffer)
-        //         {
-        //             await outputFileStream.WriteAsync(memory);
-        //             totalBytesRead += memory.Length;
-        //         }
-        //         contentReader.AdvanceTo(buffer.End);
+            if (!matches)
+            {
+                throw new BadRequestException(ErrorCodes.INVALID_FILE);
+            }
+        }
+        else if (extension == ".txt")
+        {
+            // No real signature for plain text. Cheap heuristic instead:
+            // genuine text essentially never contains a null byte. A renamed
+            // binary will almost always fail this.
+            if (headerBuffer.Take(headerBytesRead).Any(b => b == 0x00))
+            {
+                throw new BadRequestException(ErrorCodes.INVALID_FILE);
+            }
+        }
 
-        //         if (readResult.IsCompleted)
-        //         {
-        //             break;
-        //         }
-        //     }
+        using FileStream targetStream = new FileStream(
+            targetPath, FileMode.Create, FileAccess.Write, FileShare.None,
+            bufferSize: _bufferSize, useAsync: true);
+        using SHA256 sha256 = SHA256.Create();
 
-        //     _logger.LogInformation($"File upload completed (via pipeReader). Total bytes read: {totalBytesRead} bytes.");
-        //     return targetFilePath;
-        // }
+        // Hash and write the header bytes we already consumed during the peek —
+        // otherwise the saved file would be missing its own first 8 bytes.
+        sha256.TransformBlock(headerBuffer, 0, headerBytesRead, null, 0);
+        await targetStream.WriteAsync(headerBuffer, 0, headerBytesRead, cancellationToken);
+        long totalBytes = headerBytesRead;
+
+        byte[] buffer = new byte[_bufferSize];
+        int bytesRead;
+        while ((bytesRead = await sectionBody.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+        {
+            totalBytes += bytesRead;
+
+            // Gate 3: size cap, enforced while streaming — not after the fact.
+            if (totalBytes > _maxAllowedSize)
+            {
+                throw new BadRequestException(ErrorCodes.INVALID_FILE);
+            }
+
+            sha256.TransformBlock(buffer, 0, bytesRead, null, 0);
+            await targetStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+        }
+
+        sha256.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+        string checksum = Convert.ToHexString(sha256.Hash!);
+
+        return (totalBytes, checksum);
+    }
+
+    private static async Task<int> ReadExactAsync(Stream stream, byte[] buffer, CancellationToken cancellationToken)
+    {
+        int totalRead = 0;
+        while (totalRead < buffer.Length)
+        {
+            int read = await stream.ReadAsync(buffer, totalRead, buffer.Length - totalRead, cancellationToken);
+            if (read == 0) break; // stream ended before filling the buffer — fine for small files
+            totalRead += read;
+        }
+        return totalRead;
+    }
+
+    public Task<Stream> OpenReadAsync(string storageName, CancellationToken cancellationToken)
+    {
+        string fullPath = Path.Combine(_localStoragePath, storageName);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException();
+
+        return Task.FromResult<Stream>(File.OpenRead(fullPath));
+    }
+
+    public Task<bool> ExistsAsync(string storageName, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(File.Exists(Path.Combine(_localStoragePath, storageName)));
+    }
+
+    public Task DeleteAsync(string storageName, CancellationToken cancellationToken)
+    {
+        string filePath = Path.Combine(_localStoragePath, storageName);
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+        return Task.CompletedTask;
     }
 }

@@ -18,6 +18,7 @@ public static class ValidationErrorMessage
     // Serializatio
     public const string InvalidInput          = "One or more Invalid input values or format.";
     public const string InvalidValue          = "Invalid value provided.";
+    public const string InvalidFile           = "Invalid file provided or file format not supported.";
     public const string InvalidInputParamsQuery          = "Invalid value or type provided.";
 }
 public static class ErrorMessage
