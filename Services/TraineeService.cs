@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.CacheServices;
-using StackExchange.Redis;
 using TraineeManagement.Api.ValidationConstantUtils;
+using StackExchange.Redis;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -53,8 +53,6 @@ public class TraineeService : ITraineeService
     // DELETE
     public async Task DeleteTraineeService(long id)
     {
-        string cacheKey = $"trainee:{id}";
-        string allCacheKey = "trainees:all";
         Trainee t = await FetchTrainee(id);
         if (t is null)
         {
@@ -63,8 +61,6 @@ public class TraineeService : ITraineeService
         _context.Trainees.Remove(t);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"Trainee with id {id} deleted successfully");
-        await _cache.RemoveAsync(cacheKey);
-        await _cache.RemoveAsync(allCacheKey);
         return;
     }
 
@@ -93,7 +89,7 @@ public class TraineeService : ITraineeService
     // GET by ID
     public async Task<TraineeResponse> GetTraineeResponseByIdService(long id)
     {
-        string cacheKey = $"trainee:{id}";
+        string cacheKey = CacheKey.traineeId + $"{id}";
         TraineeResponse? trainee = await _cache.GetAsync<TraineeResponse>(cacheKey);
         if(trainee is null)
         {
@@ -110,6 +106,7 @@ public class TraineeService : ITraineeService
                         .FirstOrDefaultAsync();
             if (trainee is null)
             {
+                
                 throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
             }
 
@@ -122,7 +119,6 @@ public class TraineeService : ITraineeService
     // CREATE
     public async Task<TraineeResponse> CreateTraineeService(CreateTraineeRequest trainee)
     {
-        string allCacheKey = "trainees:all";
         Trainee u = new Trainee
         {
             FirstName = trainee.FirstName,
@@ -135,17 +131,12 @@ public class TraineeService : ITraineeService
         _context.Trainees.Add(u);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"Trainee created successfully"); 
-        await _cache.RemoveAsync(allCacheKey);
-
         return ToResponse(u);
     }
 
     // UPDATE
     public async Task<TraineeResponse> UpdateTraineeService(long id, UpdateTraineeRequest trainee)
     {
-        string cacheKey = $"trainee:{id}";
-        string allCacheKey = "trainees:all";
-        
         Trainee? user = await FetchTrainee(id);
         if (user is null)
         {
@@ -162,8 +153,7 @@ public class TraineeService : ITraineeService
         _context.Trainees.Update(user);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"Trainee with id {id} updated successfully");
-        await _cache.RemoveAsync(cacheKey);
-        await _cache.RemoveAsync(allCacheKey);
+
         return ToResponse(user);
     }
 

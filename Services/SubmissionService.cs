@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Rabbit.Contracts;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
@@ -11,11 +12,13 @@ public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<SubmissionService> _logger;
+    private readonly PublishService _publishService;
 
-    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger)
+    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, PublishService publishService)
     {
         _context = context;
         _logger = logger;
+        _publishService = publishService;
     }
 
     private async Task<Submission> FetchSubmission(long id)
@@ -53,6 +56,24 @@ public class SubmissionService : ISubmissionService
         _context.Submissions.Add(s);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Submission {SubmissionId} created successfully", s.Id);
+
+        try
+        {
+            SubmissionProcessingRequested sr = new SubmissionProcessingRequested(
+                MessageId: Guid.NewGuid().ToString(),
+                CorrelationId: Guid.NewGuid().ToString(), 
+                TaskAssignmentId: s.TaskAssignmentId,
+                RequestedAt: DateTime.UtcNow,
+                ContractVersion: "1.0"
+            );
+            await _publishService.PublishSubmissionAsync(sr);
+            _logger.LogInformation("Published processing request event for TaskAssignmentId {Id}", s.TaskAssignmentId);
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish message to RabbitMQ for Submission {SubmissionId}", s.Id);
+            throw;
+        }
         return ToResponse(s);
     }
 

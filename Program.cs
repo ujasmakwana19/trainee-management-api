@@ -16,6 +16,8 @@ using TraineeManagement.Api.FileServices;
 using TraineeManagement.Api.SubmissionFileService;
 using TraineeManagement.Api.CacheServices;
 using StackExchange.Redis;
+using RabbitMQ.Client;
+using Rabbit.Contracts;
 
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -140,7 +142,10 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     string configuration = builder.Configuration.GetConnectionString("RedisConnection")!;
     return ConnectionMultiplexer.Connect(configuration);
 });
- 
+
+ConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(builder.Configuration);
+IConnection connection = await factory.CreateConnectionAsync();
+await RabbitMqSetup.InitializeTopologyAsync(connection);
 
 builder.Services.AddScoped<ITraineeService,TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -151,9 +156,13 @@ builder.Services.AddScoped<ITrackTaskService, TrackTaskService>();
 builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ISubmissionFileService, SubmissionFileService>();
-builder.Services.AddScoped<ICacheService,CacheService>();
+
 builder.Services.AddSingleton<IFileStorageService, LocalStorageFileService>();
 
+builder.Services.AddScoped<ICacheService,CacheService>();
+
+builder.Services.AddSingleton<IConnection>(connection);
+builder.Services.AddSingleton<PublishService>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
