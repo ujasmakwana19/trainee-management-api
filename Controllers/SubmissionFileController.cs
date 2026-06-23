@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
-using System.Security.Claims;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.FileServices;
@@ -35,7 +34,7 @@ public class SubmissionFileController : ControllerBase
         // The User here used is implict provided by the framework
         // such that to get the data of the claim
         string? userIdClaim = User.FindFirst("userId")?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !long.TryParse(userIdClaim, out long userId))
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !long.TryParse(userIdClaim, out long userId))
         {
             throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
         }
@@ -93,7 +92,7 @@ public class SubmissionFileController : ControllerBase
         }
         catch
         {
-            // DB write failed after the file already landed on disk — roll the file back.
+            //if DB operation failed to delete the file for the disk
             await _fileStorageService.DeleteAsync(savedFile.StorageName, cancellationToken);
             throw;
         }
@@ -107,25 +106,21 @@ public class SubmissionFileController : ControllerBase
                 originalFileName = savedFile.OriginalFileName,
                 contentType = savedFile.ContentType,
                 sizeInBytes = savedFile.SizeInBytes
-                // deliberately NOT returning storageName or any physical path
             });
     }
 
     [HttpGet("/api/submission-files/{id}/download")]
     public async Task<IActionResult> DownloadSubmissionFile(long id)
     {
-        SubmissionFile? metadata = await _submissionFileService.GetByIdAsync(id);
-        if (metadata == null)
-        {
-            return ResponseHandler.CreateResponse(StatusCodes.Status404NotFound, ErrorCodes.REFERENCE_NOT_EXISTS);
-        }
+        SubmissionFile metadata = await _submissionFileService.GetByIdAsync(id);
+        
 
         long currentUserId = GetCurrentUserId();
         bool isOwner = metadata.UploadedByUserId == currentUserId;
         
         if (!isOwner)
         {
-            return ResponseHandler.CreateResponse(StatusCodes.Status403Forbidden, ErrorCodes.INVALID_CREDENTIALS);
+            return ResponseHandler.CreateResponse(StatusCodes.Status401Unauthorized, ErrorCodes.UNAUTHORISE_ACCESS);
         }
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
@@ -133,7 +128,7 @@ public class SubmissionFileController : ControllerBase
         if (!await _fileStorageService.ExistsAsync(metadata.StorageName, cancellationToken))
         {
             _logger.LogWarning("Metadata exists but physical file missing. FileId={FileId}", id);
-            return ResponseHandler.CreateResponse(StatusCodes.Status404NotFound, ErrorCodes.REFERENCE_NOT_EXISTS);
+            return ResponseHandler.CreateResponse(StatusCodes.Status404NotFound, ErrorCodes.NOT_FOUND_FILE);
         }
 
         Stream fileStream = await _fileStorageService.OpenReadAsync(metadata.StorageName, cancellationToken);
@@ -146,25 +141,18 @@ public class SubmissionFileController : ControllerBase
     [HttpDelete("/api/submission-files/{id}")]
     public async Task<IActionResult> DeleteSubmissionFile(long id)
     {
-        var metadata = await _submissionFileService.GetByIdAsync(id);
-        if (metadata == null)
-        {
-            return ResponseHandler.CreateResponse(StatusCodes.Status404NotFound, ErrorCodes.REFERENCE_NOT_EXISTS);
-        }
+        SubmissionFile metadata = await _submissionFileService.GetByIdAsync(id);
 
         long currentUserId = GetCurrentUserId();
         if (metadata.UploadedByUserId != currentUserId)
         {
-            return ResponseHandler.CreateResponse(StatusCodes.Status403Forbidden, ErrorCodes.INVALID_CREDENTIALS);
+            return ResponseHandler.CreateResponse(StatusCodes.Status401Unauthorized, ErrorCodes.UNAUTHORISE_ACCESS);
         }
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
 
-        // Delete the DB row first inside a transaction-like sequence: if disk delete
-        // fails, we still want metadata gone (storage cleanup can be retried/cron'd),
-        // not a dangling row pointing at a file we're unsure about. Your call if you'd
-        // rather order this the other way — see note below.
         await _submissionFileService.DeleteMetadataAsync(id, cancellationToken);
+
         await _fileStorageService.DeleteAsync(metadata.StorageName, cancellationToken);
 
         return NoContent();

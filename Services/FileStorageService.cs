@@ -14,13 +14,10 @@ public class LocalStorageFileService : IFileStorageService
     private readonly int _bufferSize;
     private readonly long _maxAllowedSize;
 
-    // One signature per extension. .docx and .zip share a signature on purpose —
-    // docx IS a zip container. We don't try to tell them apart at the byte level;
-    // the allow-list + claimed extension is what decides intent, magic bytes just
-    // confirm "this really is some zip-format file, not a renamed .exe".
+
     private static readonly Dictionary<string, byte[][]> AllowedSignatures = new()
     {
-        [".pdf"]  = new[] { new byte[] { 0x25, 0x50, 0x44, 0x46 } },                 // %PDF
+        [".pdf"]  = new[] { new byte[] { 0x25, 0x50, 0x44, 0x46 } },                 
         [".png"]  = new[] { new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A } },
         [".jpg"]  = new[]
         {
@@ -30,8 +27,8 @@ public class LocalStorageFileService : IFileStorageService
             new byte[] { 0xFF, 0xD8, 0xFF, 0xDB }
         },
         [".zip"]  = new[] { new byte[] { 0x50, 0x4B, 0x03, 0x04 } },
-        [".docx"] = new[] { new byte[] { 0x50, 0x4B, 0x03, 0x04 } },                 // same as zip — expected
-        // .txt has no real signature — handled separately via null-byte sniffing below.
+        [".docx"] = new[] { new byte[] { 0x50, 0x4B, 0x03, 0x04 } },                 
+        // .txt has no real signature
     };
 
     private static readonly Dictionary<string, string> ExtensionToContentType = new()
@@ -47,7 +44,7 @@ public class LocalStorageFileService : IFileStorageService
     private static string GetContentType(string extension) =>
         ExtensionToContentType.TryGetValue(extension, out var contentType)
             ? contentType
-            : "application/octet-stream"; // shouldn't happen — extension already passed the allow-list
+            : "application/octet-stream"; 
 
     private const int HeaderPeekSize = 8;
 
@@ -79,7 +76,7 @@ public class LocalStorageFileService : IFileStorageService
         SavedFileResult? result = null;
         string? savedTargetPath = null;
 
-        
+        // Read the multipart sections and process the file section
         while ((section = await reader.ReadNextSectionAsync(cancellationToken)) != null)
         {
             ContentDispositionHeaderValue? contentDisposition = section.GetContentDispositionHeader();
@@ -104,7 +101,6 @@ public class LocalStorageFileService : IFileStorageService
             string? rawFileName = HeaderUtilities.RemoveQuotes(contentDisposition.FileName).Value;
             string originalFileName = rawFileName ?? string.Empty;
             string fileExtension = Path.GetExtension(originalFileName).ToLowerInvariant();
-            System.Console.WriteLine(fileExtension + "->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<< ");
 
             // Extension allow-list. Must happen before we touch any bytes.
             bool isAllowedExtension = AllowedSignatures.ContainsKey(fileExtension) || fileExtension == ".txt";
@@ -119,11 +115,12 @@ public class LocalStorageFileService : IFileStorageService
             {
                 (long  totalBytes, string checksum) = await WriteSectionToDiskAsync(
                     section.Body, targetPath, fileExtension, cancellationToken);
+
                 if (totalBytes == 0)
                 {
-                    File.Delete(targetPath);
                     throw new BadRequestException(ErrorCodes.INVALID_FILE);
                 }
+
                 string contentType = GetContentType(fileExtension);
                 result = new SavedFileResult(storageName, originalFileName, totalBytes, checksum, contentType);
                 savedTargetPath = targetPath;
@@ -150,6 +147,7 @@ public class LocalStorageFileService : IFileStorageService
     private async Task<(long TotalBytes, string Checksum)> WriteSectionToDiskAsync(
         Stream sectionBody, string targetPath, string extension, CancellationToken cancellationToken)
     {
+        // Checking the file signature via magic numbers.
         byte[] headerBuffer = new byte[HeaderPeekSize];
         int headerBytesRead = await ReadExactAsync(sectionBody, headerBuffer, cancellationToken);
 
@@ -171,6 +169,7 @@ public class LocalStorageFileService : IFileStorageService
             }
         }
 
+        // File Stream init
         using FileStream targetStream = new FileStream(
             targetPath, 
             FileMode.Create, 
@@ -189,11 +188,12 @@ public class LocalStorageFileService : IFileStorageService
         byte[] buffer = new byte[_bufferSize];
         int bytesRead;
 
+        // Read the rest of the stream in chunks, updating the checksum and writing to disk
         while ((bytesRead = await sectionBody.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
         {
             totalBytes += bytesRead;
 
-            // Gate 3: size cap, enforced while streaming — not after the fact.
+            
             if (totalBytes > _maxAllowedSize)
             {
                 throw new BadRequestException(ErrorCodes.INVALID_FILE);
@@ -224,9 +224,7 @@ public class LocalStorageFileService : IFileStorageService
     public Task<Stream> OpenReadAsync(string storageName, CancellationToken cancellationToken)
     {
         string fullPath = Path.Combine(_localStoragePath, storageName);
-        if (!File.Exists(fullPath))
-            throw new FileNotFoundException();
-
+        
         return Task.FromResult<Stream>(File.OpenRead(fullPath));
     }
 

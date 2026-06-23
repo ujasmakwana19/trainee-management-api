@@ -20,6 +20,7 @@ public static class ValidationErrorMessage
     public const string InvalidValue          = "Invalid value provided.";
     public const string InvalidFile           = "Invalid files provided or files format not supported.";
     public const string InvalidInputParamsQuery          = "Invalid value or type provided.";
+    public const string UnauthoriseAccess                    = "Unauthorised access to resource";
 }
 public static class ErrorMessage
 {
@@ -33,6 +34,7 @@ public static class ErrorMessage
     public const string TaskAssignementNotFound                    = "Task Assignment Not Found";
     public const string SubmissionNotFound                    = "Submission Not Found";
     public const string ReviewNotFound                    = "Review Not Found";
+    public const string FileNotFound                    = "File Not Found";
     public const string ReferenceInvalid                    = "Please Enter valid references";
     public const string DeleteNotPossibleReferenceExists                    = "Cannot Delete the referenced used values";
     public const string UniqueUsername                    = "Username Already Exists";

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.Data;
+using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.FileServices;
 using TraineeManagement.Api.SubmissionFileModel;
 
@@ -47,20 +49,26 @@ public class SubmissionFileService : ISubmissionFileService
         return file.Id;
     }
 
-    public async Task<SubmissionFile?> GetByIdAsync(long fileId)
+    public async Task<SubmissionFile> GetByIdAsync(long fileId)
     {
-        return await _context.SubmissionFiles
-            .Include(f => f.Submission)
-            .FirstOrDefaultAsync(f => f.Id == fileId);
+        SubmissionFile? metadata = await _context.SubmissionFiles.FirstOrDefaultAsync(f => f.Id == fileId);
+        if (metadata is null)
+        {
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_FILE);
+        }
+
+        return metadata;
     }
 
     public async Task DeleteMetadataAsync(long fileId, CancellationToken cancellationToken)
     {
         SubmissionFile? entity = await _context.SubmissionFiles.FirstOrDefaultAsync(f => f.Id == fileId, cancellationToken);
-        if (entity != null)
+        if (entity is null)
         {
-            _context.SubmissionFiles.Remove(entity);
-            await _context.SaveChangesAsync(cancellationToken);
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_FILE);
         }
+
+        _context.SubmissionFiles.Remove(entity);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
