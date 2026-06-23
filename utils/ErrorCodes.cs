@@ -8,6 +8,7 @@ public static class ErrorCodes
     public static readonly ErrorCode SUCCESS = new ErrorCode(2000, ErrorMessage.Success);
     public static readonly ErrorCode INVALID_MODEL = new ErrorCode(4000, ValidationErrorMessage.InvalidInput);
     public static readonly ErrorCode INVALID_FILE = new ErrorCode(4000, ValidationErrorMessage.InvalidFile);
+    public static readonly ErrorCode CONTENT_TOO_LARGE = new ErrorCode(4130, ValidationErrorMessage.ContentTooLarge);
 
     public static readonly ErrorCode INVALID_CREDENTIALS = new ErrorCode(4001, ErrorMessage.InvalidCredentials);
     public static readonly ErrorCode INVALID_TOKEN = new ErrorCode(4001, ErrorMessage.InvalidToken);

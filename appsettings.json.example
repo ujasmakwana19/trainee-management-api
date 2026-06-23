@@ -7,6 +7,18 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Server=YourHost;Port=YourPort;Database=DbName;User=User;Password=Pass;"
-  }
+    "DefaultConnection": "Server=YourHost;Port=YourPort;Database=DbName;User=User;Password=Pass;",
+    "RedisConnection" : "<Host>:port"
+  },
+  "Jwt": {
+    "Issuer": "",
+    "Audience": "",
+    "ExpiryMinutes": 
+  },
+  "StorageSettings": {
+    "StorageRoot": "complete path",
+    "Buffer_Size": , 
+    "Max_Buffer_Size": 
+  },
+  "RedisInstance" : ""
 }

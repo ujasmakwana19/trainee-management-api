@@ -21,6 +21,7 @@ public static class ValidationErrorMessage
     public const string InvalidFile           = "Invalid files provided or files format not supported.";
     public const string InvalidInputParamsQuery          = "Invalid value or type provided.";
     public const string UnauthoriseAccess                    = "Unauthorised access to resource";
+    public const string ContentTooLarge                    = "Content is too large";
 }
 public static class ErrorMessage
 {

@@ -147,10 +147,11 @@ public class LocalStorageFileService : IFileStorageService
     private async Task<(long TotalBytes, string Checksum)> WriteSectionToDiskAsync(
         Stream sectionBody, string targetPath, string extension, CancellationToken cancellationToken)
     {
-        // Checking the file signature via magic numbers.
+        // Reading the initial bytes
         byte[] headerBuffer = new byte[HeaderPeekSize];
         int headerBytesRead = await ReadExactAsync(sectionBody, headerBuffer, cancellationToken);
 
+        // Verify the magic string signature
         if (AllowedSignatures.TryGetValue(extension, out byte[][]? signatures))
         {
             bool matches = signatures.Any(sig =>
@@ -178,11 +179,15 @@ public class LocalStorageFileService : IFileStorageService
             bufferSize: _bufferSize, 
             useAsync: true);
 
+        // Hash init 
         using SHA256 sha256 = SHA256.Create();
 
-        
+        // Hashs the intial bytes used for the magic string
         sha256.TransformBlock(headerBuffer, 0, headerBytesRead, null, 0);
+        
+        // Streams the initial bytes to save to the localstorage
         await targetStream.WriteAsync(headerBuffer, 0, headerBytesRead, cancellationToken);
+        
         long totalBytes = headerBytesRead;
 
         byte[] buffer = new byte[_bufferSize];
@@ -196,12 +201,13 @@ public class LocalStorageFileService : IFileStorageService
             
             if (totalBytes > _maxAllowedSize)
             {
-                throw new BadRequestException(ErrorCodes.INVALID_FILE);
+                throw new BadRequestException(ErrorCodes.CONTENT_TOO_LARGE);
             }
 
             sha256.TransformBlock(buffer, 0, bytesRead, null, 0);
             await targetStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
         }
+        
 
         sha256.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
         string checksum = Convert.ToHexString(sha256.Hash!);
@@ -215,7 +221,7 @@ public class LocalStorageFileService : IFileStorageService
         while (totalRead < buffer.Length)
         {
             int read = await stream.ReadAsync(buffer, totalRead, buffer.Length - totalRead, cancellationToken);
-            if (read == 0) break; // stream ended before filling the buffer — fine for small files
+            if (read == 0) break; 
             totalRead += read;
         }
         return totalRead;
