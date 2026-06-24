@@ -31,7 +31,7 @@ public class SubmitController : ControllerBase
                     ErrorCodes.INVALID_MODEL);
         }
         SubmissionResponse submission = await _service.CreateSubmission(body);
-        return ResponseHandler.SuccessResponse(
+        return ResponseHandler.AcceptResponse(
             HttpContext,
             ErrorCodes.ACCEPTED,
             submission

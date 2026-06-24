@@ -18,6 +18,20 @@ public static class ResponseHandler
         };
         
     }
+    public static ActionResult AcceptResponse(HttpContext context, ErrorCode errorCode, object value)
+    {
+        object body = new
+        {
+            ErrorMessage = errorCode.Message,
+            ErrorCode = errorCode.Code,
+            data = value
+        };
+        return new ObjectResult(body)
+        {
+            StatusCode = StatusCodes.Status202Accepted
+        };
+        
+    }
 
     public static ActionResult CreateResponse(int statusCode, ErrorCode errorCode)
     {
