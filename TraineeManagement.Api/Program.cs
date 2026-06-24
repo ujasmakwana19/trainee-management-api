@@ -17,7 +17,7 @@ using TraineeManagement.Api.SubmissionFileService;
 using TraineeManagement.Api.CacheServices;
 using StackExchange.Redis;
 using RabbitMQ.Client;
-using Rabbit.Contracts;
+using TraineeManagement.Messaging;
 
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -143,9 +143,12 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(configuration);
 });
 
-ConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(builder.Configuration);
-IConnection connection = await factory.CreateConnectionAsync();
-await RabbitMqSetup.InitializeTopologyAsync(connection);
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    ConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(builder.Configuration);
+    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+});
+
 
 builder.Services.AddScoped<ITraineeService,TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -161,8 +164,7 @@ builder.Services.AddSingleton<IFileStorageService, LocalStorageFileService>();
 
 builder.Services.AddScoped<ICacheService,CacheService>();
 
-builder.Services.AddSingleton<IConnection>(connection);
-builder.Services.AddSingleton<PublishService>();
+builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();

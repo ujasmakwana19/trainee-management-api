@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Rabbit.Contracts;
+using TraineeManagement.Messaging;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.SubmissionDTO;
 using TraineeManagement.Api.SubmissionModel;
+using TraineeManagement.Contracts.Events;
 
 namespace TraineeManagement.Api.SubmissionService;
 
@@ -12,9 +13,9 @@ public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<SubmissionService> _logger;
-    private readonly PublishService _publishService;
+    private readonly IEventPublisher _publishService;
 
-    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, PublishService publishService)
+    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, IEventPublisher publishService)
     {
         _context = context;
         _logger = logger;
@@ -66,7 +67,8 @@ public class SubmissionService : ISubmissionService
                 RequestedAt: DateTime.UtcNow,
                 ContractVersion: "1.0"
             );
-            await _publishService.PublishSubmissionAsync(sr);
+            
+            await _publishService.PublishAsync<SubmissionProcessingRequested>(sr, routingKey: "submission.requested");
             _logger.LogInformation("Published processing request event for TaskAssignmentId {Id}", s.TaskAssignmentId);
         }
         catch (System.Exception ex)
