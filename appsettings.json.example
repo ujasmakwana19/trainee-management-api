@@ -7,18 +7,25 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Server=YourHost;Port=YourPort;Database=DbName;User=User;Password=Pass;",
-    "RedisConnection" : "<Host>:port"
+    "DefaultConnection": "",
+    "RedisConnection": ""
   },
-  "Jwt": {
-    "Issuer": "",
-    "Audience": "",
-    "ExpiryMinutes": 
+  "Jwt":{
+    "Issuer" : "",
+    "Audience" : "",
+    "ExpiryMinutes" : ,
+    "Secret" : ""
   },
-  "StorageSettings": {
-    "StorageRoot": "complete path",
-    "Buffer_Size": , 
-    "Max_Buffer_Size": 
+  "StorageSettings":{
+    "StorageRoot": "",
+    "Buffer_Size" : , 
+    "Max_Buffer_Size" :  
   },
-  "RedisInstance" : ""
+  "RabbitMQ": {
+    "HostName": "",
+    "Port": "",
+    "UserName": "",
+    "Password": "",
+    "VirtualHost": ""
+  }
 }
