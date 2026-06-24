@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using TraineeManagement.Api.TraineeModel;
 using TraineeManagement.Api.UserModel;
 using TraineeManagement.Api.IDateTimeAutoService;
@@ -90,9 +91,9 @@ public class AppDbContext : DbContext
     // This runs on every INSERT and UPDATE
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var entries = ChangeTracker.Entries<IDateTimeAuto>();
+        IEnumerable<EntityEntry<IDateTimeAuto>> entries = ChangeTracker.Entries<IDateTimeAuto>();
 
-        foreach (var entry in entries)
+        foreach (EntityEntry<IDateTimeAuto> entry in entries)
         {
             if (entry.State == EntityState.Added)
             {

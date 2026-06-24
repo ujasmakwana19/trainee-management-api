@@ -39,7 +39,6 @@ public class MentorController : ControllerBase
                 ErrorCodes.INVALID_PARAMS_QUERY
             );
         }
-        System.Console.WriteLine(id);
         MentorResponse mentor = await _service.GetById(id);
         return ResponseHandler.SuccessResponse(
             HttpContext,

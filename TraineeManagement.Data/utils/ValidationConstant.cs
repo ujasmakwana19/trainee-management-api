@@ -9,6 +9,5 @@ public static class ValidationConstant
     public const int MAX_LENTH_LARGE_INPUT = 500;
     public const int MAX_LENTH_NAME_INPUT = 50;
     public const int PASSWORD_INPUT = 140;
-    public const int GETS_TTL_MIN = 15;
     
 }

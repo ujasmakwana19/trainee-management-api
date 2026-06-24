@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TraineeManagement.Api.CacheServices;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
@@ -8,11 +9,13 @@ public class ReviewService : IReviewService
 {   
     private readonly AppDbContext _context;
     private readonly ILogger<ReviewService> _logger;
+    private readonly ICacheService _cache;
 
-    public ReviewService(AppDbContext context, ILogger<ReviewService> logger)
+    public ReviewService(AppDbContext context, ILogger<ReviewService> logger, ICacheService cache)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
     }
 
     private async Task<Review> FetchReview(long id)
@@ -52,11 +55,13 @@ public class ReviewService : IReviewService
         _context.Add(review);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Review {ReviewId} created successfully", review.Id);
+        await _cache.RemoveAsync(CacheKey.reviewAll);
         return ToResponse(review);
     }
 
     public async Task<ReviewResponse> GetById(long Id)
     {
+
         ReviewResponse? review = await _context.Reviews
                                 .Where(t => t.Id == Id)
                                 .Select(t => new ReviewResponse(
@@ -76,17 +81,25 @@ public class ReviewService : IReviewService
 
     public async Task<IEnumerable<ReviewResponse>> GetAll()
     {
-        IEnumerable<ReviewResponse> reviews = await _context.Reviews
-                                .Select(t => new ReviewResponse(
-                                    t.Id,
-                                    t.SubmissionId,
-                                    t.MentorId,
-                                    t.Feedback,
-                                    t.Score,
-                                    t.ReviewStatus,
-                                    t.ReviewedDate
-                                ))
-                                .ToListAsync();
+        IEnumerable<ReviewResponse>? reviews = await _cache.GetAsync<IEnumerable<ReviewResponse>>(CacheKey.reviewAll);
+
+        if(reviews is null)
+        {
+
+            reviews = await _context.Reviews
+                                    .Select(t => new ReviewResponse(
+                                        t.Id,
+                                        t.SubmissionId,
+                                        t.MentorId,
+                                        t.Feedback,
+                                        t.Score,
+                                        t.ReviewStatus,
+                                        t.ReviewedDate
+                                    ))
+                                    .ToListAsync();
+            if(reviews.Any())
+                await _cache.SetAsync<IEnumerable<ReviewResponse>>(CacheKey.reviewAll, reviews, CacheTTL.GETS_TTL_MIN);
+        }
         return reviews;
     }
 }

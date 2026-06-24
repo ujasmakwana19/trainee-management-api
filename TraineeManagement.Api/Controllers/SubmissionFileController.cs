@@ -33,6 +33,7 @@ public class SubmissionFileController : ControllerBase
     {
         // The User here used is implict provided by the framework
         // such that to get the data of the claim
+        // To get the user details from the jwt , instead of taking explicitly
         string? userIdClaim = User.FindFirst("userId")?.Value;
         if (string.IsNullOrWhiteSpace(userIdClaim) || !long.TryParse(userIdClaim, out long userId))
         {
@@ -45,6 +46,7 @@ public class SubmissionFileController : ControllerBase
     [HttpPost("{id}/files")]
     public async Task<IActionResult> SaveSubmissionFile(long id)
     {
+        // check if the provided id is valid format and type
         if (!ModelState.IsValid || id < 1)
         {
             return ResponseHandler.CreateResponse(
@@ -53,6 +55,7 @@ public class SubmissionFileController : ControllerBase
             );
         }
 
+        // check the content type
         if (!Request.ContentType?.StartsWith("multipart/form-data") ?? true)
         {
             return ResponseHandler.CreateResponse(
@@ -61,6 +64,7 @@ public class SubmissionFileController : ControllerBase
                 );
         }
         
+        // parse the boundary , so that further stream can understand where to start reading
         string? boundary = HeaderUtilities.RemoveQuotes(MediaTypeHeaderValue.Parse(Request.ContentType).Boundary).Value;
         if (string.IsNullOrWhiteSpace(boundary))
         {
@@ -70,6 +74,7 @@ public class SubmissionFileController : ControllerBase
             );
         }
 
+        // check if the submission reference to this file exists
         if (!await _submissionFileService.IsSubmissionExists(id))
         {
             
@@ -83,11 +88,13 @@ public class SubmissionFileController : ControllerBase
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
         
+        // Reads the file and save to the disk
         SavedFileResult savedFile = await _fileStorageService.SaveAsync(Request.Body, boundary, cancellationToken);
 
         long fileId;
         try
         {
+            // save the meta data to the submission file metadata  
             fileId = await _submissionFileService.SaveMetadataAsync(id, currentUserId, savedFile, cancellationToken);
         }
         catch
@@ -112,37 +119,55 @@ public class SubmissionFileController : ControllerBase
     [HttpGet("/api/submission-files/{id}/download")]
     public async Task<IActionResult> DownloadSubmissionFile(long id)
     {
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest, 
+                ErrorCodes.INVALID_PARAMS_QUERY
+            );
+        }
+        // To check if the submission file metadata exists
         SubmissionFile metadata = await _submissionFileService.GetByIdAsync(id);
         
-
-        long currentUserId = GetCurrentUserId();
-        bool isOwner = metadata.UploadedByUserId == currentUserId;
+        // Check Only access able by --::> Not Clearly mention to handle it Role based
+        // or not , and also there was not any thing else regarding the Register User
+        // long currentUserId = GetCurrentUserId();
+        // bool isOwner = metadata.UploadedByUserId == currentUserId;
         
-        if (!isOwner)
-        {
-            return ResponseHandler.CreateResponse(StatusCodes.Status401Unauthorized, ErrorCodes.UNAUTHORISE_ACCESS);
-        }
+        // if (!isOwner)
+        // {
+        //     return ResponseHandler.CreateResponse(StatusCodes.Status401Unauthorized, ErrorCodes.UNAUTHORISE_ACCESS);
+        // }
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
 
+        // check the exists of the file on the disk
         if (!await _fileStorageService.ExistsAsync(metadata.StorageName, cancellationToken))
         {
             _logger.LogWarning("Metadata exists but physical file missing. FileId={FileId}", id);
             return ResponseHandler.CreateResponse(StatusCodes.Status404NotFound, ErrorCodes.NOT_FOUND_FILE);
         }
 
+        // Openes the file stream to send to the client
         Stream fileStream = await _fileStorageService.OpenReadAsync(metadata.StorageName, cancellationToken);
 
-        // Content-Disposition: attachment forces a download instead of inline rendering —
-        // important for .txt/.docx/.zip to never get rendered in-browser from your domain.
+        // Content-Disposition: attachment forces a download instead of inline rendering.
         return File(fileStream, metadata.ContentType, metadata.OriginalFileName);
     }
 
     [HttpDelete("/api/submission-files/{id}")]
     public async Task<IActionResult> DeleteSubmissionFile(long id)
     {
+        if (!ModelState.IsValid || id < 1)
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status400BadRequest, 
+                ErrorCodes.INVALID_PARAMS_QUERY
+            );
+        }
         SubmissionFile metadata = await _submissionFileService.GetByIdAsync(id);
 
+        // Only the User who own can delete it
         long currentUserId = GetCurrentUserId();
         if (metadata.UploadedByUserId != currentUserId)
         {
@@ -151,8 +176,10 @@ public class SubmissionFileController : ControllerBase
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
 
+        // Delete the file metadata in the MySQL
         await _submissionFileService.DeleteMetadataAsync(id, cancellationToken);
 
+        // Delete the file 
         await _fileStorageService.DeleteAsync(metadata.StorageName, cancellationToken);
 
         return NoContent();

@@ -19,10 +19,10 @@ namespace TraineeManagement.Api.CacheServices;
             return JsonSerializer.Deserialize<T>(value!);
         }
  
-        public async Task SetAsync<T>(string key, T value, TimeSpan ttl)
+        public async Task SetAsync<T>(string key, T value, int ttl)
         {
             RedisValue json = JsonSerializer.Serialize(value);
-            await _db.StringSetAsync(key, json, ttl);
+            await _db.StringSetAsync(key, json, TimeSpan.FromMinutes(ttl));
         }
  
         public async Task RemoveAsync(string key)

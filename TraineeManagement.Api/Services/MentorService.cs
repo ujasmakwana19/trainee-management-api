@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TraineeManagement.Api.CacheServices;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
@@ -10,11 +11,13 @@ public class MentorService : IMentorService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<MentorService> _logger;
+    private readonly ICacheService _cache;
 
-    public MentorService(AppDbContext context, ILogger<MentorService> logger)
+    public MentorService(AppDbContext context, ILogger<MentorService> logger, ICacheService cache)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
     }
 
     private static MentorResponse ToResponse(Mentor mentor)
@@ -42,23 +45,36 @@ public class MentorService : IMentorService
     // GETALL
     public async Task<IEnumerable<MentorResponse>> GetAll()
     {
-        IEnumerable<MentorResponse> mentors = await _context.Mentors
-                                .Select(t => new MentorResponse(
-                                    t.Id,
-                                    t.FirstName,
-                                    t.LastName,
-                                    t.Email,
-                                    t.Expertise,
-                                    t.Status
-                                ))
-                                .ToListAsync();
+        string cacheKey = CacheKey.mentorall;
+        IEnumerable<MentorResponse>? mentors = await _cache.GetAsync<IEnumerable<MentorResponse>>(cacheKey); 
+
+        if(mentors is null)
+        {    
+            mentors = await _context.Mentors
+                                    .Select(t => new MentorResponse(
+                                        t.Id,
+                                        t.FirstName,
+                                        t.LastName,
+                                        t.Email,
+                                        t.Expertise,
+                                        t.Status
+                                    ))
+                                    .ToListAsync();
+            if(mentors.Any())
+                await _cache.SetAsync<IEnumerable<MentorResponse>>(cacheKey, mentors, CacheTTL.GETS_TTL_MIN);
+        }
         return mentors;
     }
 
     // GET by ID
     public async Task<MentorResponse> GetById(long id)
     {
-        MentorResponse?  mentor = await _context.Mentors
+        string cacheKey = CacheKey.mentorall;
+        IEnumerable<MentorResponse>? mentors = await _cache.GetAsync<IEnumerable<MentorResponse>>(cacheKey);
+        MentorResponse? mentor = mentors?.FirstOrDefault(t => t.Id == id);
+        if(mentor is null)
+        {   
+            mentor = await _context.Mentors
                                 .Where(t => t.Id == id)
                                 .Select(t => new MentorResponse(
                                     t.Id,
@@ -69,8 +85,10 @@ public class MentorService : IMentorService
                                     t.Status
                                 ))
                                 .FirstOrDefaultAsync();
-        if(mentor is null)
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_MENTOR);
+            if(mentor is null)
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_MENTOR);
+
+        }
         return mentor;
     }
 
@@ -90,6 +108,7 @@ public class MentorService : IMentorService
         _context.Mentors.Add(mentor);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Mentor {MentorId} created successfully", mentor.Id);
+        await _cache.RemoveAsync(CacheKey.mentorall);
         return ToResponse(mentor);
     }
 
@@ -108,6 +127,7 @@ public class MentorService : IMentorService
         _context.Mentors.Update(mentor);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Mentor {MentorId} updated successfully", mentor.Id);
+        await _cache.RemoveAsync(CacheKey.mentorall);
         return ToResponse(mentor);
     }
 
@@ -119,6 +139,7 @@ public class MentorService : IMentorService
         _context.Mentors.Remove(mentor);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Mentor {MentorId} deleted successfully", mentor.Id);
+        await _cache.RemoveAsync(CacheKey.mentorall);
         return;
     }
 }

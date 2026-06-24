@@ -13,11 +13,14 @@ public class RabbitMqEventPublisher : IEventPublisher
         _connection = connection;
     }
 
-    public async Task PublishAsync<T>(T message, string routingKey = RabbitMqSetup.RoutingKey, CancellationToken cancellationToken = default)
+    public async Task PublishAsync<T>(T message, string routingKey, CancellationToken cancellationToken = default)
         where T : class
     {
+        // This creates the scoped channel it will be , closed as the message is published successfully
         using IChannel channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
+        // the data (message) must be converted to and fro from json to bytes
+        // before sending and after receiving 
         byte[] body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
         BasicProperties properties = new BasicProperties

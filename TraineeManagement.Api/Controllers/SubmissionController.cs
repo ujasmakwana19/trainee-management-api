@@ -33,7 +33,7 @@ public class SubmitController : ControllerBase
         SubmissionResponse submission = await _service.CreateSubmission(body);
         return ResponseHandler.SuccessResponse(
             HttpContext,
-            ErrorCodes.SUCCESS,
+            ErrorCodes.ACCEPTED,
             submission
         );
     }

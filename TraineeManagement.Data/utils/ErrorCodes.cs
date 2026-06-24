@@ -6,6 +6,7 @@ public record ErrorCode(int Code, string Message);
 public static class ErrorCodes
 {
     public static readonly ErrorCode SUCCESS = new ErrorCode(2000, ErrorMessage.Success);
+    public static readonly ErrorCode ACCEPTED = new ErrorCode(2020, ErrorMessage.Queued);
     public static readonly ErrorCode INVALID_MODEL = new ErrorCode(4000, ValidationErrorMessage.InvalidInput);
     public static readonly ErrorCode INVALID_FILE = new ErrorCode(4000, ValidationErrorMessage.InvalidFile);
     public static readonly ErrorCode CONTENT_TOO_LARGE = new ErrorCode(4130, ValidationErrorMessage.ContentTooLarge);

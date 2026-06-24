@@ -9,6 +9,7 @@ public static class RabbitMqSetup
     public const string QueueName = "submission-processing";
     public const string RoutingKey = "submission.requested";
 
+    // For connecting to the RabbitMQ
     public static ConnectionFactory GetConnectionFactory(IConfiguration configuration)
     {
         IConfiguration section = configuration.GetSection("RabbitMQ");
@@ -21,6 +22,8 @@ public static class RabbitMqSetup
             UserName = section["UserName"]!,
             Password = section["Password"]!,
             VirtualHost = section["VirtualHost"] ?? "/",
+            // It is used to handle the connection automatically if 
+            // if MQ does not exists or the failed to connect via starting up
             AutomaticRecoveryEnabled = true
         };
     }
@@ -37,8 +40,11 @@ public static class RabbitMqSetup
 
         await channel.QueueDeclareAsync(
             queue: QueueName,
+            // to make queue persistant
             durable: true,
+            // specific to per connection only 
             exclusive: false,
+            // auto delete after the last consumer disconnects
             autoDelete: false
         );
 

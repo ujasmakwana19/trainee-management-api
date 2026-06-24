@@ -42,7 +42,7 @@ public class LocalStorageFileService : IFileStorageService
     };
 
     private static string GetContentType(string extension) =>
-        ExtensionToContentType.TryGetValue(extension, out var contentType)
+        ExtensionToContentType.TryGetValue(extension, out string? contentType)
             ? contentType
             : "application/octet-stream"; 
 

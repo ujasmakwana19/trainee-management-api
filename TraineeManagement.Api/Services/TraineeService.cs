@@ -67,22 +67,16 @@ public class TraineeService : ITraineeService
     // GETALL
     public async Task<IEnumerable<TraineeResponse>> GetAllTraineesService()
     {
-        string cacheKey = "trainees:all";
-        IEnumerable<TraineeResponse>? trainees = await _cache.GetAsync<IEnumerable<TraineeResponse>>(cacheKey);
-        if(trainees is null)
-        {
-            trainees = await _context.Trainees
-                                                .Select(t => new TraineeResponse(
-                                                    t.Id,
-                                                    t.FirstName,
-                                                    t.LastName,
-                                                    t.Email,
-                                                    t.TechStack,
-                                                    t.Status
-                                                ))
-                                                .ToListAsync();
-            await _cache.SetAsync<IEnumerable<TraineeResponse>>(cacheKey, trainees, TimeSpan.FromMinutes(ValidationConstant.GETS_TTL_MIN));
-        }
+        IEnumerable<TraineeResponse> trainees = await _context.Trainees
+                                            .Select(t => new TraineeResponse(
+                                                t.Id,
+                                                t.FirstName,
+                                                t.LastName,
+                                                t.Email,
+                                                t.TechStack,
+                                                t.Status
+                                            ))
+                                            .ToListAsync();
         return trainees;
     }
 
@@ -110,7 +104,7 @@ public class TraineeService : ITraineeService
                 throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
             }
 
-            await _cache.SetAsync<TraineeResponse>(cacheKey, trainee, TimeSpan.FromMinutes(ValidationConstant.GETS_TTL_MIN));
+            await _cache.SetAsync<TraineeResponse>(cacheKey, trainee, CacheTTL.GETS_TTL_MIN);
             
         }
         return trainee;
@@ -153,8 +147,12 @@ public class TraineeService : ITraineeService
         _context.Trainees.Update(user);
         await _context.SaveChangesAsync();
         _logger.LogInformation($"Trainee with id {id} updated successfully");
+        
+        await _cache.RemoveAsync(CacheKey.traineeId + $"{id}");
+        TraineeResponse t = ToResponse(user);
+        await _cache.SetAsync<TraineeResponse>(CacheKey.traineeId + $"{id}", t, CacheTTL.GETS_TTL_MIN);
 
-        return ToResponse(user);
+        return t;
     }
 
     // SEARCH

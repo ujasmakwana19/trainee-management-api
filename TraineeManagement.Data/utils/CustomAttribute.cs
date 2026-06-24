@@ -79,7 +79,7 @@ public class DisableFormValueModelBindingAttribute : Attribute, IResourceFilter
     {
         // This completely unhooks the default form readers so ASP.NET 
         // doesn't touch Request.Body while your code is running.
-        var factories = context.ValueProviderFactories;
+        IList<IValueProviderFactory> factories = context.ValueProviderFactories;
         factories.RemoveType<FormValueProviderFactory>();
         factories.RemoveType<FormFileValueProviderFactory>();
         factories.RemoveType<JQueryFormValueProviderFactory>();

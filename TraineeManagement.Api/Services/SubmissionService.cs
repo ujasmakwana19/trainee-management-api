@@ -6,6 +6,7 @@ using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.SubmissionDTO;
 using TraineeManagement.Api.SubmissionModel;
 using TraineeManagement.Contracts.Events;
+using TraineeManagement.Api.CacheServices;
 
 namespace TraineeManagement.Api.SubmissionService;
 
@@ -13,12 +14,14 @@ public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<SubmissionService> _logger;
+    private readonly ICacheService _cache;
     private readonly IEventPublisher _publishService;
 
-    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, IEventPublisher publishService)
+    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, ICacheService cache, IEventPublisher publishService)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
         _publishService = publishService;
     }
 
@@ -68,7 +71,7 @@ public class SubmissionService : ISubmissionService
                 ContractVersion: "1.0"
             );
             
-            await _publishService.PublishAsync<SubmissionProcessingRequested>(sr, routingKey: "submission.requested");
+            await _publishService.PublishAsync<SubmissionProcessingRequested>(sr, RabbitMqSetup.RoutingKey);
             _logger.LogInformation("Published processing request event for TaskAssignmentId {Id}", s.TaskAssignmentId);
         }
         catch (System.Exception ex)
@@ -81,19 +84,27 @@ public class SubmissionService : ISubmissionService
 
     public async Task<SubmissionResponse> GetSubmissionById(long id)
     {
-        SubmissionResponse? s = await _context.Submissions
-                                        .Where(t => t.Id == id)
-                                        .Select(t => new SubmissionResponse(
-                                            t.Id,
-                                            t.TaskAssignmentId,
-                                            t.SubmissionUrl,
-                                            t.Notes,
-                                            t.SubmittedDate,
-                                            t.Status
-                                        ))
-                                        .FirstOrDefaultAsync();
+        string cacheKey = CacheKey.submissionId + $"{id}";
+        SubmissionResponse? s = await _cache.GetAsync<SubmissionResponse>(cacheKey);
+
         if(s is null)
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_SUBMISSION);
+        {
+            s = await _context.Submissions
+                                .Where(t => t.Id == id)
+                                .Select(t => new SubmissionResponse(
+                                    t.Id,
+                                    t.TaskAssignmentId,
+                                    t.SubmissionUrl,
+                                    t.Notes,
+                                    t.SubmittedDate,
+                                    t.Status
+                                ))
+                                .FirstOrDefaultAsync();
+            if(s is null)
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_SUBMISSION);
+
+            await _cache.SetAsync<SubmissionResponse>(cacheKey, s, CacheTTL.GETS_TTL_MIN);
+        }
         return s;
     }
 

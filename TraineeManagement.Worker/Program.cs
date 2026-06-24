@@ -3,19 +3,28 @@ using TraineeManagement.Worker;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using TraineeManagement.Api.Data;
+using StackExchange.Redis;
+using TraineeManagement.Api.CacheServices;
 
-var builder = Host.CreateApplicationBuilder(args);
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddSingleton<IConnection>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var factory = RabbitMqSetup.GetConnectionFactory(config);
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    
+    IConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(config);
 
-    var connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+    IConnection connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
 
     RabbitMqSetup.InitializeTopologyAsync(connection).GetAwaiter().GetResult();
 
     return connection;
+});
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    string configuration = builder.Configuration.GetConnectionString("RedisConnection")!;
+    return ConnectionMultiplexer.Connect(configuration);
 });
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -26,6 +35,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Register the consumer worker
 builder.Services.AddHostedService<SubmissionConsumerWorker>();
-
-var host = builder.Build();
+builder.Services.AddSingleton<ICacheService,CacheService>();
+IHost host = builder.Build();
 host.Run();

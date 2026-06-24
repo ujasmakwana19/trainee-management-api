@@ -27,6 +27,7 @@ public static class ErrorMessage
 {
     public const string ValidationErrorOccured             = "One or more validation errors occurred.";
     public const string Success                            = "Success";
+    public const string Queued                            = "Task will be processed";
     public const string InvalidCredentials                 = "Invalid credentials.";
     public const string InvalidToken                 = "Unauthorised, Please login again";
     public const string TraineeNotFound                    = "Trainee Not Found";

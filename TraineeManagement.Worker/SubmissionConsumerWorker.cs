@@ -5,11 +5,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using StackExchange.Redis;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Contracts.Events;
 using TraineeManagement.Messaging;
-
+using TraineeManagement.Api.CacheServices;
 namespace TraineeManagement.Worker;
 
 public class SubmissionConsumerWorker : BackgroundService
@@ -31,6 +32,7 @@ public class SubmissionConsumerWorker : BackgroundService
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
+        // Creates the persistant channel connection 
         _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
         await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false, cancellationToken: cancellationToken);
@@ -42,8 +44,9 @@ public class SubmissionConsumerWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var consumer = new AsyncEventingBasicConsumer(_channel!);
+        AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel!);
 
+        // lambda function that acts as a callback. Every single time RabbitMQ pushes a message from the queue this block of code executes. The ea parameter (Event Arguments) contains the message data and headers.
         consumer.ReceivedAsync += async (sender, ea) =>
         {
             string? messageId = null;
@@ -55,7 +58,14 @@ public class SubmissionConsumerWorker : BackgroundService
                 if (message is null)
                 {
                     _logger.LogWarning("Received null/undeserializable message. Dead-lettering.");
-                    await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: stoppingToken);
+                    // Negative ack
+                    await _channel!.BasicNackAsync(
+                        ea.DeliveryTag, 
+                        multiple: false, 
+                        // to move to dead state and remove
+                        requeue: false, 
+                        cancellationToken: stoppingToken
+                    );
                     return;
                 }
 
@@ -66,20 +76,30 @@ public class SubmissionConsumerWorker : BackgroundService
                 );
 
                 await ProcessMessageAsync(message, stoppingToken);
-
-                await _channel!.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
+                
+                // Positive Ack
+                await _channel!.BasicAckAsync(
+                    ea.DeliveryTag, 
+                    multiple: false, 
+                    cancellationToken: stoppingToken
+                );
                 _logger.LogInformation("Acked message {MessageId}", messageId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process message {MessageId}. Requeuing.", messageId ?? "unknown");
 
-                // requeue: true — put it back in the queue for retry
-                // In production you'd want a retry count check + dead-letter queue instead
-                await _channel!.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: stoppingToken);
+                // requeue: true put it back in the queue for retry
+                await _channel!.BasicNackAsync(
+                    ea.DeliveryTag, 
+                    multiple: false, 
+                    requeue: true, 
+                    cancellationToken: stoppingToken
+                );
             }
         };
 
+        // This is the method that use the callback
         await _channel!.BasicConsumeAsync(
             queue: RabbitMqSetup.QueueName,
             autoAck: false,        
@@ -93,22 +113,31 @@ public class SubmissionConsumerWorker : BackgroundService
 
     private async Task ProcessMessageAsync(SubmissionProcessingRequested message, CancellationToken cancellationToken)
     {
+        // just added for monitoring
         await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
-        using IServiceScope scope = _scopeFactory.CreateScope();
-        AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        TrackTask? task = await context.TrackTasks.FirstOrDefaultAsync(t => t.Id == message.TaskAssignmentId, cancellationToken);
-
-        if (task is null)
+        
+        // scope for the DB operation
+        using (IServiceScope scope = _scopeFactory.CreateScope())
         {
-            _logger.LogWarning("TrackTask with Id {Id} not found", message.TaskAssignmentId);
-            return;
+            
+            AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            
+            ICacheService cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+            TrackTask? task = await context.TrackTasks.FirstOrDefaultAsync(t => t.Id == message.TaskAssignmentId, cancellationToken);
+
+            if (task is null)
+            {
+                _logger.LogWarning("TrackTask with Id {Id} not found", message.TaskAssignmentId);
+                return;
+            }
+
+            task.Status = TaskAssignmentValue.Submitted;
+            await context.SaveChangesAsync(cancellationToken);
+            await cacheService.RemoveAsync(CacheKey.trackTaskId + $"{task.Id}");
+            await cacheService.RemoveAsync(CacheKey.trackTaskAll);
+            _logger.LogInformation("TrackTask {Id} marked as Submitted", message.TaskAssignmentId);
         }
-
-        task.Status = TaskAssignmentValue.Submitted;
-        await context.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("TrackTask {Id} marked as Submitted", message.TaskAssignmentId);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TraineeManagement.Api.CacheServices;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.ErrorCodesUtils;
 using TraineeManagement.Api.ExceptionUtils;
@@ -10,11 +11,13 @@ public class LearningTaskService : ILearningTaskService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<LearningTaskService> _logger;
+    private readonly ICacheService _cache;
 
-    public LearningTaskService(AppDbContext context, ILogger<LearningTaskService> logger)
+    public LearningTaskService(AppDbContext context, ILogger<LearningTaskService> logger, ICacheService cache)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
     }
 
     private static TaskResponseData ToResponse(LearningTask task)
@@ -59,20 +62,28 @@ public class LearningTaskService : ILearningTaskService
     // GET by ID
     public async Task<TaskResponseData> GetById(long id)
     {
-        TaskResponseData? task = await _context.LearningTasks
-                                .Where(t => t.Id == id)
-                                .Select(t => new TaskResponseData(
-                                            t.Id,
-                                            t.Title,
-                                            t.Description,
-                                            t.ExpectedTechStack,
-                                            t.DueDate,
-                                            t.Status
-                                        ))
-                                .FirstOrDefaultAsync();
-        if (task is null)
-        {
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK);
+        string cacheKey = CacheKey.taskId + $"{id}";
+        TaskResponseData? task = await _cache.GetAsync<TaskResponseData>(cacheKey);
+
+        if(task is null)
+        {    
+            task = await _context.LearningTasks
+                                    .Where(t => t.Id == id)
+                                    .Select(t => new TaskResponseData(
+                                                t.Id,
+                                                t.Title,
+                                                t.Description,
+                                                t.ExpectedTechStack,
+                                                t.DueDate,
+                                                t.Status
+                                            ))
+                                    .FirstOrDefaultAsync();
+            if (task is null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK);
+            }
+
+            await _cache.SetAsync<TaskResponseData>(cacheKey, task, CacheTTL.GETS_TTL_MIN);
         }
         return task;
     }
@@ -111,7 +122,12 @@ public class LearningTaskService : ILearningTaskService
         _context.LearningTasks.Update(taskData);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Task {TaskId} updated successfully", taskData.Id);
-        return ToResponse(taskData);
+        
+        await _cache.RemoveAsync(CacheKey.taskId + $"{Id}");
+        TaskResponseData task = ToResponse(taskData);
+        await _cache.SetAsync<TaskResponseData>(CacheKey.taskId + $"{task.Id}", task, CacheTTL.GETS_TTL_MIN);
+        
+        return task;
     }
 
     // DELETE
@@ -122,6 +138,8 @@ public class LearningTaskService : ILearningTaskService
         _context.LearningTasks.Remove(taskData);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Task {TaskId} deleted successfully", taskData.Id);
+        
+        await _cache.RemoveAsync(CacheKey.taskId + $"{id}");
         return;
     }
 }

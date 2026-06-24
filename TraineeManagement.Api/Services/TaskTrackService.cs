@@ -8,17 +8,21 @@ using TraineeManagement.Api.TaskDTO;
 using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Api.ExceptionUtils;
 using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Api.CacheServices;
+using System.Collections;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<TrackTaskService>_logger;
+    private readonly ICacheService _cache;
 
-    public TrackTaskService(AppDbContext context, ILogger<TrackTaskService> logger)
+    public TrackTaskService(AppDbContext context, ILogger<TrackTaskService> logger, ICacheService cache)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
     }
 
     private TrackTaskResponse ToResponse(TrackTask trackTask)
@@ -66,50 +70,69 @@ public class TrackTaskService : ITrackTaskService
         _context.TrackTasks.Add(trackTask);
         await _context.SaveChangesAsync();
         _logger.LogInformation("TrackTask {TrackTaskId} created successfully", trackTask.Id);
+        await _cache.RemoveAsync(CacheKey.trackTaskAll);
         return ToResponse(trackTask);
     }
 
     public async Task<IEnumerable<TrackTaskResponse>> GetAllTasks()
     {
-        IEnumerable<TrackTaskResponse> trackTasks = await _context.TrackTasks
-                                            .Select(t => new TrackTaskResponse(
-                                                t.Id,
-                                                t.TraineeId,
-                                                t.MentorId,
-                                                t.LearningTaskId,
-                                                t.AssignedDate,
-                                                t.DueDate,
-                                                t.Status,
-                                                t.Remark
-                                            ))
-                                            .ToListAsync();
+        IEnumerable<TrackTaskResponse>? trackTasks = await _cache.GetAsync<IEnumerable<TrackTaskResponse>>(CacheKey.trackTaskAll);
+
+        if(trackTasks is null)
+        {    
+            trackTasks = await _context.TrackTasks
+                                                .Select(t => new TrackTaskResponse(
+                                                    t.Id,
+                                                    t.TraineeId,
+                                                    t.MentorId,
+                                                    t.LearningTaskId,
+                                                    t.AssignedDate,
+                                                    t.DueDate,
+                                                    t.Status,
+                                                    t.Remark
+                                                ))
+                                                .ToListAsync();
+            if(trackTasks.Any())
+                await _cache.SetAsync<IEnumerable<TrackTaskResponse>>(CacheKey.trackTaskAll,trackTasks,CacheTTL.GETS_TTL_MIN);
+        }
         return trackTasks;
     }
 
     public async Task<TrackTaskPopulatedResponseBody> GetTrackTaskByIdAsync(long id)
     {
-        TrackTask? trackTask = await _context.TrackTasks
-            .Include(t => t.Trainee)
-            .Include(t => t.Mentor)
-            .Include(t => t.LearningTask)
-            .FirstOrDefaultAsync() ; 
-        
+        string cacheKey = CacheKey.trackTaskId + $"{id}";
+        TrackTaskPopulatedResponseBody? trackTask = await _cache.GetAsync<TrackTaskPopulatedResponseBody>(cacheKey);
+
         if(trackTask is null)
         {
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
-        }
+            TrackTask? task = await _context.TrackTasks
+                .Include(t => t.Trainee)
+                .Include(t => t.Mentor)
+                .Include(t => t.LearningTask)
+                .FirstOrDefaultAsync(t => t.Id == id) ; 
+            
+            if(task is null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
 
-        return new TrackTaskPopulatedResponseBody
-        (
-            Id: trackTask.Id,
-            Trainee: new TraineeResponse(trackTask.Trainee.Id, trackTask.Trainee.FirstName, trackTask.Trainee.LastName, trackTask.Trainee.Email, trackTask.Trainee.TechStack, trackTask.Trainee.Status),
-            Mentor: new MentorResponse(trackTask.Mentor.Id, trackTask.Mentor.FirstName,trackTask.Mentor.LastName, trackTask.Mentor.Email, trackTask.Mentor.Expertise, trackTask.Mentor.Status),
-            LearningTask: new TaskResponseData(trackTask.LearningTask.Id, trackTask.LearningTask.Title, trackTask.LearningTask.Description, trackTask.LearningTask.ExpectedTechStack, trackTask.LearningTask.DueDate, trackTask.LearningTask.Status),
-            AssignedDate: trackTask.AssignedDate,
-            DueDate: trackTask.DueDate,
-            Status: trackTask.Status,
-            Remark: trackTask.Remark
-        );
+            trackTask = new TrackTaskPopulatedResponseBody
+            (
+                Id: task.Id,
+                Trainee: new TraineeResponse(task.Trainee.Id, task.Trainee.FirstName, task.Trainee.LastName, task.Trainee.Email, task.Trainee.TechStack, task.Trainee.Status),
+                Mentor: new MentorResponse(task.Mentor.Id, task.Mentor.FirstName,task.Mentor.LastName, task.Mentor.Email, task.Mentor.Expertise, task.Mentor.Status),
+                LearningTask: new TaskResponseData(task.LearningTask.Id, task.LearningTask.Title, task.LearningTask.Description, task.LearningTask.ExpectedTechStack, task.LearningTask.DueDate, task.LearningTask.Status),
+                AssignedDate: task.AssignedDate,
+                DueDate: task.DueDate,
+                Status: task.Status,
+                Remark: task.Remark
+            );
+
+            await _cache.SetAsync<TrackTaskPopulatedResponseBody>(cacheKey,trackTask,CacheTTL.GETS_TTL_MIN);
+        }
+        
+
+        return trackTask;
     }
 
     public async Task<TrackTaskResponse> UpdateTrackTaskAsync(long id, TrackTaskUpdateRequestBody body)
@@ -121,6 +144,8 @@ public class TrackTaskService : ITrackTaskService
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("TrackTask {TrackTaskId} updated successfully", trackTask.Id);
+        await _cache.RemoveAsync(CacheKey.trackTaskAll);
+        await _cache.RemoveAsync(CacheKey.trackTaskId + $"{id}");
         return ToResponse(trackTask);
     }
 }
