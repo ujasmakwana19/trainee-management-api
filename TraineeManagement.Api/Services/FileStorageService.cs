@@ -76,6 +76,10 @@ public class LocalStorageFileService : IFileStorageService
         SavedFileResult? result = null;
         string? savedTargetPath = null;
 
+        if (!Directory.Exists(_localStoragePath))
+        {
+            Directory.CreateDirectory(_localStoragePath);
+        }
         // Read the multipart sections and process the file section
         while ((section = await reader.ReadNextSectionAsync(cancellationToken)) != null)
         {
