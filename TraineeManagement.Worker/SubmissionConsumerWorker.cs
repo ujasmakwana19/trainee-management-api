@@ -107,7 +107,6 @@ public class SubmissionConsumerWorker : BackgroundService
                     await RejectMessageAsync(ea.DeliveryTag, requeue: false, stoppingToken);
                     return;
                 }
-
                 await HandleProcessingFailureAsync(ea.DeliveryTag, jobContext, ex, stoppingToken);
             }
         };
@@ -153,6 +152,8 @@ public class SubmissionConsumerWorker : BackgroundService
 
         await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
 
+        // To test the dead queue part
+        // throw new Exception("Hello");
         using (IServiceScope scope = _scopeFactory.CreateScope())
         {
 
@@ -162,21 +163,28 @@ public class SubmissionConsumerWorker : BackgroundService
             SubmissionFile? file = await context.SubmissionFiles.FirstOrDefaultAsync(t => t.Id == message.SubmissionId, cancellationToken);
             if (file is not null && !string.IsNullOrEmpty(file.Checksum))
             {
-                SubmissionFile? existingSameFile = await context.SubmissionFiles.FirstOrDefaultAsync(
+                IEnumerable<SubmissionFile?> existingSameFiles = await context.SubmissionFiles.Where(
                     t => t.Checksum == file.Checksum &&
-                    t.Id != file.Id, cancellationToken);
+                    t.Id != file.Id).ToListAsync();
 
-                if (existingSameFile is not null && !string.IsNullOrEmpty(existingSameFile.Checksum))
+                foreach (SubmissionFile? existingSameFile in existingSameFiles)
                 {
-                    string filePath = Path.Combine(_localStoragePath, file.StorageName);
-                    file.StorageName = existingSameFile.StorageName;
-
-                    await context.SaveChangesAsync();
-
-                    if (File.Exists(filePath))
+                    if (existingSameFile is not null && !string.IsNullOrEmpty(existingSameFile.Checksum))
                     {
-                        _logger.LogInformation("Completed Processing and Replace the filled with already existed same file");
-                        File.Delete(filePath);
+                        if (File.Exists(Path.Combine(_localStoragePath, existingSameFile.StorageName)))
+                        {
+                            string filePath = Path.Combine(_localStoragePath, file.StorageName);
+                            file.StorageName = existingSameFile.StorageName;
+
+                            await context.SaveChangesAsync();
+
+                            if (File.Exists(filePath))
+                            {
+                                _logger.LogInformation("Completed Processing and Replace the filled with already existed same file");
+                                File.Delete(filePath);
+                            }
+                            return;
+                        }
                     }
                 }
             }
@@ -200,10 +208,10 @@ public class SubmissionConsumerWorker : BackgroundService
         {
             _logger.LogWarning("Processing failure encountered for Message {MessageId}. Re-queuing message.",
                 jobContext.MessageId);
-
+            await Task.Delay(TimeSpan.FromSeconds(10));
             await UpdateJobStatusAsync(jobContext.MessageId, ProcessingJobStatus.Queued, exception.Message, token);
-
             // Requeue 
+            await Task.Delay(TimeSpan.FromSeconds(10));
             await RejectMessageAsync(deliveryTag, requeue: true, token);
         }
     }
