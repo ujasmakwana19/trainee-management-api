@@ -5,10 +5,6 @@ namespace TraineeManagement.Messaging;
 
 public static class RabbitMqSetup
 {
-    public const string ExchangeName = "submissions.exchange";
-    public const string QueueName = "submission-processing";
-    public const string RoutingKey = "submission.requested";
-
     // For connecting to the RabbitMQ
     public static ConnectionFactory GetConnectionFactory(IConfiguration configuration)
     {
@@ -31,27 +27,58 @@ public static class RabbitMqSetup
     public static async Task InitializeTopologyAsync(IConnection connection)
     {
         using IChannel channel = await connection.CreateChannelAsync();
-
+        
+        // Dead State Queue
         await channel.ExchangeDeclareAsync(
-            exchange: ExchangeName,
+            exchange : QueueConfig.DeadLetterExchange, 
+            type: ExchangeType.Direct, 
+            durable: true
+        );
+        
+        await channel.QueueDeclareAsync(
+            queue : QueueConfig.DeadLetterQueue, 
+            durable: true, 
+            exclusive: false, 
+            autoDelete: false
+        );
+
+        await channel.QueueBindAsync(
+            queue : QueueConfig.DeadLetterQueue, 
+            exchange : QueueConfig.DeadLetterExchange, 
+            routingKey : QueueConfig.DeadLetterRoutingKey
+        );
+
+        // Binding configurations
+        Dictionary<string, object?> queueArguments = new Dictionary<string, object?>
+        {
+            { "x-dead-letter-exchange", QueueConfig.DeadLetterExchange },
+            { "x-dead-letter-routing-key", QueueConfig.DeadLetterRoutingKey }
+        };
+        
+        // Main Queue Declare
+        await channel.ExchangeDeclareAsync(
+            exchange: QueueConfig.SubmissionExchange,
             type: ExchangeType.Direct,
             durable: true
         );
 
         await channel.QueueDeclareAsync(
-            queue: QueueName,
+            queue: QueueConfig.SubmissionQueue,
             // to make queue persistant
             durable: true,
             // specific to per connection only 
             exclusive: false,
             // auto delete after the last consumer disconnects
-            autoDelete: false
+            autoDelete: false,
+            // config main queue rejects to deadstate
+            arguments: queueArguments
         );
 
         await channel.QueueBindAsync(
-            queue: QueueName,
-            exchange: ExchangeName,
-            routingKey: RoutingKey
+            queue: QueueConfig.SubmissionQueue,
+            exchange: QueueConfig.SubmissionExchange,
+            routingKey: QueueConfig.SubmissionRouting
         );
+
     }
 }

@@ -9,6 +9,7 @@ using TraineeManagement.Api.TrackTaskModel;
 using TraineeManagement.Api.SubmissionModel;
 using TraineeManagement.Api.ReviewModel;
 using TraineeManagement.Api.SubmissionFileModel;
+using TraineeManagement.Data.ProcessingJobModel;
 namespace TraineeManagement.Api.Data;
 
 public class AppDbContext : DbContext
@@ -57,6 +58,7 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
         });
+        
 
         builder.Entity<Review>(entity =>
         {
@@ -119,5 +121,6 @@ public class AppDbContext : DbContext
     public DbSet<Submission> Submissions {get; set;}
     public DbSet<Review> Reviews {get; set;}
     public DbSet<SubmissionFile> SubmissionFiles {get; set;}
+    public DbSet<ProcessingJob> ProcessingJobs {get; set;}
 
 }

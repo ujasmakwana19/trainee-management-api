@@ -60,25 +60,6 @@ public class SubmissionService : ISubmissionService
         _context.Submissions.Add(s);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Submission {SubmissionId} created successfully", s.Id);
-
-        try
-        {
-            SubmissionProcessingRequested sr = new SubmissionProcessingRequested(
-                MessageId: Guid.NewGuid().ToString(),
-                CorrelationId: Guid.NewGuid().ToString(), 
-                TaskAssignmentId: s.TaskAssignmentId,
-                RequestedAt: DateTime.UtcNow,
-                ContractVersion: "1.0"
-            );
-            
-            await _publishService.PublishAsync<SubmissionProcessingRequested>(sr, RabbitMqSetup.RoutingKey);
-            _logger.LogInformation("Published processing request event for TaskAssignmentId {Id}", s.TaskAssignmentId);
-        }
-        catch (System.Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish message to RabbitMQ for Submission {SubmissionId}", s.Id);
-            throw;
-        }
         return ToResponse(s);
     }
 

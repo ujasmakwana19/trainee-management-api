@@ -37,10 +37,12 @@ public static class ErrorMessage
     public const string SubmissionNotFound                    = "Submission Not Found";
     public const string ReviewNotFound                    = "Review Not Found";
     public const string FileNotFound                    = "File Not Found";
+    public const string QueueMessageNotFound                    = "Queue Message Not Found";
     public const string ReferenceInvalid                    = "Please Enter valid references";
     public const string DeleteNotPossibleReferenceExists                    = "Cannot Delete the referenced used values";
     public const string UniqueUsername                    = "Username Already Exists";
     public const string JwtError                        = "An UnExpected Error Occured , Please try again";
     public const string ServerError                        = "Something Went Wrong";
+    public const string QueueOperationFailed                        = "Something Went Wrong, while processing in background";
 
 }

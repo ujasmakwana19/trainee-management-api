@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TraineeManagement.Api.Data;
 
@@ -11,9 +12,11 @@ using TraineeManagement.Api.Data;
 namespace TraineeManagement.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625084630_Processing Task")]
+    partial class ProcessingTask
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -373,10 +376,15 @@ namespace TraineeManagement.Api.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<long>("SubmissionFileId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("SubmissionId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SubmissionFileId");
 
                     b.ToTable("ProcessingJobs");
                 });
@@ -455,6 +463,17 @@ namespace TraineeManagement.Api.Migrations
                     b.Navigation("Mentor");
 
                     b.Navigation("Trainee");
+                });
+
+            modelBuilder.Entity("TraineeManagement.Data.ProcessingJobModel.ProcessingJob", b =>
+                {
+                    b.HasOne("TraineeManagement.Api.SubmissionFileModel.SubmissionFile", "SubmissionFile")
+                        .WithMany()
+                        .HasForeignKey("SubmissionFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SubmissionFile");
                 });
 #pragma warning restore 612, 618
         }

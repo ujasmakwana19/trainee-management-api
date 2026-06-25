@@ -24,6 +24,7 @@ public static class ErrorCodes
     public static readonly ErrorCode NOT_FOUND_SUBMISSION = new ErrorCode(4040, ErrorMessage.SubmissionNotFound);
     public static readonly ErrorCode NOT_FOUND_REVIEW = new ErrorCode(4040, ErrorMessage.ReviewNotFound);
     public static readonly ErrorCode NOT_FOUND_FILE = new ErrorCode(4040, ErrorMessage.FileNotFound);
+    public static readonly ErrorCode NOT_FOUND_QUEUEMESSAGE = new ErrorCode(4040, ErrorMessage.QueueMessageNotFound);
  
  
     public static readonly ErrorCode REFERENCE_NOT_EXISTS = new ErrorCode(4040, ErrorMessage.ReferenceInvalid);
@@ -34,4 +35,5 @@ public static class ErrorCodes
     public static readonly ErrorCode JWT_OPERATION_FAILED = new ErrorCode(5000, ErrorMessage.UniqueUsername);
     public static readonly ErrorCode SERVER_ERROR = new ErrorCode(5000, ErrorMessage.ServerError);
     public static readonly ErrorCode SERVER_CREDENTIAL_FAILED = new ErrorCode(5001, ErrorMessage.ServerError);
+    public static readonly ErrorCode QUEUING_OPERATION_FAILED = new ErrorCode(5001, ErrorMessage.QueueOperationFailed);
 }

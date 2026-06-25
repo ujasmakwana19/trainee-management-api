@@ -44,6 +44,17 @@ public class ServerCredentialException : Exception
     }
 }
 
+public class QueuingOperationExeception : Exception
+{
+    public readonly int _code;
+    public readonly string _message;
+    public QueuingOperationExeception(ErrorCode message) 
+    {
+        _code = message.Code;
+        _message = message.Message;
+    }
+}
+
 public class JwtOperationException : Exception
 {
     public JwtOperationException()  { }

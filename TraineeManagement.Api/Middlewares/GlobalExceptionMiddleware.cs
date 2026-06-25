@@ -49,6 +49,13 @@ public class GlobalExceptionMiddleware
             ErrorCodes.SERVER_CREDENTIAL_FAILED.Code,
             ErrorCodes.SERVER_CREDENTIAL_FAILED.Message);
         }
+        catch (QueuingOperationExeception ex)
+        {
+            _logger.LogError("Queuing operation error: {Message}", ex);
+            await WriteResponse(context, StatusCodes.Status500InternalServerError, 
+            ex._code,
+            ex._message);
+        }
         catch (Exception ex)
         {
             if(ex.InnerException is MySqlException mysqlEx){

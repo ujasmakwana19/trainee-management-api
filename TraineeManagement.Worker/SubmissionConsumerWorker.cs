@@ -1,43 +1,47 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using StackExchange.Redis;
 using TraineeManagement.Api.Data;
 using TraineeManagement.Api.TrackTaskModel;
-using TraineeManagement.Contracts.Events;
-using TraineeManagement.Messaging;
 using TraineeManagement.Api.CacheServices;
+using TraineeManagement.Data.ProcessingJobModel;
+using TraineeManagement.Messaging;
+using TraineeManagement.Api.SubmissionFileModel;
+
 namespace TraineeManagement.Worker;
 
 public class SubmissionConsumerWorker : BackgroundService
 {
     private readonly IConnection _connection;
     private readonly ILogger<SubmissionConsumerWorker> _logger;
-    private readonly IServiceScopeFactory _scopeFactory;  
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly string _localStoragePath;
     private IChannel? _channel;
+
+    private const int MaxRetryAttempts = 3;
 
     public SubmissionConsumerWorker(
         IConnection connection,
         ILogger<SubmissionConsumerWorker> logger,
-        IServiceScopeFactory scopeFactory)  
+        IServiceScopeFactory scopeFactory,
+        IConfiguration config)
     {
         _connection = connection;
         _logger = logger;
-        _scopeFactory = scopeFactory;  
+        _scopeFactory = scopeFactory;
+        _localStoragePath = config["StorageSettings:StorageRoot"]!;
     }
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
-        // Creates the persistant channel connection 
         _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
+        // Fetch one message at a time to distribute loads evenly across workers
         await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false, cancellationToken: cancellationToken);
 
-        _logger.LogInformation("SubmissionConsumerWorker channel ready, listening on queue: {Queue}", RabbitMqSetup.QueueName);
+        _logger.LogInformation("SubmissionConsumerWorker channel ready, listening on queue: {Queue}", QueueConfig.SubmissionQueue);
 
         await base.StartAsync(cancellationToken);
     }
@@ -46,103 +50,216 @@ public class SubmissionConsumerWorker : BackgroundService
     {
         AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(_channel!);
 
-        // lambda function that acts as a callback. Every single time RabbitMQ pushes a message from the queue this block of code executes. The ea parameter (Event Arguments) contains the message data and headers.
         consumer.ReceivedAsync += async (sender, ea) =>
         {
-            string? messageId = null;
+            ProcessingJob? jobContext = null;
+
             try
             {
                 string json = Encoding.UTF8.GetString(ea.Body.ToArray());
-                SubmissionProcessingRequested? message = JsonSerializer.Deserialize<SubmissionProcessingRequested>(json);
+                ProcessingJob? incomingMessage = JsonSerializer.Deserialize<ProcessingJob>(json);
 
-                if (message is null)
+                if (incomingMessage is null || incomingMessage.MessageId == Guid.Empty)
                 {
-                    _logger.LogWarning("Received null/undeserializable message. Dead-lettering.");
-                    // Negative ack
-                    await _channel!.BasicNackAsync(
-                        ea.DeliveryTag, 
-                        multiple: false, 
-                        // to move to dead state and remove
-                        requeue: false, 
-                        cancellationToken: stoppingToken
+                    _logger.LogWarning("Received null, corrupt, or un-deserializable message. Dead-lettering immediately.");
+                    await RejectMessageAsync(
+                        ea.DeliveryTag,
+                        requeue: false,
+                        stoppingToken
                     );
                     return;
                 }
 
-                messageId = message.MessageId;
-                _logger.LogInformation(
-                    "Processing submission event | MessageId: {MessageId} | CorrelationId: {CorrelationId} | TaskAssignmentId: {TaskAssignmentId}",
-                    message.MessageId, message.CorrelationId, message.TaskAssignmentId
+
+                jobContext = await isMessageAvailableToBeProcessed(incomingMessage);
+
+                if (jobContext is null)
+                {
+                    _logger.LogInformation(
+                        "Duplicate or already processed message ignored MessageId: {MessageId} Submission: {SubmissionId}",
+                        incomingMessage.MessageId, incomingMessage.SubmissionId
+                    );
+
+                    await AckMessageAsync(ea.DeliveryTag, stoppingToken);
+                    return;
+                }
+
+                // Business logic to be performed
+                await ProcessMessageInternalAsync(jobContext, stoppingToken);
+
+                await UpdateJobStatusAsync(
+                    jobContext.MessageId,
+                    ProcessingJobStatus.Completed,
+                    null,
+                    stoppingToken
                 );
 
-                await ProcessMessageAsync(message, stoppingToken);
-                
-                // Positive Ack
-                await _channel!.BasicAckAsync(
-                    ea.DeliveryTag, 
-                    multiple: false, 
-                    cancellationToken: stoppingToken
-                );
-                _logger.LogInformation("Acked message {MessageId}", messageId);
+                await AckMessageAsync(ea.DeliveryTag, stoppingToken);
+                _logger.LogInformation("Successfully processed and Acked message {MessageId}", jobContext.MessageId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to process message {MessageId}. Requeuing.", messageId ?? "unknown");
+                _logger.LogError(ex, "Exception caught while processing message delivery tag: {DeliveryTag}", ea.DeliveryTag);
 
-                // requeue: true put it back in the queue for retry
-                await _channel!.BasicNackAsync(
-                    ea.DeliveryTag, 
-                    multiple: false, 
-                    requeue: true, 
-                    cancellationToken: stoppingToken
-                );
+                if (jobContext is null)
+                {
+                    // If not parse or grab a Job record context, safely reject it to Dead Letter Queue
+                    await RejectMessageAsync(ea.DeliveryTag, requeue: false, stoppingToken);
+                    return;
+                }
+
+                await HandleProcessingFailureAsync(ea.DeliveryTag, jobContext, ex, stoppingToken);
             }
         };
 
-        // This is the method that use the callback
         await _channel!.BasicConsumeAsync(
-            queue: RabbitMqSetup.QueueName,
-            autoAck: false,        
+            queue: QueueConfig.SubmissionQueue,
+            autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken
         );
 
-        
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
-    private async Task ProcessMessageAsync(SubmissionProcessingRequested message, CancellationToken cancellationToken)
+
+    private async Task<ProcessingJob?> isMessageAvailableToBeProcessed(ProcessingJob incomingMessage)
     {
-        // just added for monitoring
-        await Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
-        
-        // scope for the DB operation
         using (IServiceScope scope = _scopeFactory.CreateScope())
         {
-            
+
             AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            
-            ICacheService cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
 
-            TrackTask? task = await context.TrackTasks.FirstOrDefaultAsync(t => t.Id == message.TaskAssignmentId, cancellationToken);
+            ProcessingJob? existingJob = await context.ProcessingJobs
+                .FirstOrDefaultAsync(t => t.MessageId == incomingMessage.MessageId);
 
-            if (task is null)
+            if (existingJob is null || existingJob.Status == ProcessingJobStatus.Completed || existingJob.Status == ProcessingJobStatus.Processing)
             {
-                _logger.LogWarning("TrackTask with Id {Id} not found", message.TaskAssignmentId);
-                return;
+                return null;
             }
 
-            task.Status = TaskAssignmentValue.Submitted;
-            await context.SaveChangesAsync(cancellationToken);
-            await cacheService.RemoveAsync(CacheKey.trackTaskId + $"{task.Id}");
-            await cacheService.RemoveAsync(CacheKey.trackTaskAll);
-            _logger.LogInformation("TrackTask {Id} marked as Submitted", message.TaskAssignmentId);
+            existingJob.Status = ProcessingJobStatus.Processing;
+            existingJob.StartedAt = DateTime.UtcNow;
+            existingJob.Attempts += 1;
+
+            await context.SaveChangesAsync();
+            return existingJob;
+        }
+    }
+
+
+    private async Task ProcessMessageInternalAsync(ProcessingJob message, CancellationToken cancellationToken)
+    {
+
+        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+
+        using (IServiceScope scope = _scopeFactory.CreateScope())
+        {
+
+            AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            ICacheService cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+            SubmissionFile? file = await context.SubmissionFiles.FirstOrDefaultAsync(t => t.Id == message.SubmissionId, cancellationToken);
+            if (file is not null && !string.IsNullOrEmpty(file.Checksum))
+            {
+                SubmissionFile? existingSameFile = await context.SubmissionFiles.FirstOrDefaultAsync(
+                    t => t.Checksum == file.Checksum &&
+                    t.Id != file.Id, cancellationToken);
+
+                if (existingSameFile is not null && !string.IsNullOrEmpty(existingSameFile.Checksum))
+                {
+                    string filePath = Path.Combine(_localStoragePath, file.StorageName);
+                    file.StorageName = existingSameFile.StorageName;
+
+                    await context.SaveChangesAsync();
+
+                    if (File.Exists(filePath))
+                    {
+                        _logger.LogInformation("Completed Processing and Replace the filled with already existed same file");
+                        File.Delete(filePath);
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task HandleProcessingFailureAsync(ulong deliveryTag, ProcessingJob jobContext, Exception exception, CancellationToken token)
+    {
+        bool isPermanentError = IsPermanentException(exception);
+
+        if (isPermanentError || jobContext.Attempts >= MaxRetryAttempts)
+        {
+            _logger.LogCritical("Permanent error or Max attempts reached for Message {MessageId}. Dead-lettering.", jobContext.MessageId);
+
+            string errorSummary = $"[{exception.GetType().Name}]: {exception.Message}";
+            await UpdateJobStatusAsync(jobContext.MessageId, ProcessingJobStatus.Failed, errorSummary, token);
+
+            await RejectMessageAsync(deliveryTag, requeue: false, token);
+        }
+        else
+        {
+            _logger.LogWarning("Processing failure encountered for Message {MessageId}. Re-queuing message.",
+                jobContext.MessageId);
+
+            await UpdateJobStatusAsync(jobContext.MessageId, ProcessingJobStatus.Queued, exception.Message, token);
+
+            // Requeue 
+            await RejectMessageAsync(deliveryTag, requeue: true, token);
+        }
+    }
+
+    private bool IsPermanentException(Exception ex)
+    {
+        // Classify errors that retrying will never fix e.g., Parsing errors, bad user parameters, null schemas
+        return ex is JsonException || ex is ArgumentException || ex is NullReferenceException;
+    }
+
+    private async Task UpdateJobStatusAsync(Guid messageId, ProcessingJobStatus status, string? errorSummary, CancellationToken token)
+    {
+        using IServiceScope scope = _scopeFactory.CreateScope();
+        AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        ProcessingJob? job = await context.ProcessingJobs.FirstOrDefaultAsync(j => j.MessageId == messageId, token);
+        if (job is not null)
+        {
+            job.Status = status;
+            job.ErrorSummary = errorSummary;
+            if (status == ProcessingJobStatus.Completed || status == ProcessingJobStatus.Failed)
+            {
+                job.CompletedAt = DateTime.UtcNow;
+            }
+            await context.SaveChangesAsync(token);
+        }
+    }
+
+    private async Task AckMessageAsync(ulong deliveryTag, CancellationToken token)
+    {
+        if (_channel is not null)
+        {
+            await _channel.BasicAckAsync(
+                deliveryTag,
+                multiple: false,
+                cancellationToken: token
+            );
+        }
+    }
+
+    private async Task RejectMessageAsync(ulong deliveryTag, bool requeue, CancellationToken token)
+    {
+        if (_channel is not null)
+        {
+            await _channel.BasicNackAsync(
+                    deliveryTag,
+                    multiple: false,
+                    requeue: requeue,
+                    cancellationToken: token
+                );
         }
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("SubmissionConsumerWorker stopping, closing channel.");
+        _logger.LogInformation("SubmissionConsumerWorker stopping, closing channel cleanly.");
         if (_channel is not null)
         {
             await _channel.CloseAsync(cancellationToken);

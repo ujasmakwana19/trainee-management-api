@@ -28,14 +28,15 @@ public class RabbitMqEventPublisher : IEventPublisher
             Persistent = true,
             ContentType = "application/json"
         };
-
+        
         await channel.BasicPublishAsync(
-            exchange: RabbitMqSetup.ExchangeName,
+            exchange: QueueConfig.SubmissionExchange,
             routingKey: routingKey,
             mandatory: false,
             basicProperties: properties,
             body: body,
             cancellationToken: cancellationToken
         );
+        System.Console.WriteLine("Published successfully");
     }
 }
