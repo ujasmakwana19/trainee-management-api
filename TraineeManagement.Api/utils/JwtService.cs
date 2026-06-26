@@ -2,8 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using TraineeManagement.Api.UserModel;
-using TraineeManagement.Api.ExceptionUtils;
+using TraineeManagement.Data.UserModel;
+using TraineeManagement.Contracts.ExceptionUtils;
 
 namespace TraineeManagement.Api.JwtServices;
 

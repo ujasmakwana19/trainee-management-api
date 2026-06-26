@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ResponseHandlerUtil;
-using TraineeManagement.Api.TrackTaskDTO;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.Data.TrackTaskDTO;
 using TraineeManagement.Api.TrackTaskService;
-using TraineeManagement.Api.TraineeDTO;
+using TraineeManagement.Data.TraineeDTO;
 namespace TraineeManagement.Api.TrackTaskController;
 
 [Authorize]

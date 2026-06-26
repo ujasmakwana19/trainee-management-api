@@ -1,16 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using TraineeManagement.Api.TraineeModel;
-using TraineeManagement.Api.UserModel;
-using TraineeManagement.Api.IDateTimeAutoService;
-using TraineeManagement.Api.MentorModel;
-using TraineeManagement.Api.TaskModel;
-using TraineeManagement.Api.TrackTaskModel;
-using TraineeManagement.Api.SubmissionModel;
-using TraineeManagement.Api.ReviewModel;
-using TraineeManagement.Api.SubmissionFileModel;
+using TraineeManagement.Data.TraineeModel;
+using TraineeManagement.Data.UserModel;
+using TraineeManagement.Data.IDateTimeAutoService;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.TaskModel;
+using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.Data.SubmissionModel;
+using TraineeManagement.Data.ReviewModel;
+using TraineeManagement.Data.SubmissionFileModel;
 using TraineeManagement.Data.ProcessingJobModel;
-namespace TraineeManagement.Api.Data;
+
+namespace TraineeManagement.Data.DataBaseContext;
 
 public class AppDbContext : DbContext
 {    

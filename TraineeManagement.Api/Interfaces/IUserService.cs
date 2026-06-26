@@ -1,4 +1,4 @@
-using TraineeManagement.Api.UserDTO;
+using TraineeManagement.Data.UserDTO;
 
 namespace TraineeManagement.Api.UserServices;
 

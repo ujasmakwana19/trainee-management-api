@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.IDateTimeAutoService;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.IDateTimeAutoService;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
-namespace TraineeManagement.Api.TaskModel;
+namespace TraineeManagement.Data.TaskModel;
 public class LearningTask : IDateTimeAuto
 {
     [Key]

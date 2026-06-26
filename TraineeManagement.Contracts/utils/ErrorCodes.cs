@@ -1,6 +1,6 @@
 using System.Reflection.Metadata;
-using TraineeManagement.Api.ErrorMessageUtils;
-namespace TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Contracts.ErrorMessageUtils;
+namespace TraineeManagement.Contracts.ErrorCodesUtils;
 public record ErrorCode(int Code, string Message);
 
 public static class ErrorCodes

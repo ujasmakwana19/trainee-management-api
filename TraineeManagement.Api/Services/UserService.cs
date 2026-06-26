@@ -1,12 +1,12 @@
-using TraineeManagement.Api.UserModel;
-using TraineeManagement.Api.UserDTO;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Data.UserModel;
+using TraineeManagement.Data.UserDTO;
+using TraineeManagement.Data.DataBaseContext;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
-using TraineeManagement.Api.ExceptionUtils;
-using TraineeManagement.Api.ErrorMessageUtils;
-using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.Contracts.ErrorMessageUtils;
+using TraineeManagement.Contracts.ErrorCodesUtils;
 namespace TraineeManagement.Api.UserServices;
 
 

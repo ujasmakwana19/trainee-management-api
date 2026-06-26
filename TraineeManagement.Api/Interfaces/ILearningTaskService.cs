@@ -1,4 +1,4 @@
-using TraineeManagement.Api.TaskDTO;
+using TraineeManagement.Data.TaskDTO;
 
 namespace TraineeManagement.Api.LearningTaskServices;
 

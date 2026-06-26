@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.MentorDTO;
-using TraineeManagement.Api.TaskDTO;
-using TraineeManagement.Api.TrackTaskModel;
-using TraineeManagement.Api.TraineeDTO;
-namespace TraineeManagement.Api.TrackTaskDTO;
+using TraineeManagement.Data.MentorDTO;
+using TraineeManagement.Data.TaskDTO;
+using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.Data.TraineeDTO;
+namespace TraineeManagement.Data.TrackTaskDTO;
 
 public record TrackTaskRequestBody
 (

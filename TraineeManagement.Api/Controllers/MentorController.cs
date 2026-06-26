@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.MentorDTO;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Data.MentorDTO;
 using TraineeManagement.Api.MentorServices;
-using TraineeManagement.Api.ResponseHandlerUtil;
+using TraineeManagement.Contracts.ResponseHandlerUtil;
 namespace TraineeManagement.Api.MentorControllers;
 
 [Authorize]

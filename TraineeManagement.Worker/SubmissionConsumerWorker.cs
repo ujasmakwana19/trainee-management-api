@@ -3,12 +3,12 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using TraineeManagement.Api.Data;
-using TraineeManagement.Api.TrackTaskModel;
-using TraineeManagement.Api.CacheServices;
+using TraineeManagement.Data.DataBaseContext;
+using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.Contracts.CacheServices;
 using TraineeManagement.Data.ProcessingJobModel;
 using TraineeManagement.Messaging;
-using TraineeManagement.Api.SubmissionFileModel;
+using TraineeManagement.Data.SubmissionFileModel;
 
 namespace TraineeManagement.Worker;
 

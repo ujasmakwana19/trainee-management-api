@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.TraineeDTO;
+using TraineeManagement.Data.TraineeDTO;
 using TraineeManagement.Api.TraineeServices;
-using TraineeManagement.Api.ExceptionUtils;
-using Microsoft.AspNetCore.Http.HttpResults;
-using TraineeManagement.Api.ResponseHandlerUtil;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.TraineeModel;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Data.TraineeModel;
+
 
 namespace TraineeManagement.Api.Controllers;
 
@@ -45,8 +44,8 @@ public class TraineesController : ControllerBase
         StatusCodes.Status400BadRequest,
         ErrorCodes.INVALID_PARAMS_QUERY);
     }
-    
-    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(id);
+    CancellationToken cancellationToken = HttpContext.RequestAborted;
+    TraineeResponse traineeDto = await _service.GetTraineeResponseByIdService(id,cancellationToken);
     return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, traineeDto);
   }
 

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.MentorModel;
-using TraineeManagement.Api.ValidationConstantUtils;
-namespace TraineeManagement.Api.MentorDTO;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
+namespace TraineeManagement.Data.MentorDTO;
 
 public record MentorRequestBody
 (

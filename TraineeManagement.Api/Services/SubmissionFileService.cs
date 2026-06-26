@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.Data;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ExceptionUtils;
+using TraineeManagement.Data.DataBaseContext;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ExceptionUtils;
 using TraineeManagement.Api.FileServices;
-using TraineeManagement.Api.SubmissionFileModel;
+using TraineeManagement.Data.SubmissionFileModel;
 using TraineeManagement.Data.ProcessingJobDTO;
 using TraineeManagement.Data.ProcessingJobModel;
 using TraineeManagement.Messaging;

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.ReviewModel;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.ReviewModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
 public record ReviewRequestBody(
     [RequiredField]

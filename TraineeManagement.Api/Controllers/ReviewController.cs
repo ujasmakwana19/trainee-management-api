@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ResponseHandlerUtil;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ResponseHandlerUtil;
 using TraineeManagement.Api.ReviewService;
 namespace TraineeManagement.Api.ReviewControllers;
 

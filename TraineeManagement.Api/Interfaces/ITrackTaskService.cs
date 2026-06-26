@@ -1,4 +1,4 @@
-using TraineeManagement.Api.TrackTaskDTO;
+using TraineeManagement.Data.TrackTaskDTO;
 
 namespace TraineeManagement.Api.TrackTaskService;
 

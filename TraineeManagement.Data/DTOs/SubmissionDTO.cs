@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.SubmissionModel;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.SubmissionModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
-namespace TraineeManagement.Api.SubmissionDTO;
+namespace TraineeManagement.Data.SubmissionDTO;
 
 public record SubmissionRequestBody (
     [RequiredField]

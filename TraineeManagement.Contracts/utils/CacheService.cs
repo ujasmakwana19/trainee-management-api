@@ -1,7 +1,7 @@
 using System.Text.Json;
 using StackExchange.Redis;
 
-namespace TraineeManagement.Api.CacheServices;
+namespace TraineeManagement.Contracts.CacheServices;
  
     public class CacheService : ICacheService
     {

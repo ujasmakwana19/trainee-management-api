@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.IDateTimeAutoService;
-using TraineeManagement.Api.ValidationConstantUtils;
-namespace TraineeManagement.Api.UserModel
+using TraineeManagement.Data.IDateTimeAutoService;
+using TraineeManagement.Contracts.ValidationConstantUtils;
+namespace TraineeManagement.Data.UserModel
 {
     public class User : IDateTimeAuto
     {

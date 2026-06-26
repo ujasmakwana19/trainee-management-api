@@ -1,5 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+
 using TraineeManagement.Data.ProcessingJobModel;
 namespace TraineeManagement.Data.ProcessingJobDTO;
 

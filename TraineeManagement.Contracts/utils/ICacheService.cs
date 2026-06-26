@@ -1,4 +1,4 @@
-namespace TraineeManagement.Api.CacheServices;
+namespace TraineeManagement.Contracts.CacheServices;
 
 public interface ICacheService
     {

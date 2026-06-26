@@ -1,15 +1,13 @@
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.Data;
-using TraineeManagement.Api.TrackTaskDTO;
-using TraineeManagement.Api.TraineeDTO;
-using TraineeManagement.Api.MentorDTO;
-using TraineeManagement.Api.TaskDTO;
-using TraineeManagement.Api.TrackTaskModel;
-using TraineeManagement.Api.ExceptionUtils;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.CacheServices;
-using System.Collections;
+using TraineeManagement.Data.DataBaseContext;
+using TraineeManagement.Data.TrackTaskDTO;
+using TraineeManagement.Data.TraineeDTO;
+using TraineeManagement.Data.MentorDTO;
+using TraineeManagement.Data.TaskDTO;
+using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.CacheServices;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService

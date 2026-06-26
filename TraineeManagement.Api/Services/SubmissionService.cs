@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Messaging;
-using TraineeManagement.Api.Data;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ExceptionUtils;
-using TraineeManagement.Api.SubmissionDTO;
-using TraineeManagement.Api.SubmissionModel;
+using TraineeManagement.Data.DataBaseContext;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.Data.SubmissionDTO;
+using TraineeManagement.Data.SubmissionModel;
 using TraineeManagement.Contracts.Events;
-using TraineeManagement.Api.CacheServices;
+using TraineeManagement.Contracts.CacheServices;
 
 namespace TraineeManagement.Api.SubmissionService;
 

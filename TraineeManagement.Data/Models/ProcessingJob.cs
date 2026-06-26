@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.SubmissionFileModel;
+using TraineeManagement.Data.SubmissionFileModel;
 
 namespace TraineeManagement.Data.ProcessingJobModel;
 

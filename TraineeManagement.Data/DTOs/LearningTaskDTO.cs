@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.TaskModel;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.TaskModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
-namespace TraineeManagement.Api.TaskDTO;
+namespace TraineeManagement.Data.TaskDTO;
 
 public record TaskRequestBody
 (

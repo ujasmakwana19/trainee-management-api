@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using TraineeManagement.Api.ErrorMessageUtils;
+using TraineeManagement.Contracts.ErrorMessageUtils;
 using System.Text.Json;
-using Namotion.Reflection;
-using TraineeManagement.Api.TraineeModel;
-using System.Globalization;
 
 public static class UtilityHelper
 {

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-namespace TraineeManagement.Api.CacheServices;
+namespace TraineeManagement.Contracts.CacheServices;
 
 public class CacheKey
 {

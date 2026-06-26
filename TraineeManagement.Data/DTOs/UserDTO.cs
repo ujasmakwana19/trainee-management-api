@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.UserModel;
-namespace TraineeManagement.Api.UserDTO;
+using TraineeManagement.Data.UserModel;
+namespace TraineeManagement.Data.UserDTO;
 
 public record LoginUserRequest
 (

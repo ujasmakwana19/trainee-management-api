@@ -2,9 +2,9 @@ using TraineeManagement.Messaging;
 using TraineeManagement.Worker;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Data.DataBaseContext;
 using StackExchange.Redis;
-using TraineeManagement.Api.CacheServices;
+using TraineeManagement.Contracts.CacheServices;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 

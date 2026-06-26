@@ -4,7 +4,7 @@
 // // "Username must be between 3 and 50 characters.
 // // "Invalid email address format."
 // // "Role must be Admin, Mentor, or Trainee."
-namespace TraineeManagement.Api.ErrorMessageUtils;
+namespace TraineeManagement.Contracts.ErrorMessageUtils;
 public static class ValidationErrorMessage
 {
     public const string Required                = "{0} is required.";

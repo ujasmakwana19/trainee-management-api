@@ -1,5 +1,5 @@
-using TraineeManagement.Api.Data;
-using TraineeManagement.Api.MentorDTO;
+
+using TraineeManagement.Data.MentorDTO;
 
 namespace TraineeManagement.Api.MentorServices;
 

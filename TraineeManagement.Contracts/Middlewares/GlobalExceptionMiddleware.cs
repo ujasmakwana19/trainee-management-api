@@ -1,8 +1,10 @@
 using System.Formats.Asn1;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ExceptionUtils;
-namespace TraineeManagement.Api.ExceptionMiddlewares;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ExceptionUtils;
+namespace TraineeManagement.Contracts.ExceptionMiddlewares;
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -59,7 +61,7 @@ public class GlobalExceptionMiddleware
         catch (Exception ex)
         {
             if(ex.InnerException is MySqlException mysqlEx){
-                _logger.LogError($"ERROR CODE::::{mysqlEx.Number}::::::::::");
+                _logger.LogError($"ERROR CODE::::{mysqlEx.Number}::::::::::\t\t{ex}");
                 if(mysqlEx.Number == 1451) // Foreign key constraint failure
                 {
                     _logger.LogWarning("Foreign key constraint failure on Delete: {Message}", mysqlEx.Message);
@@ -94,6 +96,6 @@ public class GlobalExceptionMiddleware
     {
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { message = message , errorCode = code});
+        await context.Response.WriteAsJsonAsync(new { success = false ,message = message , errorCode = code});
     }
 }

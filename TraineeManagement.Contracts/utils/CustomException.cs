@@ -1,6 +1,6 @@
-using TraineeManagement.Api.ErrorCodesUtils;
+using TraineeManagement.Contracts.ErrorCodesUtils;
 
-namespace TraineeManagement.Api.ExceptionUtils;
+namespace TraineeManagement.Contracts.ExceptionUtils;
 public class NotFoundException : Exception
 {
     public readonly int _code;

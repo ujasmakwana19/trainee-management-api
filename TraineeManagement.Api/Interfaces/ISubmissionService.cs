@@ -1,4 +1,4 @@
-using TraineeManagement.Api.SubmissionDTO;
+using TraineeManagement.Data.SubmissionDTO;
 
 namespace TraineeManagement.Api.SubmissionService;
 

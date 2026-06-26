@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.MentorModel;
-using TraineeManagement.Api.SubmissionModel;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.SubmissionModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
-namespace TraineeManagement.Api.ReviewModel;
+namespace TraineeManagement.Data.ReviewModel;
 
 public class Review
 {

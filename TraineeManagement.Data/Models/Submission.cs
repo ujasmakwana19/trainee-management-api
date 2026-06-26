@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.TrackTaskModel;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
-namespace TraineeManagement.Api.SubmissionModel;
+namespace TraineeManagement.Data.SubmissionModel;
 
 public class Submission
 {

@@ -1,6 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.ErrorCodesUtils;
-namespace TraineeManagement.Api.ResponseHandlerUtil;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+namespace TraineeManagement.Contracts.ResponseHandlerUtil;
 
 public static class ResponseHandler
 {
@@ -8,6 +9,7 @@ public static class ResponseHandler
     {
         object body = new
         {
+            Success = true,
             ErrorMessage = errorCode.Message,
             ErrorCode = errorCode.Code,
             data = value
@@ -22,6 +24,7 @@ public static class ResponseHandler
     {
         object body = new
         {
+            Success = true,
             ErrorMessage = errorCode.Message,
             ErrorCode = errorCode.Code,
             data = value
@@ -33,10 +36,11 @@ public static class ResponseHandler
         
     }
 
-    public static ActionResult CreateResponse(int statusCode, ErrorCode errorCode)
+    public static ActionResult CreateResponse(int statusCode, ErrorCode errorCode, bool success = false)
     {
         object body = new
         {
+            Success = success,
             message = errorCode.Message,
             errorCode = errorCode.Code
         };

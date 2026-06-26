@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.CacheServices;
-using TraineeManagement.Api.Data;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ExceptionUtils;
-using TraineeManagement.Api.TaskDTO;
-using TraineeManagement.Api.TaskModel;
+using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Data.DataBaseContext;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.Data.TaskDTO;
+using TraineeManagement.Data.TaskModel;
+
 namespace TraineeManagement.Api.LearningTaskServices;
 
 public class LearningTaskService : ILearningTaskService

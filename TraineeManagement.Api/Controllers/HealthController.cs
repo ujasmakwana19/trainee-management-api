@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Data.DataBaseContext;
 namespace TraineeManagement.Api.Controllers;
 
 [Authorize]

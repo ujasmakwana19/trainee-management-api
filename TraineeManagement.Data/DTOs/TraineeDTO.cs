@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using TraineeManagement.Api.TraineeModel;
-using TraineeManagement.Api.ValidationConstantUtils;
-namespace TraineeManagement.Api.TraineeDTO;
+using TraineeManagement.Data.TraineeModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
+namespace TraineeManagement.Data.TraineeDTO;
 
 public record CreateTraineeRequest
 (

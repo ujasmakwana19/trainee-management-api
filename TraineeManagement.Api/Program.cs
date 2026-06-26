@@ -1,12 +1,13 @@
 using Microsoft.IdentityModel.Tokens;
-using TraineeManagement.Api.TraineeServices;
-using TraineeManagement.Api.UserServices;
-using TraineeManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
-using TraineeManagement.Api.ExceptionMiddlewares;
+
+using TraineeManagement.Api.TraineeServices;
+using TraineeManagement.Api.UserServices;
+using TraineeManagement.Data.DataBaseContext;
+using TraineeManagement.Contracts.ExceptionMiddlewares;
 using TraineeManagement.Api.MentorServices;
 using TraineeManagement.Api.LearningTaskServices;
 using TraineeManagement.Api.TrackTaskService;
@@ -14,7 +15,7 @@ using TraineeManagement.Api.SubmissionService;
 using TraineeManagement.Api.ReviewService;
 using TraineeManagement.Api.FileServices;
 using TraineeManagement.Api.SubmissionFileService;
-using TraineeManagement.Api.CacheServices;
+using TraineeManagement.Contracts.CacheServices;
 using StackExchange.Redis;
 using RabbitMQ.Client;
 using TraineeManagement.Messaging;
@@ -38,7 +39,11 @@ builder.Services.AddCors(options =>
 
 // Controller and JSON Options Setup
 builder.Services.AddControllers()
-// This is to suppress the default model state validation behavior of ASP.NET Core, which automatically returns a 400 Bad Request response if the model state is invalid. By setting SuppressModelStateInvalidFilter to true, you can handle model validation errors manually in your controller actions, allowing for more customized error responses or additional processing before returning a response to the client.
+// This is to suppress the default model state validation behavior of ASP.NET Core, 
+// which automatically returns a 400 Bad Request response if the model state is invalid. 
+// By setting SuppressModelStateInvalidFilter to true, you can handle model validation 
+// errors manually in your controller actions, allowing for more customized error responses 
+// or additional processing before returning a response to the client.
 .ConfigureApiBehaviorOptions(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
@@ -149,6 +154,14 @@ builder.Services.AddSingleton<IConnection>(sp =>
     return factory.CreateConnectionAsync().GetAwaiter().GetResult();
 });
 
+string httpClientName = builder.Configuration["TraineeMicroService:NAME"]!;
+
+builder.Services.AddHttpClient(httpClientName,client => {
+        client.BaseAddress = new Uri(builder.Configuration["TraineeMicroService:URI"]!);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(builder.Configuration["TraineeMicroService:USERAGENT"]);
+        }
+    );
+
 
 builder.Services.AddScoped<ITraineeService,TraineeService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -165,10 +178,6 @@ builder.Services.AddSingleton<IFileStorageService, LocalStorageFileService>();
 builder.Services.AddScoped<ICacheService,CacheService>();
 
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
-
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
 
 
 WebApplication app = builder.Build();

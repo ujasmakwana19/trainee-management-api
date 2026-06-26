@@ -1,5 +1,5 @@
 // Models/BaseEntity.cs
-namespace TraineeManagement.Api.IDateTimeAutoService;
+namespace TraineeManagement.Data.IDateTimeAutoService;
 
 public abstract class IDateTimeAuto
 {

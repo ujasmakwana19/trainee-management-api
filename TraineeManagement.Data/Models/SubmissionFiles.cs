@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.IDateTimeAutoService;
-using TraineeManagement.Api.SubmissionModel;
-using TraineeManagement.Api.UserModel;
+using TraineeManagement.Data.IDateTimeAutoService;
+using TraineeManagement.Data.SubmissionModel;
+using TraineeManagement.Data.UserModel;
 
-namespace TraineeManagement.Api.SubmissionFileModel;
+namespace TraineeManagement.Data.SubmissionFileModel;
 
 public class SubmissionFile : IDateTimeAuto
 {

@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using TraineeManagement.Api.TraineeModel;
-using TraineeManagement.Api.MentorModel;
-using TraineeManagement.Api.TaskModel;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Data.TraineeModel;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.TaskModel;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 
 
-namespace TraineeManagement.Api.TrackTaskModel;
+namespace TraineeManagement.Data.TrackTaskModel;
 public class TrackTask
 {
     [Key]

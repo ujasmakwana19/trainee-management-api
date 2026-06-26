@@ -1,12 +1,16 @@
-using TraineeManagement.Api.TraineeModel;
-using TraineeManagement.Api.TraineeDTO;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Data.TraineeModel;
+using TraineeManagement.Data.TraineeDTO;
+using TraineeManagement.Data.DataBaseContext;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.ExceptionUtils;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.CacheServices;
-using TraineeManagement.Api.ValidationConstantUtils;
+using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Contracts.ValidationConstantUtils;
 using StackExchange.Redis;
+using System.Text.Json;
+using TraineeManagement.Data.ResponseDTO;
+using NuGet.Protocol;
+using System.Net;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -16,11 +20,15 @@ public class TraineeService : ITraineeService
     // private readonly List<Trainee> _trainees = new();
 
     // This is for the inMemory Database Instance
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _config;
     private readonly AppDbContext _context;
     private readonly ILogger<TraineeService> _logger;
     private readonly ICacheService _cache;
-    public TraineeService(AppDbContext context, ILogger<TraineeService> logger, ICacheService cache)
+    public TraineeService(IHttpClientFactory httpClientFactory, IConfiguration config, AppDbContext context, ILogger<TraineeService> logger, ICacheService cache)
     {
+        _httpClientFactory = httpClientFactory;
+        _config = config;
         _context = context;
         _logger = logger;
         _cache = cache;
@@ -81,33 +89,47 @@ public class TraineeService : ITraineeService
     }
 
     // GET by ID
-    public async Task<TraineeResponse> GetTraineeResponseByIdService(long id)
+    public async Task<TraineeResponse> GetTraineeResponseByIdService(long id, CancellationToken cancellationToken)
     {
         string cacheKey = CacheKey.traineeId + $"{id}";
         TraineeResponse? trainee = await _cache.GetAsync<TraineeResponse>(cacheKey);
         if(trainee is null)
         {
-            trainee = await _context.Trainees
-                        .Where(t => t.Id == id)
-                        .Select(t => new TraineeResponse(
-                            t.Id,
-                            t.FirstName,
-                            t.LastName,
-                            t.Email,
-                            t.TechStack,
-                            t.Status
-                        ))
-                        .FirstOrDefaultAsync();
-            if (trainee is null)
+            string clientName = _config["TraineeMicroService:NAME"]!;
+            HttpClient client = _httpClientFactory.CreateClient(clientName);
+
+            try
             {
                 
-                throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
-            }
+                using HttpResponseMessage response = await client.GetAsync($"trainees/{id}",cancellationToken);
+                HttpStatusCode statusCode = response.StatusCode;
+                
+                InterCommunicationResponse<TraineeResponse>? responseData = await response.Content.ReadFromJsonAsync<InterCommunicationResponse<TraineeResponse>>(
+                        new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                        cancellationToken
+                );
 
-            await _cache.SetAsync<TraineeResponse>(cacheKey, trainee, CacheTTL.GETS_TTL_MIN);
+                if (responseData is null || responseData.Success == false || responseData.Data is null)
+                {  
+                    throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
+                }
+
+                
+                trainee = responseData.Data;
+                await _cache.SetAsync<TraineeResponse>(cacheKey, trainee, CacheTTL.GETS_TTL_MIN);
+                
+
+            }
+            catch (Exception)
+            {
+                
+                throw;
+            }
             
+                
         }
         return trainee;
+       
     }
 
     // CREATE

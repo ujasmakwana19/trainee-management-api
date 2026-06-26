@@ -1,5 +1,5 @@
 using TraineeManagement.Api.FileServices;
-using TraineeManagement.Api.SubmissionFileModel;
+using TraineeManagement.Data.SubmissionFileModel;
 
 namespace TraineeManagement.Api.SubmissionFileService;
 

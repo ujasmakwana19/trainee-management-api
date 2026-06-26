@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Api.ErrorCodesUtils;
-using TraineeManagement.Api.ResponseHandlerUtil;
-using TraineeManagement.Api.SubmissionDTO;
+using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.Data.SubmissionDTO;
 using TraineeManagement.Api.SubmissionService;
 
 namespace TraineeManagement.Api.SubmissionController;

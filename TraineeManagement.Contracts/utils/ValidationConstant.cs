@@ -1,6 +1,5 @@
-using System.Reflection.Metadata;
 
-namespace TraineeManagement.Api.ValidationConstantUtils;
+namespace TraineeManagement.Contracts.ValidationConstantUtils;
 
 public static class ValidationConstant
 {

@@ -1,11 +1,11 @@
 
-using TraineeManagement.Api.UserModel;
+using TraineeManagement.Data.UserModel;
 using Microsoft.AspNetCore.Identity;
-using TraineeManagement.Api.Data;
+using TraineeManagement.Data.DataBaseContext;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Api.TraineeModel;
-using TraineeManagement.Api.MentorModel;
-using TraineeManagement.Api.TaskModel;
+using TraineeManagement.Data.TraineeModel;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.TaskModel;
 public static class SeederService
 {
     public static async Task SeedData(IServiceProvider serviceProvider)
