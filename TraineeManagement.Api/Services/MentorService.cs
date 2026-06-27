@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Data.CacheServices;
 using TraineeManagement.Data.DataBaseContext;
 using TraineeManagement.Contracts.ErrorCodesUtils;
 using TraineeManagement.Contracts.ExceptionUtils;

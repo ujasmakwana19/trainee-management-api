@@ -7,7 +7,7 @@ using TraineeManagement.Data.TaskDTO;
 using TraineeManagement.Data.TrackTaskModel;
 using TraineeManagement.Contracts.ExceptionUtils;
 using TraineeManagement.Contracts.ErrorCodesUtils;
-using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Data.CacheServices;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService

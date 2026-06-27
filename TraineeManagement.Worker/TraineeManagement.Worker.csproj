@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TraineeManagement.Data\TraineeManagement.Data.csproj" />
-    <ProjectReference Include="..\TraineeManagement.Contracts\TraineeManagement.Contracts.csproj" />
     <ProjectReference Include="..\TraineeManagement.Messaging\TraineeManagement.Messaging.csproj" />
   </ItemGroup>
 

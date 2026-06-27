@@ -15,7 +15,7 @@ using TraineeManagement.Api.SubmissionService;
 using TraineeManagement.Api.ReviewService;
 using TraineeManagement.Api.FileServices;
 using TraineeManagement.Api.SubmissionFileService;
-using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Data.CacheServices;
 using StackExchange.Redis;
 using RabbitMQ.Client;
 using TraineeManagement.Messaging;
@@ -142,25 +142,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Use AddSingleton when we are storing in the List 
 // For inMemory and the Persistant Database use the AddScoped
 
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    string configuration = builder.Configuration.GetConnectionString("RedisConnection")!;
-    return ConnectionMultiplexer.Connect(configuration);
-});
-
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    ConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(builder.Configuration);
-    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
-});
-
-string httpClientName = builder.Configuration["TraineeMicroService:NAME"]!;
-
-builder.Services.AddHttpClient(httpClientName,client => {
-        client.BaseAddress = new Uri(builder.Configuration["TraineeMicroService:URI"]!);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(builder.Configuration["TraineeMicroService:USERAGENT"]);
-        }
-    );
 
 
 builder.Services.AddScoped<ITraineeService,TraineeService>();
@@ -179,8 +160,58 @@ builder.Services.AddScoped<ICacheService,CacheService>();
 
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
+// To make the Redis Soft Dependency for the system
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    ConfigurationOptions options = ConfigurationOptions.Parse(
+        builder.Configuration.GetConnectionString("RedisConnection")!);
+        options.AbortOnConnectFail = false;
+        options.ConnectTimeout = 3000;
+        options.ConnectRetry = 2;
+    return ConnectionMultiplexer.Connect(options);
+});
 
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    // Hard Dependency for the RabbitMQ Connection
+    // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // ConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(builder.Configuration);
+    // IConnection connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+
+    // Console.WriteLine("RabbitMQ Connection Established");
+    // return connection;
+
+    // Soft Dependency for the RabbitMQ Connection
+    
+    ConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(builder.Configuration);
+    try
+    {
+        Task<IConnection> connection = factory.CreateConnectionAsync();
+        if (connection.Wait(TimeSpan.FromSeconds(5)))
+        {
+            Console.WriteLine("RabbitMQ Connection Established");
+            return connection.Result;
+        }
+        throw new TimeoutException("RabbitMQ connection timed out after 5s");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"RabbitMQ unavailable at startup: {ex.Message}");
+        return null!; 
+    }
+});
+
+string httpClientName = builder.Configuration["TraineeMicroService:NAME"]!;
+
+builder.Services.AddHttpClient(httpClientName,client => {
+        client.BaseAddress = new Uri(builder.Configuration["TraineeMicroService:URI"]!);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(builder.Configuration["TraineeMicroService:USERAGENT"]);
+        }
+    );
+
+Console.WriteLine("Before Build");
 WebApplication app = builder.Build();
+Console.WriteLine("After Build");
 
 // Seeder Function
 await SeederService.SeedData(app.Services);

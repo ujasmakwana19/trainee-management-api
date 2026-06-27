@@ -4,7 +4,6 @@ using TraineeManagement.Contracts.ErrorCodesUtils;
 using TraineeManagement.Contracts.ExceptionUtils;
 using TraineeManagement.Api.FileServices;
 using TraineeManagement.Data.SubmissionFileModel;
-using TraineeManagement.Data.ProcessingJobDTO;
 using TraineeManagement.Data.ProcessingJobModel;
 using TraineeManagement.Messaging;
 
@@ -65,7 +64,12 @@ public class SubmissionFileService : ISubmissionFileService
         }
         catch (Exception)
         {
-            throw new QueuingOperationExeception(ErrorCodes.QUEUING_OPERATION_FAILED);
+            // throw new QueuingOperationExeception(ErrorCodes.QUEUING_OPERATION_FAILED);
+            message.Status = ProcessingJobStatus.Failed;
+            message.ErrorSummary = "Failed to publish message to RabbitMQ";
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Message with {id} is not saved to DB", message.SubmissionId);
         }
 
         return file.Id;

@@ -4,7 +4,6 @@ using TraineeManagement.Contracts.ErrorCodesUtils;
 using TraineeManagement.Contracts.ResponseHandlerUtil;
 using TraineeManagement.Data.TrackTaskDTO;
 using TraineeManagement.Api.TrackTaskService;
-using TraineeManagement.Data.TraineeDTO;
 namespace TraineeManagement.Api.TrackTaskController;
 
 [Authorize]

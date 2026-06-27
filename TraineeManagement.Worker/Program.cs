@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using TraineeManagement.Data.DataBaseContext;
 using StackExchange.Redis;
-using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Data.CacheServices;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 

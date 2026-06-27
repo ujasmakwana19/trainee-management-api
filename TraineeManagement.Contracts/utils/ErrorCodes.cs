@@ -7,14 +7,14 @@ public static class ErrorCodes
 {
     public static readonly ErrorCode SUCCESS = new ErrorCode(2000, ErrorMessage.Success);
     public static readonly ErrorCode ACCEPTED = new ErrorCode(2020, ErrorMessage.Queued);
-    public static readonly ErrorCode INVALID_MODEL = new ErrorCode(4000, ValidationErrorMessage.InvalidInput);
-    public static readonly ErrorCode INVALID_FILE = new ErrorCode(4000, ValidationErrorMessage.InvalidFile);
-    public static readonly ErrorCode CONTENT_TOO_LARGE = new ErrorCode(4130, ValidationErrorMessage.ContentTooLarge);
+    public static readonly ErrorCode INVALID_MODEL = new ErrorCode(4000, ErrorMessage.InvalidInput);
+    public static readonly ErrorCode INVALID_FILE = new ErrorCode(4000, ErrorMessage.InvalidFile);
+    public static readonly ErrorCode CONTENT_TOO_LARGE = new ErrorCode(4130, ErrorMessage.ContentTooLarge);
 
     public static readonly ErrorCode INVALID_CREDENTIALS = new ErrorCode(4001, ErrorMessage.InvalidCredentials);
     public static readonly ErrorCode INVALID_TOKEN = new ErrorCode(4001, ErrorMessage.InvalidToken);
-    public static readonly ErrorCode INVALID_PARAMS_QUERY = new ErrorCode(4000, ValidationErrorMessage.InvalidInputParamsQuery);
-    public static readonly ErrorCode UNAUTHORISE_ACCESS = new ErrorCode(4010, ValidationErrorMessage.UnauthoriseAccess);
+    public static readonly ErrorCode INVALID_PARAMS_QUERY = new ErrorCode(4000, ErrorMessage.InvalidInputParamsQuery);
+    public static readonly ErrorCode UNAUTHORISE_ACCESS = new ErrorCode(4010, ErrorMessage.UnauthoriseAccess);
 
 
     public static readonly ErrorCode NOT_FOUND_TRAINEE = new ErrorCode(4040, ErrorMessage.TraineeNotFound);

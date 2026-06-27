@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Data.TraineeModel;
 using TraineeManagement.Data.MentorModel;
 using TraineeManagement.Data.TaskModel;
-using TraineeManagement.Contracts.ValidationConstantUtils;
+using TraineeManagement.Data.ValidationConstantUtils;
 
 
 namespace TraineeManagement.Data.TrackTaskModel;

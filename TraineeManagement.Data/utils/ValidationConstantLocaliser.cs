@@ -1,5 +1,5 @@
 
-namespace TraineeManagement.Contracts.ValidationConstantUtils;
+namespace TraineeManagement.Data.ValidationConstantUtils;
 
 public static class ValidationConstant
 {

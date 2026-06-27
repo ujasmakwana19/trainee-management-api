@@ -7,6 +7,7 @@ using TraineeManagement.Api.FileServices;
 using TraineeManagement.Contracts.ResponseHandlerUtil;
 using TraineeManagement.Data.SubmissionFileModel;
 using TraineeManagement.Api.SubmissionFileService;
+using TraineeManagement.Api.FileAttributeCustom;
 
 namespace TraineeManagement.Api.SubmissionFileController;
 

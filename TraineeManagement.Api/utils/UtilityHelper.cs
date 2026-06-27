@@ -28,13 +28,13 @@ public static class UtilityHelper
             annotationErrors[kvp.Key] = kvp.Value.Errors
                 .Select(e => !string.IsNullOrEmpty(e.ErrorMessage)
                     ? e.ErrorMessage
-                    : ValidationErrorMessage.InvalidValue)
+                    : ErrorMessage.InvalidValue)
                 .ToArray();
         }
 
         // All serialization errors into one clean entry
         if (hasSerializationError)
-            annotationErrors["body"] = new[] { ValidationErrorMessage.InvalidInput };
+            annotationErrors["body"] = new[] { ErrorMessage.InvalidInput };
 
         return annotationErrors;
     }
@@ -55,7 +55,7 @@ public static class UtilityHelper
             errorsList.AddRange(kvp.Value.Errors
                 .Select(e => !string.IsNullOrEmpty(e.ErrorMessage)
                     ? e.ErrorMessage
-                    : ValidationErrorMessage.InvalidValue));
+                    : ErrorMessage.InvalidValue));
 
         }
         annotationErrors["body"] = errorsList.ToArray();

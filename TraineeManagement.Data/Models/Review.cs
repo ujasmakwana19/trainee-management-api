@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Data.MentorModel;
 using TraineeManagement.Data.SubmissionModel;
-using TraineeManagement.Contracts.ValidationConstantUtils;
+using TraineeManagement.Data.ValidationConstantUtils;
 
 namespace TraineeManagement.Data.ReviewModel;
 

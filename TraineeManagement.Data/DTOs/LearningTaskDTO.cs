@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using TraineeManagement.Data.TaskModel;
-using TraineeManagement.Contracts.ValidationConstantUtils;
+using TraineeManagement.Data.ValidationConstantUtils;
 
 namespace TraineeManagement.Data.TaskDTO;
 

@@ -5,8 +5,7 @@ using TraineeManagement.Contracts.ErrorCodesUtils;
 using TraineeManagement.Contracts.ExceptionUtils;
 using TraineeManagement.Data.SubmissionDTO;
 using TraineeManagement.Data.SubmissionModel;
-using TraineeManagement.Contracts.Events;
-using TraineeManagement.Contracts.CacheServices;
+using TraineeManagement.Data.CacheServices;
 
 namespace TraineeManagement.Api.SubmissionService;
 
