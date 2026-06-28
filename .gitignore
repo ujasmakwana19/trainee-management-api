@@ -5,7 +5,6 @@ appsettings.json
 appsettings.Development.json
 simple.txt
 /publish
-docker-compose.yml
 .env
 docker-compose.txt
 /Uploads
