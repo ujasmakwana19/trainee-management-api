@@ -8,4 +8,4 @@ simple.txt
 .env
 docker-compose.txt
 /Uploads
-/init-db
+nuget.config

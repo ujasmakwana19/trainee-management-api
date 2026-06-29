@@ -21,7 +21,6 @@ public class TraineeController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetTraineeById(long id)
     {
-        _logger.LogInformation("I am here");
         if (!ModelState.IsValid || id < 1)
         {
             return ResponseHandler.CreateResponse(

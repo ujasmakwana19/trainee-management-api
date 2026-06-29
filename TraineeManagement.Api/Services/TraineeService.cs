@@ -118,7 +118,8 @@ public class TraineeService : ITraineeService
             throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
         }
 
-        response.EnsureSuccessStatusCode(); // anything else non-2xx throws HttpRequestException — caught by global middleware
+        
+        response.EnsureSuccessStatusCode(); 
 
         InterCommunicationResponse<TraineeResponse>? responseData =
             await response.Content.ReadFromJsonAsync<InterCommunicationResponse<TraineeResponse>>(

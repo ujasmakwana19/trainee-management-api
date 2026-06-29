@@ -8,6 +8,7 @@ using TraineeManagement.Data.MentorModel;
 using TraineeManagement.Data.TaskModel;
 public static class SeederService
 {
+    
     public static async Task SeedData(IServiceProvider serviceProvider)
     {
         PasswordHasher<User> ph = new PasswordHasher<User>();
@@ -33,11 +34,11 @@ public static class SeederService
             {
                 context.Users.Add(u);
                 await context.SaveChangesAsync();
-                System.Console.WriteLine("Admin Created Successfully");
+                Console.WriteLine("[Seeder-Service]::::Admin Created Successfully");
             }
             else
             {
-                System.Console.WriteLine("Admin Already Exists ");
+                Console.WriteLine("[Seeder-Service]::::Admin Already Exists ");
             }
 
             if (!await context.Trainees.AnyAsync())
@@ -51,7 +52,7 @@ public static class SeederService
             }
             else
             {
-                System.Console.WriteLine("Trainee Already Exists ");
+                Console.WriteLine("[Seeder-Service]::::Trainee Already Exists ");
             }
 
             if (!context.Mentors.Any())
@@ -65,7 +66,7 @@ public static class SeederService
             }
             else
             {
-                System.Console.WriteLine("Mentor Already Exists ");
+                Console.WriteLine("[Seeder-Service]::::Mentor Already Exists ");
             }
 
             if (!context.LearningTasks.Any())
@@ -79,13 +80,13 @@ public static class SeederService
             }
             else
             {
-                System.Console.WriteLine("Learning Tasks Already Exists ");
+                Console.WriteLine("[Seeder-Service]::::Learning Tasks Already Exists ");
             }
 
         }
-        catch (System.Exception)
+        catch (Exception)
         {
-            System.Console.WriteLine("Failed to seed data..");
+            Console.WriteLine("[Seeder-Service]:::: Failed to seed data..");
             throw;
         }
     }

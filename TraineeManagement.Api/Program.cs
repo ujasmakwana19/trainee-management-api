@@ -22,7 +22,8 @@ using RabbitMQ.Client;
 using TraineeManagement.Messaging;
 using TraineeManagement.Contracts.CoorealationIdMiddlewares;
 using TraineeManagement.Contracts.CoorealationIdServices;
-
+using Serilog;
+using Serilog.Events;
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -76,13 +77,21 @@ builder.Services.AddControllers()
     });
 
 // To add the logs with the correlationID appended
-builder.Logging.AddConsole(options =>
-{
-    options.FormatterName = "simple";
-}).AddSimpleConsole(options =>
-{
-    options.IncludeScopes = true; 
-});
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration) 
+    .Enrich.FromLogContext() 
+    .WriteTo.Conditional(
+        eventHappen => eventHappen.Properties.TryGetValue("SourceContext", out LogEventPropertyValue? src) 
+        && src.ToString().Contains("RequestLoggingMiddleware"),
+
+        wt => wt.Console(outputTemplate: "[{Timestamp:HH:mm:ss}] [{Level:u3}] [HTTP] [Corr: {CorrelationId}] {Message:lj}{NewLine}{Exception}")
+    )
+    .WriteTo.Conditional(
+        evt => !(evt.Properties.TryGetValue("SourceContext", out LogEventPropertyValue? src) 
+        && src.ToString().Contains("RequestLoggingMiddleware")),
+        wt => wt.Console(outputTemplate: "[{Timestamp:HH:mm:ss}] [{Level:u3}] [{SourceContext}] [Corr: {CorrelationId}] {Message:lj}{NewLine}{Exception}")
+    )
+);
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // Swagger Configuration
@@ -126,7 +135,7 @@ builder.Logging.AddConsole(options =>
 
 //  To get the connection creditials of the MySql
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 46));
+MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 41));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, serverVersion));
@@ -230,11 +239,9 @@ builder.Services.AddHttpClient(httpClientName,client => {
     options.Retry.MaxRetryAttempts = 3;
     options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
     options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
-});;
+});
 
-Console.WriteLine("Before Build");
 WebApplication app = builder.Build();
-Console.WriteLine("After Build");
 
 // Seeder Function
 await SeederService.SeedData(app.Services);
@@ -252,6 +259,10 @@ await SeederService.SeedData(app.Services);
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

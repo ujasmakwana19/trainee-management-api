@@ -189,21 +189,22 @@ public class SubmissionConsumerWorker : BackgroundService
                                 File.Delete(filePath);
                             }
 
-                            long id = await context.Submissions.Where(t => t.Id == file.SubmissionId).Select(t => t.TaskAssignmentId).FirstOrDefaultAsync();
-
-                            TrackTask? taskAssignment = await context.TrackTasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
-                            if(taskAssignment is not null)
-                            {
-                                taskAssignment.Status = TaskAssignmentValue.Submitted;
-                                await context.SaveChangesAsync(cancellationToken);
-                                await _cacheService.RemoveAsync(CacheKey.trackTaskAll);
-                                await _cacheService.RemoveAsync(CacheKey.trackTaskId + taskAssignment.Id);
-                            }
-
+                            
                             return;
                         }
                     }
                 }
+                long id = await context.Submissions.Where(t => t.Id == file.SubmissionId).Select(t => t.TaskAssignmentId).FirstOrDefaultAsync();
+
+                TrackTask? taskAssignment = await context.TrackTasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+                if(taskAssignment is not null)
+                {
+                    taskAssignment.Status = TaskAssignmentValue.Submitted;
+                    await context.SaveChangesAsync(cancellationToken);
+                    await _cacheService.RemoveAsync(CacheKey.trackTaskAll);
+                    await _cacheService.RemoveAsync(CacheKey.trackTaskId + taskAssignment.Id);
+                }
+
                 _logger.LogInformation("CoorelationId:{CoorelationId} - Completed Processing and not existed same file", message.CoorelationId);
             }
         }
