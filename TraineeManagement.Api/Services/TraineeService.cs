@@ -9,6 +9,8 @@ using System.Text.Json;
 using TraineeManagement.Data.ResponseDTO;
 using NuGet.Protocol;
 using System.Net;
+using TraineeManagement.Contracts.CoorealationIdServices;
+using TraineeManagement.Contracts.CoorealationIdMiddlewares;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -23,13 +25,15 @@ public class TraineeService : ITraineeService
     private readonly AppDbContext _context;
     private readonly ILogger<TraineeService> _logger;
     private readonly ICacheService _cache;
-    public TraineeService(IHttpClientFactory httpClientFactory, IConfiguration config, AppDbContext context, ILogger<TraineeService> logger, ICacheService cache)
+    private readonly ICorrelationIdAccessor _correlationIdAccessor;
+    public TraineeService(IHttpClientFactory httpClientFactory, IConfiguration config, AppDbContext context, ILogger<TraineeService> logger, ICacheService cache, ICorrelationIdAccessor correlationIdAccessor)
     {
         _httpClientFactory = httpClientFactory;
         _config = config;
         _context = context;
         _logger = logger;
         _cache = cache;
+        _correlationIdAccessor = correlationIdAccessor;
     }
 
     // Helper Method
@@ -91,43 +95,44 @@ public class TraineeService : ITraineeService
     {
         string cacheKey = CacheKey.traineeId + $"{id}";
         TraineeResponse? trainee = await _cache.GetAsync<TraineeResponse>(cacheKey);
-        if(trainee is null)
+        if (trainee is not null)
         {
-            string clientName = _config["TraineeMicroService:NAME"]!;
-            HttpClient client = _httpClientFactory.CreateClient(clientName);
-
-            try
-            {
-                
-                using HttpResponseMessage response = await client.GetAsync($"trainees/{id}",cancellationToken);
-                HttpStatusCode statusCode = response.StatusCode;
-                
-                InterCommunicationResponse<TraineeResponse>? responseData = await response.Content.ReadFromJsonAsync<InterCommunicationResponse<TraineeResponse>>(
-                        new JsonSerializerOptions(JsonSerializerDefaults.Web),
-                        cancellationToken
-                );
-
-                if (responseData is null || responseData.Success == false || responseData.Data is null)
-                {  
-                    throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
-                }
-
-                
-                trainee = responseData.Data;
-                await _cache.SetAsync<TraineeResponse>(cacheKey, trainee, CacheTTL.GETS_TTL_MIN);
-                
-
-            }
-            catch (Exception)
-            {
-                
-                throw;
-            }
-            
-                
+            return trainee;
         }
+
+        string clientName = _config["TraineeMicroService:NAME"]!;
+        HttpClient client = _httpClientFactory.CreateClient(clientName);
+
+        using HttpRequestMessage request = new(HttpMethod.Get, $"trainees/{id}");
+
+        string? correlationId = _correlationIdAccessor.CorrelationId;
+        if (!string.IsNullOrEmpty(correlationId))
+        {
+            request.Headers.TryAddWithoutValidation(CorrelationIdMiddleware.HeaderName, correlationId);
+        }
+
+        using HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
+        }
+
+        response.EnsureSuccessStatusCode(); // anything else non-2xx throws HttpRequestException — caught by global middleware
+
+        InterCommunicationResponse<TraineeResponse>? responseData =
+            await response.Content.ReadFromJsonAsync<InterCommunicationResponse<TraineeResponse>>(
+                new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                cancellationToken);
+
+        if (responseData is null || responseData.Success == false || responseData.Data is null)
+        {
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
+        }
+
+        trainee = responseData.Data;
+        await _cache.SetAsync(cacheKey, trainee, CacheTTL.GETS_TTL_MIN);
         return trainee;
-       
     }
 
     // CREATE

@@ -58,6 +58,34 @@ public class GlobalExceptionMiddleware
             ex._code,
             ex._message);
         }
+        catch (BrokenCircuitException ex)
+        {
+            // Circuit is open — we didn't even attempt the call, we already know
+            // the dependency is unhealthy. This is the "fallback behaviour" path.
+            _logger.LogWarning(ex, "Circuit breaker open on {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+            await WriteResponse(context, StatusCodes.Status503ServiceUnavailable,
+                ErrorCodes.SERVICE_UNAVAILABLE.Code, ErrorCodes.SERVICE_UNAVAILABLE.Message);
+        }
+        catch (TimeoutRejectedException ex)
+        {
+            // Per-attempt or total resilience timeout exhausted — dependency is
+            // slow/unresponsive, not a bug in our code.
+            _logger.LogWarning(ex, "Upstream timeout on {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+            await WriteResponse(context, StatusCodes.Status503ServiceUnavailable,
+                ErrorCodes.SERVICE_UNAVAILABLE.Code, ErrorCodes.SERVICE_UNAVAILABLE.Message);
+        }
+        catch (HttpRequestException ex)
+        {
+            // Network-level failure (connection refused, DNS, reset) reaching
+            // the dependency directly, outside the resilience pipeline's retry
+            // budget (e.g. circuit already half-open and this probe failed).
+            _logger.LogWarning(ex, "Upstream unreachable on {Method} {Path}",
+                context.Request.Method, context.Request.Path);
+            await WriteResponse(context, StatusCodes.Status503ServiceUnavailable,
+                ErrorCodes.SERVICE_UNAVAILABLE.Code, ErrorCodes.SERVICE_UNAVAILABLE.Message);
+        }
         catch (Exception ex)
         {
             if(ex.InnerException is MySqlException mysqlEx){

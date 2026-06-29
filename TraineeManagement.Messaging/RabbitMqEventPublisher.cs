@@ -16,7 +16,7 @@ public class RabbitMqEventPublisher : IEventPublisher
         _logger = logger;
     }
 
-    public async Task PublishAsync<T>(T message, string routingKey, CancellationToken cancellationToken = default)
+    public async Task PublishAsync<T>(T message, string coorealtionId, string routingKey, CancellationToken cancellationToken = default)
         where T : class
     {
         if (_connection == null || !_connection.IsOpen)
@@ -48,7 +48,7 @@ public class RabbitMqEventPublisher : IEventPublisher
                 body: body,
                 cancellationToken: cancellationToken
             );
-            _logger.LogInformation("Event published successfully: {RoutingKey}", routingKey);
+            _logger.LogInformation("CoorelationID:{CoorelationId} - Event published successfully: QueueBinding:{RoutingKey}", coorealtionId, routingKey);
         }
         catch (Exception ex)
         {

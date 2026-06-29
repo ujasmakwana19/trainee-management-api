@@ -8,6 +8,8 @@ using TraineeManagement.Data.CacheServices;
 using TraineeManagement.Data.ProcessingJobModel;
 using TraineeManagement.Messaging;
 using TraineeManagement.Data.SubmissionFileModel;
+using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.Data.TaskModel;
 
 namespace TraineeManagement.Worker;
 
@@ -16,6 +18,7 @@ public class SubmissionConsumerWorker : BackgroundService
     private readonly IConnection _connection;
     private readonly ILogger<SubmissionConsumerWorker> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ICacheService _cacheService;
     private readonly string _localStoragePath;
     private IChannel? _channel;
 
@@ -25,11 +28,13 @@ public class SubmissionConsumerWorker : BackgroundService
         IConnection connection,
         ILogger<SubmissionConsumerWorker> logger,
         IServiceScopeFactory scopeFactory,
+        ICacheService cacheService,
         IConfiguration config)
     {
         _connection = connection;
         _logger = logger;
         _scopeFactory = scopeFactory;
+        _cacheService = cacheService;
         _localStoragePath = config["StorageSettings:StorageRoot"]!;
     }
 
@@ -60,7 +65,7 @@ public class SubmissionConsumerWorker : BackgroundService
 
                 if (incomingMessage is null || incomingMessage.MessageId == Guid.Empty)
                 {
-                    _logger.LogWarning("Received null, corrupt, or un-deserializable message. Dead-lettering immediately.");
+                    _logger.LogWarning("CoorelationId:{CoorelationId} - Received null, corrupt, or un-deserializable message. Dead-lettering immediately.", incomingMessage?.CoorelationId ?? Guid.Empty);
                     await RejectMessageAsync(
                         ea.DeliveryTag,
                         requeue: false,
@@ -75,8 +80,8 @@ public class SubmissionConsumerWorker : BackgroundService
                 if (jobContext is null)
                 {
                     _logger.LogInformation(
-                        "Duplicate or already processed message ignored MessageId: {MessageId} Submission: {SubmissionId}",
-                        incomingMessage.MessageId, incomingMessage.SubmissionId
+                        "CoorelationId:{CoorelationId} - Duplicate or already processed message ignored MessageId: {MessageId} Submission: {SubmissionId}",
+                        incomingMessage.CoorelationId, incomingMessage.MessageId, incomingMessage.SubmissionId
                     );
 
                     await AckMessageAsync(ea.DeliveryTag, stoppingToken);
@@ -98,7 +103,7 @@ public class SubmissionConsumerWorker : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception caught while processing message delivery tag: {DeliveryTag}", ea.DeliveryTag);
+                _logger.LogError("CorrelationId:{CoorelationId} - Exception caught while processing message delivery tag: {DeliveryTag} \n {ex}", jobContext?.CoorelationId ?? Guid.Empty, ea.DeliveryTag, ex);
 
                 if (jobContext is null)
                 {
@@ -139,6 +144,7 @@ public class SubmissionConsumerWorker : BackgroundService
             existingJob.Status = ProcessingJobStatus.Processing;
             existingJob.StartedAt = DateTime.UtcNow;
             existingJob.Attempts += 1;
+            _logger.LogInformation("CoorelationId:{CoorelationId} - Processing attempt : {Attempts}", incomingMessage.CoorelationId, existingJob.Attempts);
 
             await context.SaveChangesAsync();
             return existingJob;
@@ -158,14 +164,14 @@ public class SubmissionConsumerWorker : BackgroundService
 
             AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             ICacheService cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
-
+            
             SubmissionFile? file = await context.SubmissionFiles.FirstOrDefaultAsync(t => t.Id == message.SubmissionId, cancellationToken);
             if (file is not null && !string.IsNullOrEmpty(file.Checksum))
             {
                 IEnumerable<SubmissionFile?> existingSameFiles = await context.SubmissionFiles.Where(
                     t => t.Checksum == file.Checksum &&
                     t.Id != file.Id).ToListAsync();
-
+               
                 foreach (SubmissionFile? existingSameFile in existingSameFiles)
                 {
                     if (existingSameFile is not null && !string.IsNullOrEmpty(existingSameFile.Checksum))
@@ -179,13 +185,26 @@ public class SubmissionConsumerWorker : BackgroundService
 
                             if (File.Exists(filePath))
                             {
-                                _logger.LogInformation("Completed Processing and Replace the filled with already existed same file");
+                                _logger.LogInformation("CoorelationId:{CoorelationId} - Completed Processing and Replace the filled with already existed same file", message.CoorelationId);
                                 File.Delete(filePath);
                             }
+
+                            long id = await context.Submissions.Where(t => t.Id == file.SubmissionId).Select(t => t.TaskAssignmentId).FirstOrDefaultAsync();
+
+                            TrackTask? taskAssignment = await context.TrackTasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+                            if(taskAssignment is not null)
+                            {
+                                taskAssignment.Status = TaskAssignmentValue.Submitted;
+                                await context.SaveChangesAsync(cancellationToken);
+                                await _cacheService.RemoveAsync(CacheKey.trackTaskAll);
+                                await _cacheService.RemoveAsync(CacheKey.trackTaskId + taskAssignment.Id);
+                            }
+
                             return;
                         }
                     }
                 }
+                _logger.LogInformation("CoorelationId:{CoorelationId} - Completed Processing and not existed same file", message.CoorelationId);
             }
         }
     }
@@ -196,7 +215,7 @@ public class SubmissionConsumerWorker : BackgroundService
 
         if (isPermanentError || jobContext.Attempts >= MaxRetryAttempts)
         {
-            _logger.LogCritical("Permanent error or Max attempts reached for Message {MessageId}. Dead-lettering.", jobContext.MessageId);
+            _logger.LogCritical("CoorelationId:{CoorelationId} - Permanent error or Max attempts reached for Message {MessageId}. Dead-lettering.", jobContext.CoorelationId, jobContext.MessageId);
 
             string errorSummary = $"[{exception.GetType().Name}]: {exception.Message}";
             await UpdateJobStatusAsync(jobContext.MessageId, ProcessingJobStatus.Failed, errorSummary, token);
@@ -205,8 +224,7 @@ public class SubmissionConsumerWorker : BackgroundService
         }
         else
         {
-            _logger.LogWarning("Processing failure encountered for Message {MessageId}. Re-queuing message.",
-                jobContext.MessageId);
+            _logger.LogWarning("CoorelationId:{CoorelationId} - Processing failure encountered for Message {MessageId}. Re-queuing message.", jobContext.CoorelationId, jobContext.MessageId);
             await Task.Delay(TimeSpan.FromSeconds(10));
             await UpdateJobStatusAsync(jobContext.MessageId, ProcessingJobStatus.Queued, exception.Message, token);
             // Requeue 

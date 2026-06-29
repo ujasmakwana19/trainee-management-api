@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
+using Microsoft.Extensions.Http.Resilience;
 
 using TraineeManagement.Api.TraineeServices;
 using TraineeManagement.Api.UserServices;
@@ -19,6 +20,8 @@ using TraineeManagement.Data.CacheServices;
 using StackExchange.Redis;
 using RabbitMQ.Client;
 using TraineeManagement.Messaging;
+using TraineeManagement.Contracts.CoorealationIdMiddlewares;
+using TraineeManagement.Contracts.CoorealationIdServices;
 
 
 String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -27,13 +30,16 @@ String MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Cors Setup
+string[] allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins1")
+    .Get<string[]>() ?? Array.Empty<string>();
+    
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("http://localhost:3000",
-                                              "http://localhost:5173");
+                          policy.WithOrigins(allowedOrigins);
                       });
 });
 
@@ -67,8 +73,16 @@ builder.Services.AddControllers()
 .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow;
-    });;
+    });
 
+// To add the logs with the correlationID appended
+builder.Logging.AddConsole(options =>
+{
+    options.FormatterName = "simple";
+}).AddSimpleConsole(options =>
+{
+    options.IncludeScopes = true; 
+});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // Swagger Configuration
@@ -160,6 +174,9 @@ builder.Services.AddScoped<ICacheService,CacheService>();
 
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICorrelationIdAccessor, CorrelationIdAccessor>();
+
 // To make the Redis Soft Dependency for the system
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
@@ -207,7 +224,13 @@ builder.Services.AddHttpClient(httpClientName,client => {
         client.BaseAddress = new Uri(builder.Configuration["TraineeMicroService:URI"]!);
         client.DefaultRequestHeaders.UserAgent.ParseAdd(builder.Configuration["TraineeMicroService:USERAGENT"]);
         }
-    );
+    )
+    .AddStandardResilienceHandler(options =>
+{
+    options.Retry.MaxRetryAttempts = 3;
+    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
+});;
 
 Console.WriteLine("Before Build");
 WebApplication app = builder.Build();
@@ -228,6 +251,7 @@ await SeederService.SeedData(app.Services);
 
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

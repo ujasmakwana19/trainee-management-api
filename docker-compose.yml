@@ -60,6 +60,7 @@ services:
     ports:
       - "5078:8080"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};
       ConnectionStrings__RedisConnection: redis-cache:6379
       RabbitMQ__HostName: rabbitmq
@@ -87,6 +88,7 @@ services:
     container_name: docker1worker
     restart: unless-stopped
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};
       ConnectionStrings__RedisConnection: redis-cache:6379
       RabbitMQ__HostName: rabbitmq
@@ -114,6 +116,7 @@ services:
     ports:
       - "5000:8080"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};
     depends_on:
       db:

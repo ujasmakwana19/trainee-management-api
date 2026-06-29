@@ -59,8 +59,8 @@ public class SubmissionFileService : ISubmissionFileService
         await _context.SaveChangesAsync();
         try
         {
-            await _eventPublisher.PublishAsync<ProcessingJob>(message, QueueConfig.SubmissionRouting);
-            _logger.LogInformation("Message with {id} is saved to DB", message.SubmissionId);   
+            _logger.LogInformation(" coorelationId:{CoorelationId} - The Job to process check sum is queuing", message.CoorelationId);
+            await _eventPublisher.PublishAsync<ProcessingJob>(message, message.CoorelationId.ToString() , QueueConfig.SubmissionRouting);
         }
         catch (Exception)
         {
@@ -68,8 +68,8 @@ public class SubmissionFileService : ISubmissionFileService
             message.Status = ProcessingJobStatus.Failed;
             message.ErrorSummary = "Failed to publish message to RabbitMQ";
             await _context.SaveChangesAsync();
+            _logger.LogInformation(" coorelationId:{CoorelationId} - The Queuing Operation failed", message.CoorelationId);
             
-            _logger.LogInformation("Message with {id} is not saved to DB", message.SubmissionId);
         }
 
         return file.Id;
