@@ -5,8 +5,8 @@ using TraineeManagement.Data.TraineeDTO;
 using TraineeManagement.Data.MentorDTO;
 using TraineeManagement.Data.TaskDTO;
 using TraineeManagement.Data.TrackTaskModel;
-using TraineeManagement.Contracts.ExceptionUtils;
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.Data.CacheServices;
 namespace TraineeManagement.Api.TrackTaskService;
 

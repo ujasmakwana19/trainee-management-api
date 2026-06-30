@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Data.TraineeDTO;
 using TraineeManagement.Api.TraineeServices;
-using TraineeManagement.Contracts.ExceptionUtils;
-using TraineeManagement.Contracts.ResponseHandlerUtil;
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
+using TraineeManagement.WebCommons.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.Data.TraineeModel;
 
 

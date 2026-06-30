@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using TraineeManagement.Contracts.ErrorMessageUtils;
+using TraineeManagement.WebCommons.ErrorMessageUtils;
 using System.Text.Json;
 
+namespace TraineeManagement.WebCommons.ErrorStackUtils;
 public static class UtilityHelper
 {
     public static Dictionary<string, string[]> GetInvalidModelStateErrors(ModelStateDictionary modelState, string modelName)

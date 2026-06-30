@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Contracts.ErrorCodesUtils;
-using TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ResponseHandlerUtil;
 using TraineeManagement.Data.TraineeDTO;
 using TrainingDirectory.TraineeInterface;
 

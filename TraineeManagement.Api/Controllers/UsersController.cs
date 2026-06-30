@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Data.UserDTO;
 using TraineeManagement.Api.UserServices;
-using TraineeManagement.Contracts.ResponseHandlerUtil;
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 namespace TraineeManagement.Api.UserController;
 
 [ApiController]

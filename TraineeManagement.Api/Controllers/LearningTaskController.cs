@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraineeManagement.Api.LearningTaskServices;
 using TraineeManagement.Data.TaskDTO;
-using TraineeManagement.Contracts.ResponseHandlerUtil;
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 
 namespace TraineeManagement.Api.LearningTaskControllers;
 

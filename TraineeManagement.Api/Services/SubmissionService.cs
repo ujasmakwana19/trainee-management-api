@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Messaging;
 using TraineeManagement.Data.DataBaseContext;
-using TraineeManagement.Contracts.ErrorCodesUtils;
-using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Data.SubmissionDTO;
 using TraineeManagement.Data.SubmissionModel;
 using TraineeManagement.Data.CacheServices;

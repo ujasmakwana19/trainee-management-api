@@ -4,9 +4,9 @@ using TraineeManagement.Data.DataBaseContext;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Api.JwtServices;
-using TraineeManagement.Contracts.ExceptionUtils;
-using TraineeManagement.Contracts.ErrorMessageUtils;
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
+using TraineeManagement.WebCommons.ErrorMessageUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 namespace TraineeManagement.Api.UserServices;
 
 

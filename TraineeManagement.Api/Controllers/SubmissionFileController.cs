@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
-using TraineeManagement.Contracts.ErrorCodesUtils;
-using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Api.FileServices;
-using TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ResponseHandlerUtil;
 using TraineeManagement.Data.SubmissionFileModel;
 using TraineeManagement.Api.SubmissionFileService;
 using TraineeManagement.Api.FileAttributeCustom;

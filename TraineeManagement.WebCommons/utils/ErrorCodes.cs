@@ -1,6 +1,6 @@
 using System.Reflection.Metadata;
-using TraineeManagement.Contracts.ErrorMessageUtils;
-namespace TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ErrorMessageUtils;
+namespace TraineeManagement.WebCommons.ErrorCodesUtils;
 public record ErrorCode(int Code, string Message);
 
 public static class ErrorCodes
@@ -35,5 +35,6 @@ public static class ErrorCodes
     public static readonly ErrorCode JWT_OPERATION_FAILED = new ErrorCode(5000, ErrorMessage.UniqueUsername);
     public static readonly ErrorCode SERVER_ERROR = new ErrorCode(5000, ErrorMessage.ServerError);
     public static readonly ErrorCode SERVER_CREDENTIAL_FAILED = new ErrorCode(5001, ErrorMessage.ServerError);
+    public static readonly ErrorCode INTER_SERVICE_FAILED = new ErrorCode(5001, ErrorMessage.InterServiceOperationFailed);
     public static readonly ErrorCode QUEUING_OPERATION_FAILED = new ErrorCode(5001, ErrorMessage.QueueOperationFailed);
 }

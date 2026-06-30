@@ -2,15 +2,16 @@ using TraineeManagement.Data.TraineeModel;
 using TraineeManagement.Data.TraineeDTO;
 using TraineeManagement.Data.DataBaseContext;
 using Microsoft.EntityFrameworkCore;
-using TraineeManagement.Contracts.ExceptionUtils;
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.Data.CacheServices;
 using System.Text.Json;
 using TraineeManagement.Data.ResponseDTO;
 using NuGet.Protocol;
 using System.Net;
-using TraineeManagement.Contracts.CoorealationIdServices;
-using TraineeManagement.Contracts.CoorealationIdMiddlewares;
+using TraineeManagement.WebCommons.CoorealationIdServices;
+using TraineeManagement.WebCommons.CoorealationIdMiddlewares;
+using TraineeManagement.Api.HttpServices;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -20,20 +21,18 @@ public class TraineeService : ITraineeService
     // private readonly List<Trainee> _trainees = new();
 
     // This is for the inMemory Database Instance
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IInterServiceHttpClient _interServiceHttpClient;
     private readonly IConfiguration _config;
     private readonly AppDbContext _context;
     private readonly ILogger<TraineeService> _logger;
     private readonly ICacheService _cache;
-    private readonly ICorrelationIdAccessor _correlationIdAccessor;
-    public TraineeService(IHttpClientFactory httpClientFactory, IConfiguration config, AppDbContext context, ILogger<TraineeService> logger, ICacheService cache, ICorrelationIdAccessor correlationIdAccessor)
+    public TraineeService(IConfiguration config, AppDbContext context, ILogger<TraineeService> logger, ICacheService cache, IInterServiceHttpClient interServiceHttpClient)
     {
-        _httpClientFactory = httpClientFactory;
         _config = config;
         _context = context;
         _logger = logger;
         _cache = cache;
-        _correlationIdAccessor = correlationIdAccessor;
+        _interServiceHttpClient = interServiceHttpClient;
     }
 
     // Helper Method
@@ -101,37 +100,20 @@ public class TraineeService : ITraineeService
         }
 
         string clientName = _config["TraineeMicroService:NAME"]!;
-        HttpClient client = _httpClientFactory.CreateClient(clientName);
-
-        using HttpRequestMessage request = new(HttpMethod.Get, $"trainees/{id}");
-
-        string? correlationId = _correlationIdAccessor.CorrelationId;
-        if (!string.IsNullOrEmpty(correlationId))
-        {
-            request.Headers.TryAddWithoutValidation(CorrelationIdMiddleware.HeaderName, correlationId);
-        }
-
-        using HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
-
-        if (response.StatusCode == HttpStatusCode.NotFound)
-        {
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
-        }
+        InterCommunicationResponse<TraineeResponse>? responseData =
+        await _interServiceHttpClient.GetAsync<InterCommunicationResponse<TraineeResponse>>(
+            clientName,
+            $"trainees/{id}",
+            cancellationToken);
 
         
-        response.EnsureSuccessStatusCode(); 
-
-        InterCommunicationResponse<TraineeResponse>? responseData =
-            await response.Content.ReadFromJsonAsync<InterCommunicationResponse<TraineeResponse>>(
-                new JsonSerializerOptions(JsonSerializerDefaults.Web),
-                cancellationToken);
-
-        if (responseData is null || responseData.Success == false || responseData.Data is null)
+        if (responseData is null || responseData.Data is null)
         {
             throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
         }
 
         trainee = responseData.Data;
+
         await _cache.SetAsync(cacheKey, trainee, CacheTTL.GETS_TTL_MIN);
         return trainee;
     }

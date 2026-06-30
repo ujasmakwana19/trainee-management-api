@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Data.CacheServices;
 using TraineeManagement.Data.DataBaseContext;
-using TraineeManagement.Contracts.ErrorCodesUtils;
-using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Data.ReviewModel;
 namespace TraineeManagement.Api.ReviewService;
 public class ReviewService : IReviewService

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-namespace TraineeManagement.Contracts.CoorealationIdMiddlewares;
+namespace TraineeManagement.WebCommons.CoorealationIdMiddlewares;
 
 public class CorrelationIdMiddleware
 {

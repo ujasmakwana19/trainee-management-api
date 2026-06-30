@@ -1,6 +1,6 @@
-using TraineeManagement.Contracts.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
 
-namespace TraineeManagement.Contracts.ExceptionUtils;
+namespace TraineeManagement.WebCommons.ExceptionUtils;
 public class NotFoundException : Exception
 {
     public readonly int _code;
@@ -49,6 +49,16 @@ public class QueuingOperationExeception : Exception
     public readonly int _code;
     public readonly string _message;
     public QueuingOperationExeception(ErrorCode message) 
+    {
+        _code = message.Code;
+        _message = message.Message;
+    }
+}
+public class InterServiceOperationExeception : Exception
+{
+    public readonly int _code;
+    public readonly string _message;
+    public InterServiceOperationExeception(ErrorCode message) 
     {
         _code = message.Code;
         _message = message.Message;

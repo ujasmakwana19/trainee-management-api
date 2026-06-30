@@ -1,7 +1,7 @@
 
 using Microsoft.AspNetCore.Http;
-using TraineeManagement.Contracts.CoorealationIdMiddlewares;
-namespace TraineeManagement.Contracts.CoorealationIdServices;
+using TraineeManagement.WebCommons.CoorealationIdMiddlewares;
+namespace TraineeManagement.WebCommons.CoorealationIdServices;
 
 public interface ICorrelationIdAccessor
 {

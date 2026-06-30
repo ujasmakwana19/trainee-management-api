@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TraineeManagement.Data.DataBaseContext;
-using TraineeManagement.Contracts.ErrorCodesUtils;
-using TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
+using TraineeManagement.WebCommons.ResponseHandlerUtil;
 using TraineeManagement.Data.ProcessingJobModel;
 namespace TraineeManagement.Api.ProcessingControllers;
 

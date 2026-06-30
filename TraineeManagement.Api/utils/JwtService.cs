@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using TraineeManagement.Data.UserModel;
-using TraineeManagement.Contracts.ExceptionUtils;
+using TraineeManagement.WebCommons.ExceptionUtils;
 
 namespace TraineeManagement.Api.JwtServices;
 

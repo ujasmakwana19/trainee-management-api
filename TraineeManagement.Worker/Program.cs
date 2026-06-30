@@ -1,40 +1,19 @@
 using TraineeManagement.Messaging;
 using TraineeManagement.Worker;
-using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
-using TraineeManagement.Data.DataBaseContext;
-using StackExchange.Redis;
 using TraineeManagement.Data.CacheServices;
+using TraineeManagement.Data.CacheSetup;
+using TraineeManagement.Data.DatabaseSetup;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    IConfiguration config = sp.GetRequiredService<IConfiguration>();
-    
-    IConnectionFactory factory = RabbitMqSetup.GetConnectionFactory(config);
+builder.Services.AddRabbitMqConnection(builder.Configuration, failFastOnStartup: true);
 
-    IConnection connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+builder.Services.AddRedisCache(builder.Configuration);
 
-    RabbitMqSetup.InitializeTopologyAsync(connection).GetAwaiter().GetResult();
-
-    return connection;
-});
-
-builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-{
-    string configuration = builder.Configuration.GetConnectionString("RedisConnection")!;
-    return ConnectionMultiplexer.Connect(configuration);
-});
-
-string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-MySqlServerVersion serverVersion = new MySqlServerVersion(new Version(8, 0, 41));
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, serverVersion));
+builder.Services.AddDb(builder.Configuration);
 
 // Register the consumer worker
-builder.Services.AddHostedService<SubmissionConsumerWorker>();
 builder.Services.AddSingleton<ICacheService,CacheService>();
+builder.Services.AddHostedService<SubmissionConsumerWorker>();
 IHost host = builder.Build();
 host.Run();

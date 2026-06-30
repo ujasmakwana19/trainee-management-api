@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraineeManagement.Data", "TraineeManagement.Data\TraineeManagement.Data.csproj", "{81B4D26F-B3C6-4614-B575-4EA5648CF9F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraineeManagement.Contracts", "TraineeManagement.Contracts\TraineeManagement.Contracts.csproj", "{7AAA3717-7C85-417D-9F8B-304B8C31A775}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraineeManagement.WebCommons", "TraineeManagement.WebCommons\TraineeManagement.WebCommons.csproj", "{7AAA3717-7C85-417D-9F8B-304B8C31A775}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraineeManagement.Messaging", "TraineeManagement.Messaging\TraineeManagement.Messaging.csproj", "{4FF428F2-A6D7-45E7-9234-C836A04974EA}"
 EndProject

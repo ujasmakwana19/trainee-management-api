@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Contracts.ErrorCodesUtils;
-namespace TraineeManagement.Contracts.ResponseHandlerUtil;
+using TraineeManagement.WebCommons.ErrorCodesUtils;
+namespace TraineeManagement.WebCommons.ResponseHandlerUtil;
 
 public static class ResponseHandler
 {

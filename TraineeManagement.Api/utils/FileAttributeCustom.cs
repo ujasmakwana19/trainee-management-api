@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using TraineeManagement.Contracts.ErrorMessageUtils;
+using TraineeManagement.WebCommons.ErrorMessageUtils;
 using TraineeManagement.Data.ValidationConstantUtils;
 
 namespace TraineeManagement.Api.FileAttributeCustom;

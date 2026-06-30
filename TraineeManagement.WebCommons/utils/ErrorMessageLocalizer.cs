@@ -4,7 +4,7 @@
 // // "Username must be between 3 and 50 characters.
 // // "Invalid email address format."
 // // "Role must be Admin, Mentor, or Trainee."
-namespace TraineeManagement.Contracts.ErrorMessageUtils;
+namespace TraineeManagement.WebCommons.ErrorMessageUtils;
 
 public static class ErrorMessage
 {
@@ -33,6 +33,7 @@ public static class ErrorMessage
     public const string UniqueUsername                    = "Username Already Exists";
     public const string JwtError                        = "An UnExpected Error Occured , Please try again";
     public const string ServerError                        = "Something Went Wrong";
+    public const string InterServiceOperationFailed         = "Some Services are not available, Please try again later";
     public const string QueueOperationFailed                        = "Something Went Wrong, while processing in background";
 
 }
