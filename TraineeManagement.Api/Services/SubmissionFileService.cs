@@ -6,6 +6,7 @@ using TraineeManagement.Api.FileServices;
 using TraineeManagement.Data.SubmissionFileModel;
 using TraineeManagement.Data.ProcessingJobModel;
 using TraineeManagement.Messaging;
+using TraineeManagement.WebCommons.CoorealationIdServices;
 
 namespace TraineeManagement.Api.SubmissionFileService;
 
@@ -14,12 +15,15 @@ public class SubmissionFileService : ISubmissionFileService
     private readonly AppDbContext _context;
     private readonly ILogger<SubmissionFileService> _logger;
     private readonly IEventPublisher _eventPublisher;
+    private readonly ICorrelationIdAccessor _correlationIdAccessor;
 
-    public SubmissionFileService(AppDbContext context, ILogger<SubmissionFileService> logger, IEventPublisher eventPublisher)
+    public SubmissionFileService(AppDbContext context, ILogger<SubmissionFileService> logger, IEventPublisher eventPublisher,
+    ICorrelationIdAccessor correlationIdAccessor)
     {
         _context = context;
         _logger = logger;
         _eventPublisher = eventPublisher;
+        _correlationIdAccessor = correlationIdAccessor;
     }
 
     public async Task<bool> IsSubmissionExists(long submissionId)
@@ -52,14 +56,16 @@ public class SubmissionFileService : ISubmissionFileService
         ProcessingJob message = new ProcessingJob
         {
             MessageId = Guid.NewGuid(),
-            CoorelationId = Guid.NewGuid(),
+            CoorelationId = string.IsNullOrEmpty(_correlationIdAccessor.CorrelationId) 
+                ? Guid.NewGuid() 
+                : Guid.Parse(_correlationIdAccessor.CorrelationId),
             SubmissionId = file.Id
         };
         _context.ProcessingJobs.Add(message);
         await _context.SaveChangesAsync();
         try
         {
-            _logger.LogInformation(" coorelationId:{CoorelationId} - The Job to process check sum is queuing", message.CoorelationId);
+            _logger.LogInformation("The Job to process check sum is queuing");
             await _eventPublisher.PublishAsync<ProcessingJob>(message, message.CoorelationId.ToString() , QueueConfig.SubmissionRouting);
         }
         catch (Exception)
@@ -68,7 +74,7 @@ public class SubmissionFileService : ISubmissionFileService
             message.Status = ProcessingJobStatus.Failed;
             message.ErrorSummary = "Failed to publish message to RabbitMQ";
             await _context.SaveChangesAsync();
-            _logger.LogInformation(" coorelationId:{CoorelationId} - The Queuing Operation failed", message.CoorelationId);
+            _logger.LogInformation("The Queuing Operation failed");
             
         }
 

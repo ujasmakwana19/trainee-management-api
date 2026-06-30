@@ -1,9 +1,5 @@
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.EntityFrameworkCore;
+
 using TraineeManagement.Api.JwtServices;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
-using Microsoft.Extensions.Http.Resilience;
 
 using TraineeManagement.Api.TraineeServices;
 using TraineeManagement.Api.UserServices;
@@ -16,8 +12,7 @@ using TraineeManagement.Api.ReviewService;
 using TraineeManagement.Api.FileServices;
 using TraineeManagement.Api.SubmissionFileService;
 using TraineeManagement.Data.CacheServices;
-using StackExchange.Redis;
-using RabbitMQ.Client;
+
 using TraineeManagement.Messaging;
 using TraineeManagement.WebCommons.CoorealationIdMiddlewares;
 using TraineeManagement.WebCommons.CoorealationIdServices;
@@ -29,6 +24,7 @@ using TraineeManagement.WebCommons.CorsSetup;
 using TraineeManagement.WebCommons.LoggingSetup;
 using TraineeManagement.Api.AuthSetup;
 using TraineeManagement.Api.HttpServices;
+using TraineeManagement.Api.HealthConfigurations;
 
 
 // Setup phase builder
@@ -84,6 +80,7 @@ builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICorrelationIdAccessor, CorrelationIdAccessor>();
 
+builder.Services.AddHealthChecks(builder.Configuration);
 // To make the Redis Soft Dependency for the system
 builder.Services.AddRedisCache(builder.Configuration);
 
@@ -94,9 +91,9 @@ builder.Services.AddMicroserviceClient(builder.Configuration);
 
 // -------
 WebApplication app = builder.Build();
-
 // Seeder Function
 await SeederService.SeedData(app.Services);
+app.MapAppHealthChecks();
 
 app.UseHttpsRedirection();
 app.UseCors(CorsServiceExtensions.MyAllowSpecificOrigins);

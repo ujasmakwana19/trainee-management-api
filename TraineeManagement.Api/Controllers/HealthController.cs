@@ -1,30 +1,62 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using TraineeManagement.Data.DataBaseContext;
-namespace TraineeManagement.Api.Controllers;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using RabbitMQ.Client;
+using System.Text.Json; 
 
-[Authorize]
-[ApiController]
-[Route("api/health")]
-public class HealthController : ControllerBase
+
+namespace TraineeManagement.Api.HealthConfigurations;
+ 
+public static class HealthCheck
 {
-  private readonly AppDbContext _context;
-  public HealthController(AppDbContext context)
-  {
-    _context = context;
-  }
-  [HttpGet]
-  public ActionResult GetMessage()
-  {
-    bool isDatabaseConnected = _context.Database.CanConnect();
-
-    return Ok(new
+    public static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
     {
-      status = "running",
-      application = "Trainee Management API",
-      // To get the timestamp in the ISO8601 format
-      timestamp = DateTime.Now.ToString("s"),
-      database = isDatabaseConnected ? "connected" : "not connected"
-    });
-  }
+        services.AddHealthChecks()
+            .AddMySql(
+                connectionString: configuration["ConnectionStrings:DefaultConnection"]!,
+                name: "mysql",
+                tags: ["readiness", "db"])
+            .AddRedis(
+                redisConnectionString: configuration["ConnectionStrings:RedisConnection"]!,
+                name: "redis",
+                tags: ["readiness", "cache"])
+            .AddRabbitMQ(
+                sp => {
+                  return sp.GetService<IConnection>()!;
+                },
+                name: "rabbitmq",
+                tags: ["readiness", "messaging"])
+            .AddUrlGroup(
+                uri: new Uri(configuration["TraineeMicroService:URI"] + "health"),
+                name: "directory-service",
+                tags: ["readiness", "upstream"]);
+ 
+        return services;
+    }
+ 
+    public static WebApplication MapAppHealthChecks(this WebApplication app)
+        {
+            app.MapHealthChecks("/api/health/live", new HealthCheckOptions
+            {
+                Predicate = _ => false,
+                ResponseWriter = WriteHealthResponse
+            });
+    
+            app.MapHealthChecks("/api/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("readiness"),
+                ResponseWriter = WriteHealthResponse
+            });
+    
+            return app;
+        }
+ 
+    private static Task WriteHealthResponse(HttpContext context, HealthReport report)
+    {
+        context.Response.ContentType = "application/json";
+        return context.Response.WriteAsync(JsonSerializer.Serialize(new
+        {
+            Status = report.Status == HealthStatus.Healthy ? "ready" : "unavailable",
+            Timestamp = DateTime.UtcNow
+        }));
+    }
 }
