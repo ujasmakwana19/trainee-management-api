@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.WebCommons.ExceptionUtils;
+using StackExchange.Redis;
 namespace TraineeManagement.WebCommons.ExceptionMiddlewares;
+
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -24,29 +26,29 @@ public class GlobalExceptionMiddleware
         }
         catch (NotFoundException ex)
         {
-            _logger.LogWarning("Not found: {Message}", ex);
+            _logger.LogWarning("Not found: {Message}", ex.Message);
             await WriteResponse(context, StatusCodes.Status404NotFound, ex._code, ex._message);
         }
         catch (UnauthorizedException ex)
         {
-            _logger.LogWarning("Unauthorized: {Message}", ex);
+            _logger.LogWarning("Unauthorized: {Message}", ex.Message);
             await WriteResponse(context, StatusCodes.Status401Unauthorized, ex._code, ex._message);
         }
         catch (BadRequestException ex)
         {
-            _logger.LogWarning("Bad request: {Message}", ex);
+            _logger.LogWarning("Bad request: {Message}", ex.Message);
             await WriteResponse(context, StatusCodes.Status400BadRequest, ex._code, ex._message);
         }
         catch (JwtOperationException ex)
         {
-            _logger.LogError("Invalid operation: {Message}", ex);
+            _logger.LogError("JWT Invalid operation: {Message}", ex.Message);
             await WriteResponse(context, StatusCodes.Status500InternalServerError, 
             ErrorCodes.JWT_OPERATION_FAILED.Code,
             ErrorCodes.JWT_OPERATION_FAILED.Message);
         }
         catch (ServerCredentialException ex)
         {
-            _logger.LogError("Server credential error: {Message}", ex);
+            _logger.LogError(ex,"Server credential error: {Message}", ex.Message);
             await WriteResponse(context, StatusCodes.Status500InternalServerError, 
             ErrorCodes.SERVER_CREDENTIAL_FAILED.Code,
             ErrorCodes.SERVER_CREDENTIAL_FAILED.Message);
@@ -63,6 +65,22 @@ public class GlobalExceptionMiddleware
             await WriteResponse(context, StatusCodes.Status500InternalServerError, 
             ex._code,
             ex._message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError("Invalid operation or Credentials error: {Message}", ex.Message);
+
+            await WriteResponse(context, StatusCodes.Status500InternalServerError, 
+            ErrorCodes.SERVER_CREDENTIAL_FAILED.Code,
+            ErrorCodes.SERVER_CREDENTIAL_FAILED.Message);
+        }
+        catch (RedisConnectionException ex)
+        {
+            _logger.LogError("Invalid operation or Credentials error: {Message}", ex.Message);
+
+            await WriteResponse(context, StatusCodes.Status500InternalServerError, 
+            ErrorCodes.SERVER_CREDENTIAL_FAILED.Code,
+            ErrorCodes.SERVER_CREDENTIAL_FAILED.Message);
         }
         catch (Exception ex)
         {
@@ -91,8 +109,9 @@ public class GlobalExceptionMiddleware
                     
             }
             else{
-                _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
-                    context.Request.Method, context.Request.Path);
+                _logger.LogError(ex, "Unhandled exception on {Method} {Path} {TypeOfException}",
+                    context.Request.Method, context.Request.Path, ex.GetType().Name);
+                
                 await WriteResponse(context,StatusCodes.Status500InternalServerError, 
                 ErrorCodes.SERVER_ERROR.Code, ErrorCodes.SERVER_ERROR.Message);
             }

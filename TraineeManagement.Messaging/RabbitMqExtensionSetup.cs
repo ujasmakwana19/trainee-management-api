@@ -38,8 +38,9 @@ public static class RabbitMqServiceExtensions
             catch (Exception ex)
             {
                 Console.WriteLine($"RabbitMQ unavailable at startup: {ex.Message}");
-                throw new InvalidOperationException(
-                    "RabbitMQ connection could not be established at startup.", ex);
+                // throw new InvalidOperationException(
+                //     "RabbitMQ connection could not be established at startup.", ex);
+                return null!;
             }
         });
 

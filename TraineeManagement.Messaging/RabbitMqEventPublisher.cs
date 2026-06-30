@@ -48,7 +48,7 @@ public class RabbitMqEventPublisher : IEventPublisher
                 body: body,
                 cancellationToken: cancellationToken
             );
-            _logger.LogInformation("CoorelationID:{CoorelationId} - Event published successfully: QueueBinding:{RoutingKey}", coorealtionId, routingKey);
+            _logger.LogInformation("Event published successfully: QueueBinding:{RoutingKey}", routingKey);
         }
         catch (Exception ex)
         {
@@ -56,4 +56,6 @@ public class RabbitMqEventPublisher : IEventPublisher
             return; // Cause soft dependency
         }
     }
+
+    
 }

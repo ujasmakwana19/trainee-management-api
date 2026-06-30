@@ -18,9 +18,16 @@ public class TraineeController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet("/api/health")]
+    public ActionResult HealthCheck()
+    {
+        return Ok();
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult> GetTraineeById(long id)
     {
+        await Task.Delay(TimeSpan.FromMinutes(1));
         if (!ModelState.IsValid || id < 1)
         {
             return ResponseHandler.CreateResponse(

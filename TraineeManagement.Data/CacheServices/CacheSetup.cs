@@ -13,8 +13,12 @@ public static class CacheServiceExtensions
     {
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
-            string connectionString = configuration.GetConnectionString("RedisConnection")
-            ?? throw new InvalidOperationException("RedisConnection connection string is missing in configuration.");
+            string? connectionString = configuration.GetConnectionString("RedisConnection");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("RedisConnection connection string is missing in configuration.");
+            }
 
             ConfigurationOptions options = ConfigurationOptions.Parse(connectionString);
 
