@@ -176,12 +176,13 @@ public class SubmissionFileController : ControllerBase
         }
 
         CancellationToken cancellationToken = HttpContext.RequestAborted;
-
+        if(await _submissionFileService.CheckIfReferenceExists(id, metadata.Checksum, cancellationToken))
+        {
+            await _fileStorageService.DeleteAsync(metadata.StorageName, cancellationToken);
+        }
         // Delete the file metadata in the MySQL
         await _submissionFileService.DeleteMetadataAsync(id, cancellationToken);
 
-        // Delete the file 
-        await _fileStorageService.DeleteAsync(metadata.StorageName, cancellationToken);
 
         return NoContent();
     }

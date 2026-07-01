@@ -7,6 +7,7 @@ using TraineeManagement.Data.SubmissionFileModel;
 using TraineeManagement.Data.ProcessingJobModel;
 using TraineeManagement.Messaging;
 using TraineeManagement.WebCommons.CoorealationIdServices;
+using System.Diagnostics.Metrics;
 
 namespace TraineeManagement.Api.SubmissionFileService;
 
@@ -68,13 +69,14 @@ public class SubmissionFileService : ISubmissionFileService
             _logger.LogInformation("The Job to process check sum is queuing");
             await _eventPublisher.PublishAsync<ProcessingJob>(message, message.CoorelationId.ToString() , QueueConfig.SubmissionRouting);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // throw new QueuingOperationExeception(ErrorCodes.QUEUING_OPERATION_FAILED);
             message.Status = ProcessingJobStatus.Failed;
             message.ErrorSummary = "Failed to publish message to RabbitMQ";
             await _context.SaveChangesAsync();
-            _logger.LogInformation("The Queuing Operation failed");
+            _logger.LogError(ex,"RabbitMq Exception:{ex}", ex.Message);
+            // SOftdependency , Hard Dependency
+            // throw new QueuingOperationExeception(ErrorCodes.QUEUING_OPERATION_FAILED);
             
         }
 
@@ -90,6 +92,16 @@ public class SubmissionFileService : ISubmissionFileService
         }
 
         return metadata;
+    }
+
+    public async Task<bool> CheckIfReferenceExists(long fileId, string Checksum, CancellationToken cancellationToken)
+    {
+        int count = await _context.SubmissionFiles.CountAsync(f => f.Checksum == Checksum, cancellationToken);
+        if (count > 1)
+        {
+            return false;
+        }
+        return true;
     }
 
     public async Task DeleteMetadataAsync(long fileId, CancellationToken cancellationToken)

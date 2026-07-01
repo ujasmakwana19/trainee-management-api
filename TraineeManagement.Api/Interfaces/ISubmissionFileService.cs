@@ -9,5 +9,6 @@ public interface ISubmissionFileService
     Task<long> SaveMetadataAsync(long submissionId, long uploadedByUserId, SavedFileResult savedFile, 
     CancellationToken cancellationToken);
     Task<SubmissionFile> GetByIdAsync(long fileId);
+    Task<bool> CheckIfReferenceExists(long fileId, string Checksum, CancellationToken cancellationToken);
     Task DeleteMetadataAsync(long fileId, CancellationToken cancellationToken);
 }

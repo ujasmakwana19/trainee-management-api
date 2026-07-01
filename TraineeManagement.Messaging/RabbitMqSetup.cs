@@ -9,15 +9,26 @@ public static class RabbitMqSetup
     public static ConnectionFactory GetConnectionFactory(IConfiguration configuration)
     {
         IConfiguration section = configuration.GetSection("RabbitMQ");
+        if(section is null || 
+            string.IsNullOrEmpty(section["HostName"]) || 
+            string.IsNullOrEmpty(section["Port"]) ||
+            string.IsNullOrEmpty(section["UserName"]) ||
+            string.IsNullOrEmpty(section["PassWord"]) ||
+            string.IsNullOrEmpty(section["VirtualHost"])
+        )
+        {
+            throw new InvalidOperationException("RabbitMq Credentials Error");
+        }
+        
         int.TryParse(section["Port"], out int port);
-
+        
         return new ConnectionFactory
         {
             HostName = section["HostName"]!,
             Port = port,
             UserName = section["UserName"]!,
             Password = section["Password"]!,
-            VirtualHost = section["VirtualHost"] ?? "/",
+            VirtualHost = section["VirtualHost"]!,
             // It is used to handle the connection automatically if 
             // if MQ does not exists or the failed to connect via starting up
             AutomaticRecoveryEnabled = true

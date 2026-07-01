@@ -161,36 +161,39 @@ public class SubmissionConsumerWorker : BackgroundService
         // throw new Exception("Hello");
         using (IServiceScope scope = _scopeFactory.CreateScope())
         {
-
+            bool isFound = false;
             AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             ICacheService cacheService = scope.ServiceProvider.GetRequiredService<ICacheService>();
             
             SubmissionFile? file = await context.SubmissionFiles.FirstOrDefaultAsync(t => t.Id == message.SubmissionId, cancellationToken);
+            
             if (file is not null && !string.IsNullOrEmpty(file.Checksum))
             {
                 IEnumerable<SubmissionFile?> existingSameFiles = await context.SubmissionFiles.Where(
                     t => t.Checksum == file.Checksum &&
+                
                     t.Id != file.Id).ToListAsync();
-               
+                
                 foreach (SubmissionFile? existingSameFile in existingSameFiles)
                 {
                     if (existingSameFile is not null && !string.IsNullOrEmpty(existingSameFile.Checksum))
                     {
                         if (File.Exists(Path.Combine(_localStoragePath, existingSameFile.StorageName)))
                         {
+                            string temp = file.StorageName;
                             string filePath = Path.Combine(_localStoragePath, file.StorageName);
                             file.StorageName = existingSameFile.StorageName;
 
                             await context.SaveChangesAsync();
 
-                            if (File.Exists(filePath))
+                            if (File.Exists(filePath) && temp!=existingSameFile.StorageName)
                             {
                                 _logger.LogInformation("CoorelationId:{CoorelationId} - Completed Processing and Replace the filled with already existed same file", message.CoorelationId);
                                 File.Delete(filePath);
                             }
-
+                            isFound = true;
                             
-                            return;
+                            break;
                         }
                     }
                 }
@@ -204,8 +207,8 @@ public class SubmissionConsumerWorker : BackgroundService
                     await _cacheService.RemoveAsync(CacheKey.trackTaskAll);
                     await _cacheService.RemoveAsync(CacheKey.trackTaskId + taskAssignment.Id);
                 }
-
-                _logger.LogInformation("CoorelationId:{CoorelationId} - Completed Processing and not existed same file", message.CoorelationId);
+                if(!isFound)
+                    _logger.LogInformation("CoorelationId:{CoorelationId} - Completed Processing and not existed same file", message.CoorelationId);
             }
         }
     }

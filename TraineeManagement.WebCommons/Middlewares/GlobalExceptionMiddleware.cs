@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.WebCommons.ExceptionUtils;
+using RabbitMQ.Client.Exceptions;
 using StackExchange.Redis;
+
 namespace TraineeManagement.WebCommons.ExceptionMiddlewares;
 
 public class GlobalExceptionMiddleware
@@ -76,11 +78,19 @@ public class GlobalExceptionMiddleware
         }
         catch (RedisConnectionException ex)
         {
-            _logger.LogError("Invalid operation or Credentials error: {Message}", ex.Message);
+            _logger.LogError("Unable to Connect to Redis: {Message}", ex.Message);
 
             await WriteResponse(context, StatusCodes.Status500InternalServerError, 
-            ErrorCodes.SERVER_CREDENTIAL_FAILED.Code,
-            ErrorCodes.SERVER_CREDENTIAL_FAILED.Message);
+            ErrorCodes.REDIS_ERROR.Code,
+            ErrorCodes.REDIS_ERROR.Message);
+        }
+        catch (RabbitMQClientException ex)
+        {
+            _logger.LogError("Unable to Connect to RabbitMq: {Message}", ex.Message);
+
+            await WriteResponse(context, StatusCodes.Status500InternalServerError, 
+            ErrorCodes.RABBIT_MQ_ERROR.Code,
+            ErrorCodes.RABBIT_MQ_ERROR.Message);
         }
         catch (Exception ex)
         {

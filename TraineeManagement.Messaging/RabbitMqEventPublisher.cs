@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 
 namespace TraineeManagement.Messaging;
 
@@ -16,19 +17,23 @@ public class RabbitMqEventPublisher : IEventPublisher
         _logger = logger;
     }
 
-    public async Task PublishAsync<T>(T message, string coorealtionId, string routingKey, CancellationToken cancellationToken = default)
-        where T : class
+    public async Task PublishAsync<T>(T message, string coorealtionId, string routingKey, CancellationToken cancellationToken = default)  
+        where T : class 
     {
         if (_connection == null || !_connection.IsOpen)
         {
             _logger.LogWarning("RabbitMQ unavailable event not published: {RoutingKey}", routingKey);
-            return; // Cause soft dependency
+            throw new InvalidOperationException("Rabbit Mq is not available"); // Cause soft dependency
         }
 
         try
         {
+            CreateChannelOptions channelOptions = new CreateChannelOptions(
+                publisherConfirmationsEnabled: true,
+                publisherConfirmationTrackingEnabled: true
+            );
             // This creates the scoped channel it will be , closed as the message is published successfully
-            using IChannel channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            using IChannel channel = await _connection.CreateChannelAsync(channelOptions,cancellationToken: cancellationToken);
 
             // the data (message) must be converted to and fro from json to bytes
             // before sending and after receiving 
@@ -53,7 +58,7 @@ public class RabbitMqEventPublisher : IEventPublisher
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish event: {RoutingKey}", routingKey);
-            return; // Cause soft dependency
+            throw ; 
         }
     }
 

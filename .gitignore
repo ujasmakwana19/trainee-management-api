@@ -1,7 +1,6 @@
 *.mp4
 bin/
 obj/
-appsettings.json
 appsettings.Development.json
 simple.txt
 /publish

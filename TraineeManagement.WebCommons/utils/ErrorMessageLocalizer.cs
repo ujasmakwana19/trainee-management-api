@@ -34,6 +34,8 @@ public static class ErrorMessage
     public const string JwtError                        = "An UnExpected Error Occured , Please try again";
     public const string ServerError                        = "Something Went Wrong";
     public const string InterServiceOperationFailed         = "Some Services are not available, Please try again later";
+    public const string RedisError                        = "Some Services are down , sorry for latency issue";
+    public const string RabbitMqError                        = "Some Services are not available to process";
     public const string QueueOperationFailed                        = "Something Went Wrong, while processing in background";
 
 }

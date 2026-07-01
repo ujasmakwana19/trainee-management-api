@@ -36,5 +36,7 @@ public static class ErrorCodes
     public static readonly ErrorCode SERVER_ERROR = new ErrorCode(5000, ErrorMessage.ServerError);
     public static readonly ErrorCode SERVER_CREDENTIAL_FAILED = new ErrorCode(5001, ErrorMessage.ServerError);
     public static readonly ErrorCode INTER_SERVICE_FAILED = new ErrorCode(5001, ErrorMessage.InterServiceOperationFailed);
+    public static readonly ErrorCode REDIS_ERROR = new ErrorCode(5001, ErrorMessage.RedisError);
+    public static readonly ErrorCode RABBIT_MQ_ERROR = new ErrorCode(5001, ErrorMessage.RabbitMqError);
     public static readonly ErrorCode QUEUING_OPERATION_FAILED = new ErrorCode(5001, ErrorMessage.QueueOperationFailed);
 }
