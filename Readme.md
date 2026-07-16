@@ -1,267 +1,131 @@
-# TraineeManagement.Api
+# Trainee Management API
 
-## Project Overview
+A backend REST API for managing trainees, mentors, learning tasks, assignments, submissions, and reviews. Built with ASP.NET Core Web API and Entity Framework Core, it supports JWT authentication, file uploads, distributed caching with Redis, and asynchronous processing through RabbitMQ and a background worker service.
 
-TraineeManagement.Api is an ASP.NET Core Web API developed for managing trainee records.
+---
 
-The project demonstrates:
-
-- ASP.NET Core Web API
-- Controllers
-- DTOs
-- Service Layer
-- EF Core with MySQL (Code First)
-- CRUD Operations
-- Validation
-- JWT Authentication
-- Swagger
+## Architecture
+![Architecture Diagram](./Architecture.png)
 
 ## Technology Stack
 
-- C#
-- .NET 9
-- ASP.NET Core Web API
-- Entity Framework Core
-- MySQL
-- JWT Authentication
-- Swagger
+- **Language:** C# (.NET)
+- **Framework:** ASP.NET Core Web API
+- **ORM:** Entity Framework Core (Code First)
+- **Database:** MySQL
+- **Authentication:** JWT Bearer Tokens
+- **Caching:** Redis
+- **Messaging:** RabbitMQ
+- **Background Processing:** .NET Worker Service
+- **Containerization:** Docker Compose
+- **API Documentation:** Postman
+
+---
 
 ## Project Structure
+
 ```text
-├── Controllers/
-│   ├── HealthController.cs
-│   ├── TraineesController.cs
-│   ├── UsersController.cs
-│   ├── MentorsController.cs
-│   ├── LearningTasksController.cs
-│   ├── TaskAssignmentsController.cs
-│   ├── SubmissionsController.cs
-│   └── ReviewsController.cs
-├── DTOs/
-│   ├── TraineeDTO.cs
-│   ├── UserDTO.cs
-│   ├── MentorDTO.cs
-│   ├── LearningTaskDTO.cs
-│   ├── TaskAssignmentDTO.cs
-│   ├── SubmissionDTO.cs
-│   └── ReviewDTO.cs
-├── Data/
-│   └── AppDbContext.cs
-├── Interfaces/
-│   ├── IDateTimeAuto.cs
-│   ├── ITraineeService.cs
-│   ├── IUserService.cs
-│   ├── IMentorService.cs
-│   ├── ILearningTaskService.cs
-│   ├── ITaskAssignmentService.cs
-│   ├── ISubmissionService.cs
-│   └── IReviewService.cs
-├── Middlewares/
-│   └── GlobalExceptionMiddleware.cs
-├── Migrations/
-├── Models/
-│   ├── Trainee.cs
-│   ├── User.cs
-│   ├── Mentor.cs
-│   ├── LearningTask.cs
-│   ├── TaskAssignment.cs
-│   ├── Submission.cs
-│   └── Review.cs
-├── Properties/
-│   └── launchSettings.json
-├── utils/
-│   ├── AppException.cs
-│   ├── JwtService.cs
-│   └── SeedService.cs
-├── Program.cs
-├── TraineeManagement.Api.csproj
-├── TraineeManagement.Api.http
-├── appsettings.json
-└── appsettings.Development.json
+TraineeManagement.Api
+│
+├── TraineeManagement.Api (Main App)
+│   ├── Controllers
+│   ├── Interfaces
+│   ├── Microservices
+│   ├── Properties
+│   ├── Services
+│   ├── Utils
+│   └── Program.cs
+│
+├── TraineeManagement.Data (Data Reference)
+│   ├── CacheServices
+│   ├── DTOs
+│   ├── Data
+│   ├── Migrations
+│   ├── Models
+│   ├── Validations
+│   └── Utils
+│
+├── TraineeManagement.Messaging (RabbitMQ Extennsion Method)
+│   └── RabbitMQ Contracts
+│
+├── TraineeManagement.WebCommons (Common Functions of the Web)
+│   ├── Configs
+│   ├── Middlewares
+│   └── Utils
+│
+├── TraineeManagement.Worker (Background Worker)
+│   ├── Processing
+│   └── Properties
+│
+├── TrainingDirectory.Api (Internal Microservice)
+│   ├── Controllers
+│   ├── Interfaces
+│   ├── Services
+│   └── Properties
+│
+├── Uploads
+├── init-db
+└── docker-compose.yml
 ```
 
 ---
 
-## Phase 1
-### Day 1:
-#### Goal
-- Create the Health endpoint to get the status of the server
-- Create the Trainee class with the following fields
-  - Id - Unique & AUTO Generate
-  - FirstName
-  - LastName
-  - Email
-  - TechStack
-  - Status
-  - CreatedDate - AUTO Generate
-  - UpdatedDate - AUTO Generate
-- Create the apis to (getall, getbyid, add) trainee
-- Get the swagger running and test apis
+## Prerequisites
 
-### Day 2:
-#### Goal
-- Add Data Validations to the fields
-- Add Proper Error Messages and Error Codes
-- Create the update API
-- Create the Delete API
-- Use the DTOs to send Response and the Data communication between controllers and services
-- Use the services to write the modular code so that code remains loosely coupled
+Make sure the following are installed before running the project:
 
-### Day 3:
-#### Goal
-- Use the EF Core Framework & Connect the Inmemory storage
-- Create the AppDbContext using DbContext and the Dbset such that easy to move to the persistent DBMS
-- Create the search api /api/trainees?search=value
-- Complete the task, upload to github and documentation
+- .NET SDK 9 
+- MySQL Server 8.0.x
+- Docker Compose in wsl
+- Postman
 
 ---
 
-## Phase 2
-### Day 1: MySQL Database with EF Core Code First
-#### Goal
-- Replace EF Core InMemory DB with MySQL
-- Read connection string from appsettings.json (no hardcoding)
-- Create and apply EF Core migration for the Trainee table
-- Verify all existing trainee CRUD APIs work with MySQL
-- Update README with MySQL setup and migration commands
+## Setup and Running the Project
 
-### Day 2: User/Auth, Password Hashing, and JWT
-#### Goal
-- Create User entity with fields: Id, Username, Email, PasswordHash, Role, CreatedDate, UpdatedDate
-- Never store plain text passwords - only store PasswordHash
-- Create migration for Users table
-- Seed at least one Admin user for testing
-- Create Login API (POST /api/auth/login)
-- Generate JWT token with claims: UserId, Username, Role
-- JWT config (Issuer, Audience, ExpiryMinutes) read from appsettings.json
-
-### Day 3: Protected APIs, Pagination, CORS, Logging
-#### Goal
-- Protect all trainee APIs with JWT (no token = 401)
-- Add pagination + search + status filter to GET /api/trainees
-- Use Skip() and Take() for pagination, never return large datasets blindly
-- Configure CORS for React frontend origins (localhost:3000, localhost:5173)
-- Add structured logging for login, CRUD events, not-found cases
-- Never log passwords, JWT tokens, or sensitive data
-
-### Day 4: Mentor and Learning Task APIs
-#### Goal
-- Create Mentor module (Id, FirstName, LastName, Email, Expertise, Status, CreatedDate, UpdatedDate)
-- Create CRUD APIs for mentors
-- Create Learning Task module (Id, Title, Description, ExpectedTechStack, DueDate, Status, CreatedDate, UpdatedDate)
-- Create CRUD APIs for learning tasks
-- DTOs and validations for both modules
-- All APIs protected with JWT
-- Migrations updated for both tables
-
-### Day 5: Task Assignment, Submission, Review APIs
-#### Goal
-- Create Task Assignment module - links Trainee, Mentor, LearningTask with AssignedDate, DueDate, Status, Remarks
-- Validate that TraineeId, MentorId, LearningTaskId exist before creating assignment
-- DueDate must not be before AssignedDate
-- Create Submission module - links to TaskAssignment with SubmissionUrl, Notes, SubmittedDate, Status
-- Create Review module - links to Submission with Feedback, Score, ReviewStatus, ReviewedDate
-- Add Global Exception Handling Middleware - return safe error messages, never expose stack traces
-- OWASP API Security checklist completed
-
----
-
-## API Endpoints
-
-### Public
-- GET /api/health
-- POST /api/auth/login
-
-### Trainees (JWT Protected)
-- GET /api/trainees?pageNumber=1&pageSize=10&search=value&status=Active
-- GET /api/trainees/:id
-- POST /api/trainees
-- PUT /api/trainees/:id
-- DELETE /api/trainees/:id
-
-### Mentors (JWT Protected)
-- GET /api/mentors
-- GET /api/mentors/:id
-- POST /api/mentors
-- PUT /api/mentors/:id
-- DELETE /api/mentors/:id
-
-### Learning Tasks (JWT Protected)
-- GET /api/learning-tasks
-- GET /api/learning-tasks/:id
-- POST /api/learning-tasks
-- PUT /api/learning-tasks/:id
-- DELETE /api/learning-tasks/:id
-
-### Task Assignments (JWT Protected)
-- POST /api/task-assignments
-- GET /api/task-assignments
-- GET /api/task-assignments/:id
-- PUT /api/task-assignments/:id/status
-
-### Submissions (JWT Protected)
-- POST /api/submissions
-- GET /api/submissions
-- GET /api/submissions/:id
-
-### Reviews (JWT Protected)
-- POST /api/reviews
-- GET /api/reviews
-- GET /api/reviews/:id
-
----
-
-## To Run Project
-```bash
-git clone https://github.com/ujasmakwana19/trainee-management-api
-dotnet restore
-dotnet clean
-dotnet build
-dotnet ef database update
-# if you dont have ef tools installed
-dotnet tool install --global dotnet-ef
-dotnet run
-# open swagger
-https://localhost:<port>/swagger
-```
-
----
-
-## MySQL Setup
-
-```json
-// appsettings.json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=3306;database=trainee_management_db;user=root;password=your_password;"
-  },
-  "Jwt": {
-    "Issuer": "TraineeManagementApi",
-    "Audience": "TraineeManagementClient",
-    "ExpiryMinutes": 60
-  }
-}
-```
+### Step 1 — Clone the Repository
 
 ```bash
-dotnet ef migrations add <MigrationName>
-dotnet ef database update
+git clone
+cd trainee-management-api
 ```
+
+### Step 2 — Configure appsettings.json
+
+Open `.env.example` and create `.env` and fill in your MySQL & RabbitMQ credentials, JWT key and set envioronment:
+create the nuget.config file in the root and login to aws to get credintials in that file
+aws congifure sso...
+
+### Step 3 — Run Everything with Docker Compose
+
+To start MySQL, Redis, RabbitMQ, the main API, the background worker, and the internal directory services all together:
+
+```bash
+docker-compose up --build
+```
+
+Services communicate using container names, not localhost. Credentials for all services must be set in environment configuration.
 
 ---
 
-## JWT Usage
+## How Authentication Works
 
-**Login Request**
-```json
+Most APIs require a valid JWT token. To get one, call the login endpoint first.
+
+**Login:**
+```
 POST /api/auth/login
+```
+
+Request body:
+```json
 {
   "username": "admin",
-  "password": "Admin@123"
+  "password": "Ram"
 }
 ```
 
-**Login Response**
+Response:
 ```json
 {
   "token": "jwt-token-value",
@@ -274,47 +138,104 @@ POST /api/auth/login
 }
 ```
 
-**Using the token**
+For every protected API call, add this header:
 ```
 Authorization: Bearer <token>
 ```
 
----
+The only public endpoints that do not need a token are `GET /api/health` and `POST /api/auth/login`.
 
-## Sample Responses
-
-**Trainee Response**
-```json
-{
-  "id": 1,
-  "firstName": "Amit",
-  "lastName": "Sharma",
-  "email": "amit.sharma@training.com",
-  "techStack": "HTML, CSS, JavaScript",
-  "status": "Active"
-}
-```
-
-**Paginated GET Response**
-```json
-{
-  "pageNumber": 1,
-  "pageSize": 10,
-  "totalRecords": 25,
-  "data": []
-}
-```
+**Test credentials:**
+- Username: `admin`
+- Password: `Ram`
 
 ---
 
-## Security Checklist
-- JWT authentication enabled
-- All non-public APIs require valid token
-- Passwords stored as hash only (BCrypt)
-- DTOs used - PasswordHash never returned in responses
-- EF Core used - no unsafe raw SQL
-- CORS restricted to expected origins
-- Secrets not hardcoded in controllers
-- Stack traces not returned in error responses
-- Passwords and tokens not logged
-- Global exception handling middleware added
+## How File Upload Works
+
+To upload a submission file:
+
+1. Authenticate and get a JWT token
+2. Call `POST /api/submissions/{submissionId}/files` with `multipart/form-data`
+3. The API validates the file, saves metadata to MySQL, and publishes a message to RabbitMQ
+4. You receive `202 Accepted` with a tracking ID
+5. The background worker picks up the message, processes the message, and updates the job status
+6. Poll `GET /api/processing-jobs/{id}` to check if processing is complete
+7. Download the file with `GET /api/submission-files/{id}/download`
+
+File security rules:
+- Empty files and files above the configured size limit are rejected
+- Only allowed file extensions are accepted
+- Physical file names are always server-generated the original file name is never used on disk
+- The storage path is never exposed in API responses
+
+---
+
+## Caching
+
+Redis is used as a distributed cache for frequently read data like trainee profiles, task assignment and submission.
+
+- On a cache miss the API reads from MySQL, stores the result in Redis with a TTL, and returns it
+- Cache keys follow the pattern `trainee:{id}`, `submission:{id}`
+- The cache is invalidated whenever a record is created, updated, or deleted
+- If Redis is unavailable the API falls back to MySQL it does not fail
+
+---
+
+## Asynchronous Processing
+
+Submission file processing is handled asynchronously through RabbitMQ and a separate worker service.
+
+- Queue name: `submission-processing` (durable, persistent)
+- The API publishes a message after a valid file upload and returns immediately.
+- The worker consumes one message at a time, update the task assignment status, also make if any one have same file so this filename replace by that filename and delete that for storage optimization, and acknowledges only after success
+- If processing fails after retries, the message is moved to a dead-letter queue and the job is marked as Failed
+- The worker is idempotent duplicate messages are detected and skipped safely
+
+---
+
+## Internal Service Communication
+
+`TrainingDirectory.Api` is a small internal service that returns data for trainee when request is come for readonly.
+
+- Communication uses `HttpClient` with a configured base address and timeout
+- A correlation ID is passed through every API call, database record, RabbitMQ message, and worker log so the full lifecycle of any request can be traced in logs
+
+---
+
+## Health Checks
+
+```
+GET /health/live    → liveness check
+GET /health/ready   → readiness check (MySQL, Redis, RabbitMQ, internal service)
+```
+
+---
+
+## Security Practices
+
+- Passwords are always stored as hashes plain text passwords are never stored or logged
+- `PasswordHash` is never returned in any API response
+- JWT signing key is read from configuration, not hardcoded
+- DTOs are used to control what data is exposed entities are never returned directly
+- All data access goes through EF Core no raw SQL queries
+- Global exception middleware catches unexpected errors and returns a safe message without stack traces
+- Logs never contain passwords, JWT tokens, connection strings, or file contents
+- CORS is restricted to `http://localhost:3000` and `http://localhost:5173` for local development
+
+---
+
+## Known Limitations
+
+- Local disk is used for file storage, not cloud storage.
+- MySQL, Redis, and RabbitMQ run as single-node no clustering or high availability
+- No email notifications or real-time updates
+
+---
+
+## Next Improvement Areas
+
+- Connect a React frontend
+- Replace local file storage with cloud object storage
+- Add API versioning
+- Add role-based access control per endpoint
