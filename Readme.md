@@ -5,6 +5,8 @@ A backend REST API for managing trainees, mentors, learning tasks, assignments, 
 ---
 
 ## Architecture
+<img width="7680" height="4536" alt="architecture1" src="https://github.com/user-attachments/assets/b078614a-773d-4d36-8687-30f3274232ac" />
+
 [Architecture Diagram](https://drive.google.com/file/d/1elFZLVWt51aaFQ_d_TZERj0AJYDloTFP/view?usp=sharing)
 
 ## Technology Stack
