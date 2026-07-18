@@ -20,6 +20,9 @@ public static class ErrorMessage
     public const string Queued                            = "Task will be processed";
     public const string InvalidCredentials                 = "Invalid credentials.";
     public const string InvalidToken                 = "Unauthorised, Please login again";
+    public const string RoleForbidden                 = "Unauthorised, To Perform Action";
+    public const string NotOwnerOfResource                 = "Unauthorised, To Perform Action on not owned";
+    
     public const string TraineeNotFound                    = "Trainee Not Found";
     public const string MentorNotFound                    = "Mentor Not Found";
     public const string TaskNotFound                    = "Task Not Found";

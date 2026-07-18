@@ -29,6 +29,7 @@ public class MentorController : ControllerBase
     }
 
     // api/mentors/:id
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpGet("{id}")]
     public async Task<ActionResult> GetMentorById(long id)
     {
@@ -46,7 +47,8 @@ public class MentorController : ControllerBase
             mentor
         );
     }
-
+    
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     public async Task<ActionResult<MentorResponse>> CreateMentorRequest([FromBody] MentorRequestBody mentorInfo)
     {
@@ -60,6 +62,7 @@ public class MentorController : ControllerBase
         return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,mentor);
     }
 
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPut("{id}")]
     public async Task<ActionResult<MentorResponse>> UpdateMentorRequest(long id, [FromBody] MentorRequestBody mentorInfo)
     {
@@ -81,6 +84,7 @@ public class MentorController : ControllerBase
         return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,mentor);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteMentorRequest(long id)
     {

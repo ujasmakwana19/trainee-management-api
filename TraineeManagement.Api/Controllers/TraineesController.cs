@@ -10,7 +10,6 @@ using TraineeManagement.Data.TraineeModel;
 
 namespace TraineeManagement.Api.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/trainees")]
 public class TraineesController : ControllerBase
@@ -51,6 +50,7 @@ public class TraineesController : ControllerBase
 
   // To add the Trainee
   // POST /api/trainees
+  [Authorize(Policy = "MentorOrAdminOnly")]
   [HttpPost]
   public async Task<ActionResult<TraineeResponse>> CreateTrainee([FromBody] CreateTraineeRequest trainee)
   {
@@ -69,6 +69,7 @@ public class TraineesController : ControllerBase
   }
 
   // PUT /api/trainees/:id
+  [Authorize(Policy = "MentorOrAdminOnly")]
   [HttpPut("{id}")]
   public async Task<ActionResult<TraineeResponse>> UpdateTrainee(long id, [FromBody] UpdateTraineeRequest trainee)
   {
@@ -91,6 +92,7 @@ public class TraineesController : ControllerBase
 
   // To Delete the Trainee
   // DELETE /api/trainees/:id
+  [Authorize(Policy = "MentorOrAdminOnly")]
   [HttpDelete("{id}")]
   public async Task<ActionResult> DeleteTrainee(long id)
   {

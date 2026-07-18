@@ -23,6 +23,17 @@ public class UnauthorizedException : Exception
     }
 }
 
+public class ForbiddenException : Exception
+{
+    public readonly int _code;
+    public readonly string _message;
+    public ForbiddenException(ErrorCode message) 
+    {
+        _code = message.Code;
+        _message = message.Message;
+    }
+}
+
 public class BadRequestException : Exception
 {
     public readonly int _code;

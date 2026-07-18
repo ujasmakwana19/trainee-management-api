@@ -121,8 +121,19 @@ POST /api/auth/login
 
 Request body:
 ```json
+// Admin
 {
   "username": "admin",
+  "password": "Ram"
+}
+// Mentor
+{
+  "username": "mentor",
+  "password": "Ram"
+}
+// Trainee
+{
+  "username": "trainee",
   "password": "Ram"
 }
 ```

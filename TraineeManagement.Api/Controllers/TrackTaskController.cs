@@ -20,6 +20,7 @@ public class TrackTaskController : ControllerBase
         _logger = logger;
     }
 
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPost]
     public async Task<ActionResult> CreateTrackTask([FromBody] TrackTaskRequestBody body)
     {
@@ -53,6 +54,7 @@ public class TrackTaskController : ControllerBase
         return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, tasks);
     }
 
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPut("{id}/status")]
     public async Task<ActionResult<TrackTaskResponse>> UpdateTrackTask(long id, [FromBody] TrackTaskUpdateRequestBody body)
     {

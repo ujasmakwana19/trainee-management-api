@@ -4,6 +4,7 @@ using TraineeManagement.Data.DataBaseContext;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Data.ReviewModel;
+using TraineeManagement.Data.TrackTaskModel;
 namespace TraineeManagement.Api.ReviewService;
 public class ReviewService : IReviewService
 {   
@@ -41,8 +42,26 @@ public class ReviewService : IReviewService
         );
     }
 
+    // The Assigned Mentor only can create the review for the specific submission
+    private async Task<bool> IsMentorSameAsAssigned(long submissionId, long mentorId)
+    {
+        bool isAssigned = await (
+            from s in _context.Submissions
+            join t in _context.TrackTasks on s.TaskAssignmentId equals t.Id
+            where s.Id == submissionId
+            select t.MentorId == mentorId
+        ).FirstOrDefaultAsync();
+    
+        return isAssigned;
+    } 
+
     public async Task<ReviewResponse> CreateReview(ReviewRequestBody body)
     {
+        if(!await IsMentorSameAsAssigned(body.SubmissionId, body.MentorId))
+        {
+            throw new UnauthorizedException(ErrorCodes.NOT_OWNER_ACCESS);
+        }
+
         Review review = new Review
         {
             SubmissionId = body.SubmissionId,

@@ -19,8 +19,9 @@ public class ReviewController : ControllerBase
         _logger = logger;
     }
 
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPost]
-    public async Task<ActionResult> CreateTrackTask([FromBody] ReviewRequestBody body)
+    public async Task<ActionResult> CreateReviewController([FromBody] ReviewRequestBody body)
     {
         if (!ModelState.IsValid)
         {
@@ -56,7 +57,7 @@ public class ReviewController : ControllerBase
     }
 
     [HttpGet("getall")]
-    public async Task<ActionResult> GetAllTasks()
+    public async Task<ActionResult> GetAllReviews()
     {
         IEnumerable<ReviewResponse> reviews = await _service.GetAll();
         return ResponseHandler.SuccessResponse(

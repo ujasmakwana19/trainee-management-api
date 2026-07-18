@@ -62,7 +62,7 @@ public class UserService : IUserService
     public async Task<LoginUserResponse> Login(LoginUserRequest userInfo)
     {
         
-        User user = await FetchUser(userInfo.Username!);
+        User user = await FetchUser(userInfo.Username);
 
         if (user.PasswordHash is null)
         {
@@ -70,11 +70,11 @@ public class UserService : IUserService
             throw new UnauthorizedException(ErrorCodes.INVALID_CREDENTIALS);
         }
 
-        PasswordVerificationResult result = VerifyPassword(user, user.PasswordHash,userInfo.Password!); 
+        PasswordVerificationResult result = VerifyPassword(user, user.PasswordHash, userInfo.Password); 
 
         if(result == PasswordVerificationResult.Success)
         {
-            string token = _jwtService.GenerateToken(user);
+            string token = _jwtService.GenerateToken(user); 
             
             return ToResponse(token, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
         }

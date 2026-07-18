@@ -51,6 +51,7 @@ public class LearningTaskController : ControllerBase
         );
     }
 
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPost]
     public async Task<ActionResult> CreateTaskRequest([FromBody] TaskRequestBody taskInfo)
     {
@@ -69,6 +70,7 @@ public class LearningTaskController : ControllerBase
         );
     }
 
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateTaskRequest(long id, [FromBody] TaskRequestBody taskInfo)
     {
@@ -92,6 +94,7 @@ public class LearningTaskController : ControllerBase
         );
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteTaskRequest(long id)
     {

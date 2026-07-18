@@ -27,7 +27,6 @@ public class TraineeController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetTraineeById(long id)
     {
-        await Task.Delay(TimeSpan.FromMinutes(1));
         if (!ModelState.IsValid || id < 1)
         {
             return ResponseHandler.CreateResponse(

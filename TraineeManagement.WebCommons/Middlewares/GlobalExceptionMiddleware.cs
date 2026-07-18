@@ -36,6 +36,11 @@ public class GlobalExceptionMiddleware
             _logger.LogWarning("Unauthorized: {Message}", ex.Message);
             await WriteResponse(context, StatusCodes.Status401Unauthorized, ex._code, ex._message);
         }
+        catch (ForbiddenException ex)
+        {
+            _logger.LogWarning("Unauthorized User Forbidden: {Message}", ex.Message);
+            await WriteResponse(context, StatusCodes.Status403Forbidden, ex._code, ex._message);
+        }
         catch (BadRequestException ex)
         {
             _logger.LogWarning("Bad request: {Message}", ex.Message);

@@ -1,4 +1,3 @@
-using System.Reflection.Metadata;
 using TraineeManagement.WebCommons.ErrorMessageUtils;
 namespace TraineeManagement.WebCommons.ErrorCodesUtils;
 public record ErrorCode(int Code, string Message);
@@ -16,7 +15,9 @@ public static class ErrorCodes
     public static readonly ErrorCode INVALID_PARAMS_QUERY = new ErrorCode(4000, ErrorMessage.InvalidInputParamsQuery);
     public static readonly ErrorCode UNAUTHORISE_ACCESS = new ErrorCode(4010, ErrorMessage.UnauthoriseAccess);
 
-
+    public static readonly ErrorCode ROLE_FORBIDDEN = new ErrorCode(4030, ErrorMessage.RoleForbidden);
+    public static readonly ErrorCode NOT_OWNER_ACCESS = new ErrorCode(4010, ErrorMessage.NotOwnerOfResource);
+    
     public static readonly ErrorCode NOT_FOUND_TRAINEE = new ErrorCode(4040, ErrorMessage.TraineeNotFound);
     public static readonly ErrorCode NOT_FOUND_MENTOR = new ErrorCode(4040, ErrorMessage.MentorNotFound);
     public static readonly ErrorCode NOT_FOUND_TASK = new ErrorCode(4040, ErrorMessage.TaskNotFound);

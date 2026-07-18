@@ -16,8 +16,9 @@ using TraineeManagement.Data.CacheServices;
 using TraineeManagement.Messaging;
 using TraineeManagement.WebCommons.CoorealationIdMiddlewares;
 using TraineeManagement.WebCommons.CoorealationIdServices;
+using TraineeManagement.WebCommons.AuthClaims;
+
 using Serilog;
-using Serilog.Events;
 using TraineeManagement.Data.CacheSetup;
 using TraineeManagement.Data.DatabaseSetup;
 using TraineeManagement.WebCommons.CorsSetup;
@@ -57,6 +58,9 @@ builder.Services.AddDb(builder.Configuration);
 // Authentication--------------------------
 builder.Services.AddJwtAuthentication(builder.Configuration);
 // ------------------------------------------
+// Authorization--------------------------
+builder.Services.AddRoleAuthorisation();
+// ------------------------------------------
 
 
 
@@ -77,11 +81,15 @@ builder.Services.AddScoped<ICacheService,CacheService>();
 
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
+// Bridges between the HttpContext for currect request to be handled by the
+// Class and the method outside the controllerBase 
 builder.Services.AddHttpContextAccessor();
+// Add the Coorelation Id or Use the upcoming
 builder.Services.AddScoped<ICorrelationIdAccessor, CorrelationIdAccessor>();
+// To Access the claims in the token inside the service
+builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 
 builder.Services.AddHealthChecks(builder.Configuration);
-// To make the Redis Soft Dependency for the system
 builder.Services.AddRedisCache(builder.Configuration);
 
 builder.Services.AddRabbitMqConnection(builder.Configuration, failFastOnStartup: false);

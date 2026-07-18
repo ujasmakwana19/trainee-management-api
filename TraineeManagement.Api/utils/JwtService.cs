@@ -34,7 +34,7 @@ public class JwtService : IJwtService
         {
             new Claim("userId", user.Id.ToString()),
             new Claim("userName", user.Username),
-            new Claim("role", user.Role.ToString())
+            new Claim("userRole", user.Role.ToString())
         };
 
         SigningCredentials credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);

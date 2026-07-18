@@ -31,7 +31,8 @@ public static class RabbitMqServiceExtensions
                 {
                     throw new TimeoutException("RabbitMQ connection timed out after 5s.");
                 }
-
+                IConnection connection = connectionTask.Result;
+                RabbitMqSetup.InitializeTopologyAsync(connection).GetAwaiter().GetResult();
                 Console.WriteLine("RabbitMQ connection established.");
                 return connectionTask.Result;
             }
