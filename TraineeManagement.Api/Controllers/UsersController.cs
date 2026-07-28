@@ -29,11 +29,9 @@ public class UserController : ControllerBase
                 ErrorCodes.INVALID_MODEL);
         }
 
-        _logger.LogInformation($"User {userInfo.Username} Hit the Login Route");
-
         LoginUserResponse user = await _service.Login(userInfo);
 
-        _logger.LogInformation($"User {userInfo.Username} Logged in successfully\t");
+        _logger.LogInformation($"User Logged in successfully\t");
         
         return ResponseHandler.SuccessResponse(
             HttpContext,

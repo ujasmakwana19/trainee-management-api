@@ -37,14 +37,15 @@ public class UserService : IUserService
             (
                 userInfo.Id,
                 userInfo.Username,
+                userInfo.Email,
                 userInfo.Role
             )
         );
     } 
 
-    private async Task<User> FetchUser(String username)
+    private async Task<User> FetchUser(String email)
     {
-        User? u = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        User? u = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if(u is null)
         {
             throw new UnauthorizedException(ErrorCodes.INVALID_CREDENTIALS);
@@ -62,7 +63,7 @@ public class UserService : IUserService
     public async Task<LoginUserResponse> Login(LoginUserRequest userInfo)
     {
         
-        User user = await FetchUser(userInfo.Username);
+        User user = await FetchUser(userInfo.Email);
 
         if (user.PasswordHash is null)
         {

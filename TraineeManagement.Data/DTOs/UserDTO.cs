@@ -4,8 +4,9 @@ namespace TraineeManagement.Data.UserDTO;
 
 public record LoginUserRequest
 (
-    [RequiredField]
-    String Username,
+    [Required]
+    [EmailAddress]
+    String Email,
     [RequiredField]
     String Password
 );
@@ -20,5 +21,6 @@ public record LoginUserResponse
 public record UserRecord(
     long Id,
     String Username,
+    String Email,
     UserRole Role
 );

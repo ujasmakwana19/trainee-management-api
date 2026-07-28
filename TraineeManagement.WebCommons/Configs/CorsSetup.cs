@@ -20,7 +20,7 @@ public static class CorsServiceExtensions
             options.AddPolicy(name: MyAllowSpecificOrigins,
                             policy =>
                             {
-                                policy.WithOrigins(allowedOrigins);
+                                policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                             });
         });
         return services;
