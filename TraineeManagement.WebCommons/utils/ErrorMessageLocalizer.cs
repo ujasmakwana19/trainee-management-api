@@ -13,6 +13,7 @@ public static class ErrorMessage
     public const string InvalidValue          = "Invalid value provided.";
     public const string InvalidFile           = "Invalid files provided or files format not supported.";
     public const string InvalidInputParamsQuery          = "Invalid value or type provided.";
+    public const string SessionExpired                    = "Session expired , please login again.";
     public const string UnauthoriseAccess                    = "Unauthorised access to resource";
     public const string ContentTooLarge                    = "Content is too large";
     public const string ValidationErrorOccured             = "One or more validation errors occurred.";

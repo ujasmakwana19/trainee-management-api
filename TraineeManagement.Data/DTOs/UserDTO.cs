@@ -18,6 +18,11 @@ public record LoginUserResponse
     UserRecord User
 );
 
+public record LoginResult ( 
+    LoginUserResponse Response, 
+    string RefreshToken
+);
+
 public record UserRecord(
     long Id,
     String Username,
