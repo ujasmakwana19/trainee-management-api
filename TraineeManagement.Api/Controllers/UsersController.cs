@@ -6,7 +6,7 @@ using TraineeManagement.WebCommons.ErrorCodesUtils;
 namespace TraineeManagement.Api.UserController;
 
 [ApiController]
-[Route("api/auth/login")]
+[Route("api/auth")]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
@@ -18,8 +18,8 @@ public class UserController : ControllerBase
         _logger = logger;
     }
 
-    // POST api/trainee/
-    [HttpPost]
+    // POST api/auth/login
+    [HttpPost("login")]
     public async Task<ActionResult> LoginUser([FromBody] LoginUserRequest userInfo)
     {
         if (!ModelState.IsValid)
@@ -29,9 +29,42 @@ public class UserController : ControllerBase
                 ErrorCodes.INVALID_MODEL);
         }
 
-        LoginUserResponse user = await _service.Login(userInfo);
+        LoginResult user = await _service.Login(userInfo);
 
         _logger.LogInformation($"User Logged in successfully\t");
+        string refreshToken = user.RefreshToken;
+
+        Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddHours(1)
+        });
+
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            user.Response
+        );
+    }
+
+    // POST api/auth/refresh
+    [HttpPost("refresh")]
+    public async Task<ActionResult> RefreshToken()
+    {
+        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken) 
+            || string.IsNullOrEmpty(refreshToken))
+        {
+            return ResponseHandler.CreateResponse(
+                StatusCodes.Status401Unauthorized,
+                ErrorCodes.SESSION_EXPIRED);
+        }
+
+        _logger.LogInformation(refreshToken);
+        
+        LoginUserResponse user = await _service.GetToken(refreshToken);
+
         
         return ResponseHandler.SuccessResponse(
             HttpContext,

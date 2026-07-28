@@ -4,5 +4,6 @@ namespace TraineeManagement.Api.UserServices;
 
 public interface IUserService
 {
-    Task<LoginUserResponse> Login(LoginUserRequest request);
+    Task<LoginResult> Login(LoginUserRequest request);
+    Task<LoginUserResponse> GetToken(string token);
 }

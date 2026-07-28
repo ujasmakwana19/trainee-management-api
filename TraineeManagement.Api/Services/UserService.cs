@@ -7,6 +7,7 @@ using TraineeManagement.Api.JwtServices;
 using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.WebCommons.ErrorMessageUtils;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
+using System.Security.Claims;
 namespace TraineeManagement.Api.UserServices;
 
 
@@ -60,7 +61,7 @@ public class UserService : IUserService
         return result;
     }
 
-    public async Task<LoginUserResponse> Login(LoginUserRequest userInfo)
+    public async Task<LoginResult> Login(LoginUserRequest userInfo)
     {
         
         User user = await FetchUser(userInfo.Email);
@@ -75,12 +76,41 @@ public class UserService : IUserService
 
         if(result == PasswordVerificationResult.Success)
         {
-            string token = _jwtService.GenerateToken(user); 
+            string accessToken = _jwtService.GenerateToken(user); 
+            string refreshToken = _jwtService.GenerateToken(user); 
             
-            return ToResponse(token, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
+            return new LoginResult
+            (
+                ToResponse(accessToken, user, int.Parse(_config["Jwt:ExpiryMinutes"]!)),
+                refreshToken
+            );
         }
         throw new UnauthorizedException(ErrorCodes.INVALID_CREDENTIALS);
         
+    }
+
+    public async Task<LoginUserResponse> GetToken(string token)
+    {
+        ClaimsPrincipal? principal = _jwtService.ValidateToken(token);
+
+        if (principal is null)
+            throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+
+        string? userId = principal.FindFirst("userId")?.Value;
+
+        if (!long.TryParse(userId, out long Id))
+                throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+
+        User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == Id);
+
+        if(user is null)
+        {
+            throw new UnauthorizedException(ErrorCodes.SESSION_EXPIRED);
+        }
+
+        string accessToken = _jwtService.GenerateToken(user);
+
+        return ToResponse(accessToken, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
     }
 };
 

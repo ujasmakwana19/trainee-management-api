@@ -10,7 +10,7 @@ namespace TraineeManagement.Api.JwtServices;
 public interface IJwtService
 {
     string GenerateToken(User user);
-    // ClaimsPrincipal? ValidateToken(string token);
+    ClaimsPrincipal? ValidateToken(string token);
 }
 
 public class JwtService : IJwtService
@@ -57,29 +57,29 @@ public class JwtService : IJwtService
         return jwtToken;
     }
 
-    // public ClaimsPrincipal? ValidateToken(string token)
-    // {
-    //     var tokenHandler = new JwtSecurityTokenHandler();
+    public ClaimsPrincipal? ValidateToken(string token)
+    {
+        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
 
-    //     try
-    //     {
-    //         var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
-    //         {
-    //             ValidateIssuer = true,
-    //             ValidateAudience = true,
-    //             ValidateLifetime = true,
-    //             ValidateIssuerSigningKey = true,
-    //             ValidIssuer = _config["Jwt:Issuer"],
-    //             ValidAudience = _config["Jwt:Audience"],
-    //             IssuerSigningKey = _key,
-    //             ClockSkew = TimeSpan.Zero  // exact expiry, no grace period
-    //         }, out _);
+        try
+        {
+            ClaimsPrincipal principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _config["Jwt:Issuer"],
+                ValidAudience = _config["Jwt:Audience"],
+                IssuerSigningKey = _key,
+                ClockSkew = TimeSpan.Zero  
+            }, out _);
 
-    //         return principal;
-    //     }
-    //     catch
-    //     {
-    //         return null;
-    //     }
-    // }
+            return principal;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
