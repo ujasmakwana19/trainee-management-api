@@ -60,8 +60,6 @@ public class UserController : ControllerBase
                 StatusCodes.Status401Unauthorized,
                 ErrorCodes.SESSION_EXPIRED);
         }
-
-        _logger.LogInformation(refreshToken);
         
         LoginUserResponse user = await _service.GetToken(refreshToken);
 
@@ -70,6 +68,19 @@ public class UserController : ControllerBase
             HttpContext,
             ErrorCodes.SUCCESS,
             user
+        );
+    }
+
+    // POST api/auth/logout
+    [HttpPost("logout")]
+    public ActionResult Logout()
+    {
+        Response.Cookies.Delete("refreshToken");
+
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            new object {}
         );
     }
 }
