@@ -94,12 +94,12 @@ public class UserService : IUserService
         ClaimsPrincipal? principal = _jwtService.ValidateToken(token);
 
         if (principal is null)
-            throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+            throw new UnauthorizedException(ErrorCodes.TOKEN_FORBIDDEN);
 
         string? userId = principal.FindFirst("userId")?.Value;
 
         if (!long.TryParse(userId, out long Id))
-                throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+                throw new UnauthorizedException(ErrorCodes.TOKEN_FORBIDDEN);
 
         User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == Id);
 

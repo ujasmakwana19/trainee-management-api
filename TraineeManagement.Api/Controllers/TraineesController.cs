@@ -9,7 +9,7 @@ using TraineeManagement.Data.TraineeModel;
 
 
 namespace TraineeManagement.Api.Controllers;
-
+[Authorize]
 [ApiController]
 [Route("api/trainees")]
 public class TraineesController : ControllerBase

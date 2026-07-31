@@ -11,7 +11,8 @@ public static class ErrorCodes
     public static readonly ErrorCode CONTENT_TOO_LARGE = new ErrorCode(4130, ErrorMessage.ContentTooLarge);
 
     public static readonly ErrorCode INVALID_CREDENTIALS = new ErrorCode(4001, ErrorMessage.InvalidCredentials);
-    public static readonly ErrorCode INVALID_TOKEN = new ErrorCode(4001, ErrorMessage.InvalidToken);
+    public static readonly ErrorCode TOKEN_EXPIRED = new ErrorCode(4555, ErrorMessage.ExpiredToken);
+    public static readonly ErrorCode TOKEN_FORBIDDEN = new ErrorCode(4001, ErrorMessage.TokenForbidden);
     public static readonly ErrorCode INVALID_PARAMS_QUERY = new ErrorCode(4000, ErrorMessage.InvalidInputParamsQuery);
     public static readonly ErrorCode SESSION_EXPIRED = new ErrorCode(4010, ErrorMessage.SessionExpired);
     public static readonly ErrorCode UNAUTHORISE_ACCESS = new ErrorCode(4010, ErrorMessage.UnauthoriseAccess);

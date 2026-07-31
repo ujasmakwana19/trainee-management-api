@@ -26,7 +26,7 @@ public class CurrentUserAccessor : ICurrentUserAccessor
             string? claim = _httpContextAccessor.HttpContext?.User?.FindFirst("userId")?.Value;
             
             if (string.IsNullOrWhiteSpace(claim) || !long.TryParse(claim, out long userId))
-                throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+                throw new UnauthorizedException(ErrorCodes.TOKEN_FORBIDDEN);
             return userId;
             
         }
@@ -36,7 +36,7 @@ public class CurrentUserAccessor : ICurrentUserAccessor
         get {            
             string? claim = _httpContextAccessor.HttpContext?.User?.FindFirst("userRole")?.Value;
             if (string.IsNullOrWhiteSpace(claim))
-                throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+                throw new UnauthorizedException(ErrorCodes.TOKEN_FORBIDDEN);
             return claim;
         }
     } 

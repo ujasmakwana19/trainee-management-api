@@ -38,7 +38,7 @@ public class SubmissionFileController : ControllerBase
         string? userIdClaim = User.FindFirst("userId")?.Value;
         if (string.IsNullOrWhiteSpace(userIdClaim) || !long.TryParse(userIdClaim, out long userId))
         {
-            throw new UnauthorizedException(ErrorCodes.INVALID_TOKEN);
+            throw new UnauthorizedException(ErrorCodes.TOKEN_FORBIDDEN);
         }
         return userId;
     }

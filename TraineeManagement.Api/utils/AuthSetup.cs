@@ -33,6 +33,15 @@ public static class AuthServiceExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
                     ClockSkew = TimeSpan.Zero
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        context.HttpContext.Items["JwtBearerException"] = context.Exception;
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         return services;
