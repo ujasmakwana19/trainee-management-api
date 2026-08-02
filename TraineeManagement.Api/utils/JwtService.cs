@@ -9,7 +9,7 @@ namespace TraineeManagement.Api.JwtServices;
 
 public interface IJwtService
 {
-    string GenerateToken(User user);
+    string GenerateToken(User user, bool isRefresh = false);
     ClaimsPrincipal? ValidateToken(string token);
 }
 
@@ -28,7 +28,7 @@ public class JwtService : IJwtService
         _logger = logger;
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(User user, bool isRefresh = false )
     {
         Claim[] claims = 
         {
@@ -39,13 +39,17 @@ public class JwtService : IJwtService
 
         SigningCredentials credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
 
+        long expiryTime = long.Parse(_config["Jwt:AExpiryMinutes"]!);
+        if (isRefresh)
+        {
+            expiryTime = long.Parse(_config["Jwt:RExpiryMinutes"]!);
+        }
+
         SecurityToken token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                double.Parse(_config["Jwt:ExpiryMinutes"]!)
-            ),
+            expires: DateTime.UtcNow.AddMinutes(expiryTime),
             signingCredentials: credentials 
         );
         string jwtToken = new JwtSecurityTokenHandler().WriteToken(token);

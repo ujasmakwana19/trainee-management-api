@@ -39,7 +39,7 @@ public class UserController : ControllerBase
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddHours(1)
+            Expires = DateTimeOffset.UtcNow.AddMinutes(60)
         });
 
         return ResponseHandler.SuccessResponse(
@@ -60,7 +60,7 @@ public class UserController : ControllerBase
                 StatusCodes.Status401Unauthorized,
                 ErrorCodes.SESSION_EXPIRED);
         }
-        
+        Console.WriteLine(refreshToken);
         LoginUserResponse user = await _service.GetToken(refreshToken);
 
         

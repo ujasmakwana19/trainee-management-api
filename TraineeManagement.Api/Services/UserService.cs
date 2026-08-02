@@ -77,11 +77,11 @@ public class UserService : IUserService
         if(result == PasswordVerificationResult.Success)
         {
             string accessToken = _jwtService.GenerateToken(user); 
-            string refreshToken = _jwtService.GenerateToken(user); 
+            string refreshToken = _jwtService.GenerateToken(user, true); 
             
             return new LoginResult
             (
-                ToResponse(accessToken, user, int.Parse(_config["Jwt:ExpiryMinutes"]!)),
+                ToResponse(accessToken, user, int.Parse(_config["Jwt:AExpiryMinutes"]!)),
                 refreshToken
             );
         }
@@ -110,7 +110,7 @@ public class UserService : IUserService
 
         string accessToken = _jwtService.GenerateToken(user);
 
-        return ToResponse(accessToken, user, int.Parse(_config["Jwt:ExpiryMinutes"]!));
+        return ToResponse(accessToken, user, int.Parse(_config["Jwt:AExpiryMinutes"]!));
     }
 };
 

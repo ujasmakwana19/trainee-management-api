@@ -1,7 +1,7 @@
 services:
   db:
-    image: docker-registry-002.zeuslearning.com/zeuslearning/mysql:8.0.41
-    container_name: dotnetmysqldb
+    image: mysql:8.0.46
+    container_name: docker1db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -16,11 +16,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 30s
 
   redis-cache:
-    image: docker-registry-002.zeuslearning.com/zeuslearning/redis:alpine
-    container_name: dotnetrediscache
+    image: redis:7.0.11-alpine
+    container_name: docker1redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -29,11 +29,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 10s
 
   rabbitmq:
-    image: docker-registry-002.zeuslearning.com/zeuslearning/rabbitmq:3-management
-    container_name: dotnetrabbitmq
+    image: rabbitmq:3.12.0-management-alpine
+    container_name: docker1rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
@@ -49,7 +49,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 20s
 
   api:
     build:
@@ -122,17 +122,6 @@ services:
       db:
         condition: service_healthy
 
-  ui-dashboard:
-    image: docker-registry-002.zeuslearning.com/zeuslearning/portainer/portainer-ce:sts
-    container_name: portainer-ui
-    ports:
-      - "9000:9000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    restart: always
-
 volumes:
   mysql_docker_data:
   rabbitmq_data:
-  portainer_data:
