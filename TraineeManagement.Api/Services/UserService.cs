@@ -8,6 +8,9 @@ using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.WebCommons.ErrorMessageUtils;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
 using System.Security.Claims;
+using TraineeManagement.WebCommons.AuthClaims;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.TraineeModel;
 namespace TraineeManagement.Api.UserServices;
 
 
@@ -18,12 +21,14 @@ public class UserService : IUserService
 
     //  Database Instance
     private readonly AppDbContext _context;
+    private readonly ICurrentUserAccessor _currentUser;
     private readonly IJwtService _jwtService;
     private readonly IConfiguration _config;
     private readonly ILogger<UserService> _logger; 
-    public UserService(AppDbContext context, IJwtService jwtService, IConfiguration config, ILogger<UserService> logger)
+    public UserService(AppDbContext context, ICurrentUserAccessor currentUser , IJwtService jwtService, IConfiguration config, ILogger<UserService> logger)
     {
         _context = context;
+        _currentUser = currentUser;
         _jwtService = jwtService;
         _config = config;
         _logger = logger;
@@ -111,6 +116,70 @@ public class UserService : IUserService
         string accessToken = _jwtService.GenerateToken(user);
 
         return ToResponse(accessToken, user, int.Parse(_config["Jwt:AExpiryMinutes"]!));
+    }
+
+    public async Task<UserProfileResponse> getUserProfile()
+    {
+        long userId = _currentUser.Id;
+        string role = _currentUser.Role;
+
+        User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if(user == null){
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_USER);
+        }
+
+        UserProfileResponse userRes;
+
+        if(user.Role == UserRole.Mentor)
+        {
+            Mentor? mentor = await _context.Mentors.FirstOrDefaultAsync(m => m.UserId == userId);
+            if(mentor == null){
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_USER);
+            }
+
+            userRes = new UserProfileResponse(
+                user.Id,
+                user.Username,
+                user.Email,
+                user.Role,
+                mentor.FirstName,
+                mentor.LastName,
+                mentor.Expertise
+            );
+
+        }
+        else if(user.Role == UserRole.Trainee)
+        {
+            Trainee? trainee = await _context.Trainees.FirstOrDefaultAsync(m => m.UserId == userId);
+            if(trainee == null){
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_USER);
+            }
+
+            userRes = new UserProfileResponse(
+                user.Id,
+                user.Username,
+                user.Email,
+                user.Role,
+                trainee.FirstName,
+                trainee.LastName,
+                trainee.TechStack
+            );
+        }
+        else
+        {
+            userRes = new UserProfileResponse(
+                user.Id,
+                user.Username,
+                user.Email,
+                user.Role,
+                "Super",
+                "Admin",
+                "Manage Stuff"
+            );
+        }
+
+        return userRes;
     }
 };
 

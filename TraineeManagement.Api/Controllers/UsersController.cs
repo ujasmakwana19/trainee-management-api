@@ -3,6 +3,8 @@ using TraineeManagement.Data.UserDTO;
 using TraineeManagement.Api.UserServices;
 using TraineeManagement.WebCommons.ResponseHandlerUtil;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 namespace TraineeManagement.Api.UserController;
 
 [ApiController]
@@ -81,6 +83,19 @@ public class UserController : ControllerBase
             HttpContext,
             ErrorCodes.SUCCESS,
             new object {}
+        );
+    }
+
+    [Authorize]
+    [HttpGet("/api/userprofile/view")]
+    public async Task<ActionResult> GetProfile()
+    {
+        UserProfileResponse userRes = await _service.getUserProfile();
+
+        return ResponseHandler.SuccessResponse(
+            HttpContext,
+            ErrorCodes.SUCCESS,
+            userRes
         );
     }
 }

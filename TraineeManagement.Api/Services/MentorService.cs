@@ -5,6 +5,8 @@ using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Data.MentorDTO;
 using TraineeManagement.Data.MentorModel;
+using Microsoft.AspNetCore.Identity;
+using TraineeManagement.Data.UserModel;
 namespace TraineeManagement.Api.MentorServices;
 
 public class MentorService : IMentorService
@@ -95,21 +97,42 @@ public class MentorService : IMentorService
     // CREATE
     public async Task<MentorResponse> CreateMentor(MentorRequestBody mentorInfo)
     {
-
-        Mentor mentor = new Mentor
+        try
         {
-            FirstName = mentorInfo.FirstName,
-            LastName = mentorInfo.LastName,
-            Email = mentorInfo.Email,
-            Expertise = mentorInfo.Expertise,
-            Status = mentorInfo.Status
-        };
+            PasswordHasher<User> ph = new PasswordHasher<User>();
+            Random random = new Random();
 
-        _context.Mentors.Add(mentor);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Mentor {MentorId} created successfully", mentor.Id);
-        await _cache.RemoveAsync(CacheKey.mentorall);
-        return ToResponse(mentor);
+            User user = new User
+            {
+                Username = $"{mentorInfo.FirstName}{mentorInfo.LastName}{random.Next(1, 999)}",
+                Email = mentorInfo.Email,
+                Role = UserRole.Mentor
+            };
+
+            user.PasswordHash = ph.HashPassword(user, mentorInfo.Password);
+
+            Mentor mentor = new Mentor
+            {
+                FirstName = mentorInfo.FirstName,
+                LastName = mentorInfo.LastName,
+                Email = mentorInfo.Email,
+                Expertise = mentorInfo.Expertise,
+                Status = mentorInfo.Status,
+                User = user
+            };
+
+            _context.Mentors.Add(mentor);
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Mentor {MentorId} created successfully", mentor.Id);
+            await _cache.RemoveAsync(CacheKey.mentorall);
+            return ToResponse(mentor);
+        }
+        catch (Exception ex)
+        {
+            throw new DataBaseOperationFailed(ex, ErrorCodes.MENTOR_NOT_CREATED);
+        }
     }
 
     // UPDATE

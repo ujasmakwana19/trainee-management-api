@@ -12,6 +12,8 @@ using System.Net;
 using TraineeManagement.WebCommons.CoorealationIdServices;
 using TraineeManagement.WebCommons.CoorealationIdMiddlewares;
 using TraineeManagement.Api.HttpServices;
+using TraineeManagement.Data.UserModel;
+using Microsoft.AspNetCore.Identity;
 namespace TraineeManagement.Api.TraineeServices;
 
 
@@ -121,19 +123,41 @@ public class TraineeService : ITraineeService
     // CREATE
     public async Task<TraineeResponse> CreateTraineeService(CreateTraineeRequest trainee)
     {
-        Trainee u = new Trainee
+        try
         {
-            FirstName = trainee.FirstName,
-            LastName = trainee.LastName,
-            Email = trainee.Email,
-            TechStack = trainee.TechStack,
-            Status = trainee.Status
-        };
+            PasswordHasher<User> ph = new PasswordHasher<User>();
+            Random random = new Random();
 
-        _context.Trainees.Add(u);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation($"Trainee created successfully"); 
-        return ToResponse(u);
+            User user = new User
+            {
+                Username = $"{trainee.FirstName}{trainee.LastName}{random.Next(1, 999)}",
+                Email = trainee.Email,
+                Role = UserRole.Trainee
+            };
+
+            user.PasswordHash = ph.HashPassword(user, trainee.Password);
+
+            Trainee u = new Trainee
+            {
+                FirstName = trainee.FirstName,
+                LastName = trainee.LastName,
+                Email = trainee.Email,
+                TechStack = trainee.TechStack,
+                Status = trainee.Status,
+                User = user 
+            };
+
+            _context.Trainees.Add(u);
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Trainee created successfully");
+            return ToResponse(u);
+        }
+        catch (Exception ex)
+        {
+            throw new DataBaseOperationFailed(ex, ErrorCodes.TRAINEE_NOT_CREATED);
+        }
     }
 
     // UPDATE
