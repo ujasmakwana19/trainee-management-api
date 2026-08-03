@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Data.IDateTimeAutoService;
+using TraineeManagement.Data.UserModel;
 using TraineeManagement.Data.ValidationConstantUtils;
 namespace TraineeManagement.Data.TraineeModel
 {
@@ -27,6 +28,10 @@ namespace TraineeManagement.Data.TraineeModel
         [RequiredField]
         [EnumDataTypeField(typeof(StatusValue))]
         public StatusValue Status { get; set; }
+
+        [RequiredField]
+        public long UserId { get; set; }
+        public User User { get; set; } = null!;
     }
 
     public enum StatusValue

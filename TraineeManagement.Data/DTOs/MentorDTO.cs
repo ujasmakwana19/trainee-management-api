@@ -24,6 +24,9 @@ public record MentorRequestBody
     MinimumLength = ValidationConstant.MIN_LENTH_GENERIC_INPUT)]
     String Expertise,
 
+    [RequiredField]
+    String Password,
+
     [Required]
     [EnumDataTypeField(typeof(MentorStatus))]
     MentorStatus Status

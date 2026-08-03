@@ -19,6 +19,9 @@ public record CreateTraineeRequest
 
     [RequiredField]
     String TechStack,
+    
+    [RequiredField]
+    String Password,
 
     [RequiredField]
     [EnumDataTypeField(typeof(StatusValue))]

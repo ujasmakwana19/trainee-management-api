@@ -25,6 +25,7 @@ public static class ErrorMessage
     public const string RoleForbidden                 = "Unauthorised, To Perform Action";
     public const string NotOwnerOfResource                 = "Unauthorised, To Perform Action on not owned";
     
+    public const string UserNotFound                    = "User Not Found";
     public const string TraineeNotFound                    = "Trainee Not Found";
     public const string MentorNotFound                    = "Mentor Not Found";
     public const string TaskNotFound                    = "Task Not Found";
@@ -35,12 +36,14 @@ public static class ErrorMessage
     public const string QueueMessageNotFound                    = "Queue Message Not Found";
     public const string ReferenceInvalid                    = "Please Enter valid references";
     public const string DeleteNotPossibleReferenceExists                    = "Cannot Delete the referenced used values";
-    public const string UniqueUsername                    = "Username Already Exists";
+    public const string UniqueUser                    = "User Already Exists";
     public const string JwtError                        = "An UnExpected Error Occured , Please try again";
     public const string ServerError                        = "Something Went Wrong";
     public const string InterServiceOperationFailed         = "Some Services are not available, Please try again later";
     public const string RedisError                        = "Some Services are down , sorry for latency issue";
     public const string RabbitMqError                        = "Some Services are not available to process";
     public const string QueueOperationFailed                        = "Something Went Wrong, while processing in background";
+    public const string TraineeNotCreated                        = "Failed to create the Trainee";
+    public const string MentorNotCreated                        = "Failed to create the Mentor";
 
 }

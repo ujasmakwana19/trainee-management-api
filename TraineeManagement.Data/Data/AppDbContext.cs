@@ -23,13 +23,32 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(builder);
         
-        // Store the Enum as a String "Admin" as defined in the Enum
-        builder.Entity<User>()
-        .HasIndex(u => u.Username)
-        .IsUnique();
+        builder.Entity<User>(entity =>
+        {
+            entity.HasIndex(u => u.Email).IsUnique();
+        });
+        
 
-        builder.Entity<Trainee>()
-        .HasIndex(u => new { u.FirstName, u.Status });
+        builder.Entity<Trainee>(entity =>
+        {
+            entity.HasIndex(u => new { u.FirstName, u.Status });  
+            entity.HasIndex(u => u.Email).IsUnique(); 
+
+            entity.HasOne(u => u.User)
+                .WithOne()
+                .HasForeignKey<Trainee>(u => u.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Mentor>(entity =>
+        {
+            entity.HasIndex(u => u.Email).IsUnique();
+            entity.HasOne(u => u.User)
+                .WithOne()
+                .HasForeignKey<Mentor>(u => u.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        
 
 
         builder.Entity<TrackTask>(entity =>

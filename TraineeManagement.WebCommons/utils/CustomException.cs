@@ -76,6 +76,19 @@ public class InterServiceOperationExeception : Exception
     }
 }
 
+public class DataBaseOperationFailed : Exception
+{
+    public readonly Exception _ex;
+    public readonly int _code;
+    public readonly string _message;
+    public DataBaseOperationFailed(Exception ex , ErrorCode message) 
+    {
+        _ex = ex;
+        _code = message.Code;
+        _message = message.Message;
+    }
+}
+
 public class JwtOperationException : Exception
 {
     public JwtOperationException()  { }

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using TraineeManagement.Data.IDateTimeAutoService;
+using TraineeManagement.Data.UserModel;
 using TraineeManagement.Data.ValidationConstantUtils;
 namespace TraineeManagement.Data.MentorModel;
 
@@ -33,6 +34,10 @@ public class Mentor : IDateTimeAuto
     [Required]
     [EnumDataTypeField(typeof(MentorStatus))]
     public MentorStatus Status{get; set;} 
+
+    [RequiredField]
+    public long UserId { get; set; }
+    public User User { get; set; } = null!;
 
 }
 

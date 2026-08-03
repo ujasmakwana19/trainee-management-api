@@ -29,3 +29,13 @@ public record UserRecord(
     String Email,
     UserRole Role
 );
+
+public record UserProfileResponse(
+    long Id,
+    string Username,
+    string Email,
+    UserRole Role,
+    string FirstName,
+    string LastName,
+    string TechStack
+);
