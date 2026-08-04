@@ -37,8 +37,7 @@ namespace TraineeManagement.Data.TraineeModel
     public enum StatusValue
     {
         Active,
-        Inactive,
-        Completed
+        Inactive
     }
 
 }
