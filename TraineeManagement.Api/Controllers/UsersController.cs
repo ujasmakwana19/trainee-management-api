@@ -62,7 +62,6 @@ public class UserController : ControllerBase
                 StatusCodes.Status401Unauthorized,
                 ErrorCodes.SESSION_EXPIRED);
         }
-        Console.WriteLine(refreshToken);
         LoginUserResponse user = await _service.GetToken(refreshToken);
 
         

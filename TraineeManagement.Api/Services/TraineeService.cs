@@ -64,15 +64,31 @@ public class TraineeService : ITraineeService
     // DELETE
     public async Task DeleteTraineeService(long id)
     {
-        Trainee t = await FetchTrainee(id);
-        if (t is null)
+        try
         {
-            throw new NotFoundException(ErrorCodes.NOT_FOUND_TRAINEE);
+            Trainee t = await FetchTrainee(id);
+            long userId = t.UserId;
+    
+            User? u = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (u is null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_USER);
+            }
+    
+            _context.Users.Remove(u);
+            _context.Trainees.Remove(t);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Trainee with id {id} deleted successfully");
+            return;
         }
-        _context.Trainees.Remove(t);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation($"Trainee with id {id} deleted successfully");
-        return;
+        catch(NotFoundException)
+        {
+            throw;
+        }
+        catch (System.Exception ex)
+        {
+            throw new DataBaseOperationFailed(ex, ErrorCodes.TRAINEE_NOT_DELETE);
+        }
     }
 
     // GETALL
