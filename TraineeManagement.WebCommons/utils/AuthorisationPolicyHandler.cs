@@ -41,7 +41,6 @@ public class RoleAuthorizationHandler : IAuthorizationMiddlewareResultHandler
                 throw new UnauthorizedException(ErrorCodes.TOKEN_EXPIRED);
             }
             
-            Console.WriteLine("Ujassssss");
             throw new UnauthorizedException(ErrorCodes.TOKEN_FORBIDDEN);
         }
         

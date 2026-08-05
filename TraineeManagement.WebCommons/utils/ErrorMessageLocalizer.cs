@@ -44,6 +44,7 @@ public static class ErrorMessage
     public const string RabbitMqError                        = "Some Services are not available to process";
     public const string QueueOperationFailed                        = "Something Went Wrong, while processing in background";
     public const string TraineeNotCreated                        = "Failed to create the Trainee";
+    public const string TraineeNotDeleted                        = "Failed to delete the trainee";
     public const string MentorNotCreated                        = "Failed to create the Mentor";
 
 }

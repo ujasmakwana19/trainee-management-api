@@ -45,6 +45,7 @@ public static class ErrorCodes
     public static readonly ErrorCode QUEUING_OPERATION_FAILED = new ErrorCode(5001, ErrorMessage.QueueOperationFailed);
 
     public static readonly ErrorCode TRAINEE_NOT_CREATED = new ErrorCode(4000, ErrorMessage.TraineeNotCreated);
+    public static readonly ErrorCode TRAINEE_NOT_DELETE = new ErrorCode(4000, ErrorMessage.TraineeNotDeleted);
     public static readonly ErrorCode MENTOR_NOT_CREATED = new ErrorCode(4000, ErrorMessage.MentorNotCreated);
     
 }
