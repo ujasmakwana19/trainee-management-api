@@ -71,3 +71,17 @@ public record TrackTaskNameResponseBody
     TaskAssignmentValue Status,
     string Remark
 );
+
+public record TrackTaskPersonalResponse(
+    long Id,
+    long TraineeId,
+    string TraineeName,
+    long MentorId,
+    string MentorName,
+    long LearningTaskId,
+    string TaskTitle,
+    DateOnly AssignedDate,
+    DateOnly DueDate,
+    TaskAssignmentValue Status,
+    string Remark
+);

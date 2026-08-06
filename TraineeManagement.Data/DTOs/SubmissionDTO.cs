@@ -34,3 +34,13 @@ public record SubmissionResponse(
     DateOnly SubmittedDate,
     SubmissionStatus Status
 );
+
+public record SubmissionPersonalResponse(
+    long Id,
+    long TaskAssignmentId,
+    string TaskTitle,
+    string SubmissionUrl,
+    string Notes,
+    DateOnly SubmittedDate,
+    SubmissionStatus Status
+);
