@@ -25,6 +25,7 @@ public class TraineesController : ControllerBase
 
   // Get all the Trainees
   // GET /api/trainees
+  [Authorize(Policy = "MentorOrAdminOnly")]
   [HttpGet("getall")]
   public async Task<ActionResult> GetTrainee()
   {
@@ -34,6 +35,7 @@ public class TraineesController : ControllerBase
 
   // Get Trainee by unique ID
   // GET /api/trainees/:id
+  [Authorize(Policy = "MentorOrAdminOnly")]
   [HttpGet("{id}")]
   public async Task<ActionResult> GetTraineeById(long id)
   {
@@ -69,7 +71,7 @@ public class TraineesController : ControllerBase
   }
 
   // PUT /api/trainees/:id
-  [Authorize(Policy = "MentorOrAdminOnly")]
+  [Authorize(Policy = "AdminOnly")]
   [HttpPut("{id}")]
   public async Task<ActionResult<TraineeResponse>> UpdateTrainee(long id, [FromBody] UpdateTraineeRequest trainee)
   {
@@ -92,7 +94,7 @@ public class TraineesController : ControllerBase
 
   // To Delete the Trainee
   // DELETE /api/trainees/:id
-  [Authorize(Policy = "MentorOrAdminOnly")]
+  [Authorize(Policy = "AdminOnly")]
   [HttpDelete("{id}")]
   public async Task<ActionResult> DeleteTrainee(long id)
   {

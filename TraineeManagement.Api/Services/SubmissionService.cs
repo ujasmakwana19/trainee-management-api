@@ -6,6 +6,10 @@ using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Data.SubmissionDTO;
 using TraineeManagement.Data.SubmissionModel;
 using TraineeManagement.Data.CacheServices;
+using TraineeManagement.WebCommons.AuthClaims;
+using TraineeManagement.Data.UserModel;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.TrackTaskModel;
 
 namespace TraineeManagement.Api.SubmissionService;
 
@@ -13,12 +17,15 @@ public class SubmissionService : ISubmissionService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<SubmissionService> _logger;
+
+    private readonly ICurrentUserAccessor _currentUser;
     private readonly ICacheService _cache;
     private readonly IEventPublisher _publishService;
 
-    public SubmissionService(AppDbContext context, ILogger<SubmissionService> logger, ICacheService cache, IEventPublisher publishService)
+    public SubmissionService(AppDbContext context, ICurrentUserAccessor currentUser , ILogger<SubmissionService> logger, ICacheService cache, IEventPublisher publishService)
     {
         _context = context;
+        _currentUser = currentUser;
         _logger = logger;
         _cache = cache;
         _publishService = publishService;
@@ -48,6 +55,28 @@ public class SubmissionService : ISubmissionService
 
     public async Task<SubmissionResponse> CreateSubmission(SubmissionRequestBody body)
     {
+        long userId = _currentUser.Id;
+        string userRole = _currentUser.Role;
+
+        if(userRole == UserRole.Mentor.ToString())
+        {
+            bool taskExists = await _context.TrackTasks.AnyAsync(t => t.Id == body.TaskAssignmentId && t.MentorId == userId);
+
+            if (!taskExists)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
+
+        }
+        else if (userRole == UserRole.Trainee.ToString())
+        {
+            bool taskExists = await _context.TrackTasks.AnyAsync(t => t.Id == body.TaskAssignmentId && t.TraineeId == userId);
+
+            if (!taskExists)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
+        }
         Submission s = new Submission
         {
             TaskAssignmentId = body.TaskAssignmentId,

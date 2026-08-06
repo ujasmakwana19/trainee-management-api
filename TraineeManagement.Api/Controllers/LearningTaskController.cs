@@ -22,6 +22,7 @@ public class LearningTaskController : ControllerBase
     }
 
     // /api/learning-tasks/getall
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpGet("getall")]
     public async Task<ActionResult> GetAllTasks()
     {
@@ -34,6 +35,7 @@ public class LearningTaskController : ControllerBase
     }
 
     // /api/learning-tasks/:id
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpGet("{id}")]
     public async Task<ActionResult> GetTaskById(long id)
     {
@@ -94,7 +96,7 @@ public class LearningTaskController : ControllerBase
         );
     }
 
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteTaskRequest(long id)
     {

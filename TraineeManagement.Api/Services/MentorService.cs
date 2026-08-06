@@ -136,7 +136,7 @@ public class MentorService : IMentorService
     }
 
     // UPDATE
-    public async Task<MentorResponse> UpdateMentor(long Id,MentorRequestBody mentorInfo)
+    public async Task<MentorResponse> UpdateMentor(long Id,MentorUpdateRequestBody mentorInfo)
     {
         Mentor mentor = await FetchMentor(Id);
         
@@ -157,12 +157,32 @@ public class MentorService : IMentorService
     // DELETE
     public async Task DeleteMentor(long id)
     {
-        Mentor mentor = await FetchMentor(id);
-
-        _context.Mentors.Remove(mentor);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Mentor {MentorId} deleted successfully", mentor.Id);
-        await _cache.RemoveAsync(CacheKey.mentorall);
-        return;
+        try
+        {
+            Mentor mentor = await FetchMentor(id);
+            long userId = mentor.UserId;
+    
+            User? u = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (u is null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_USER);
+            }
+    
+            _context.Users.Remove(u);
+            _context.Mentors.Remove(mentor);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Trainee with id {id} deleted successfully");
+            _logger.LogInformation("Mentor {MentorId} deleted successfully", mentor.Id);
+            await _cache.RemoveAsync(CacheKey.mentorall);
+            return;
+        }
+        catch(NotFoundException)
+        {
+            throw;
+        }
+        catch (System.Exception ex)
+        {
+            throw new DataBaseOperationFailed(ex, ErrorCodes.TRAINEE_NOT_DELETE);
+        }
     }
 }

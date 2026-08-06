@@ -64,7 +64,7 @@ public class MentorController : ControllerBase
 
     [Authorize(Policy = "MentorOrAdminOnly")]
     [HttpPut("{id}")]
-    public async Task<ActionResult<MentorResponse>> UpdateMentorRequest(long id, [FromBody] MentorRequestBody mentorInfo)
+    public async Task<ActionResult<MentorResponse>> UpdateMentorRequest(long id, [FromBody] MentorUpdateRequestBody mentorInfo)
     {
         if (!ModelState.IsValid)
         {

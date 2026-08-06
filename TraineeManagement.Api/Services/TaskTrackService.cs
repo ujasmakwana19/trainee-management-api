@@ -8,6 +8,10 @@ using TraineeManagement.Data.TrackTaskModel;
 using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.Data.CacheServices;
+using TraineeManagement.WebCommons.AuthClaims;
+using TraineeManagement.Data.UserModel;
+using TraineeManagement.Data.MentorModel;
+using TraineeManagement.Data.TraineeModel;
 namespace TraineeManagement.Api.TrackTaskService;
 
 public class TrackTaskService : ITrackTaskService
@@ -16,9 +20,12 @@ public class TrackTaskService : ITrackTaskService
     private readonly ILogger<TrackTaskService>_logger;
     private readonly ICacheService _cache;
 
-    public TrackTaskService(AppDbContext context, ILogger<TrackTaskService> logger, ICacheService cache)
+    private readonly ICurrentUserAccessor _currentUser ;
+
+    public TrackTaskService(AppDbContext context, ICurrentUserAccessor currentUser, ILogger<TrackTaskService> logger, ICacheService cache)
     {
         _context = context;
+        _currentUser = currentUser;
         _logger = logger;
         _cache = cache;
     }
@@ -72,65 +79,243 @@ public class TrackTaskService : ITrackTaskService
         return ToResponse(trackTask);
     }
 
-    public async Task<IEnumerable<TrackTaskResponse>> GetAllTasks()
+    public async Task<IEnumerable<TrackTaskPersonalResponse>> GetAllTasks()
     {
-        IEnumerable<TrackTaskResponse>? trackTasks = await _cache.GetAsync<IEnumerable<TrackTaskResponse>>(CacheKey.trackTaskAll);
+        long userId = _currentUser.Id;
+        string userRole = _currentUser.Role;
+        if(userRole == UserRole.Mentor.ToString())
+        {
+            Mentor? mentor = await _context.Mentors.AsNoTracking().FirstOrDefaultAsync(m => m.UserId == userId);
 
-        if(trackTasks is null)
-        {    
-            trackTasks = await _context.TrackTasks
-                                                .Select(t => new TrackTaskResponse(
-                                                    t.Id,
-                                                    t.TraineeId,
-                                                    t.MentorId,
-                                                    t.LearningTaskId,
-                                                    t.AssignedDate,
-                                                    t.DueDate,
-                                                    t.Status,
-                                                    t.Remark
-                                                ))
-                                                .ToListAsync();
-            if(trackTasks.Any())
-                await _cache.SetAsync<IEnumerable<TrackTaskResponse>>(CacheKey.trackTaskAll,trackTasks,CacheTTL.GETS_TTL_MIN);
+            if(mentor == null)
+            {
+                return [];
+            }
+
+
+            return await _context.TrackTasks.AsNoTracking()
+                                            .Where(t => t.MentorId == mentor.Id)
+                                            .Select(t => new TrackTaskPersonalResponse(
+                                                t.Id,
+                                                t.TraineeId,
+                                                t.Trainee.FirstName + " "+t.Trainee.LastName,          
+                                                t.MentorId,
+                                                t.Mentor.FirstName + " "+t.Mentor.LastName,           
+                                                t.LearningTaskId,
+                                                t.LearningTask.Title,    
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            ))
+                                            .ToListAsync();
         }
-        return trackTasks;
+        else if (userRole == UserRole.Trainee.ToString())
+        {
+            Trainee? trainee = await _context.Trainees.AsNoTracking().FirstOrDefaultAsync(t => t.UserId == userId);
+
+            if(trainee == null)
+            {
+                return [];
+            }
+
+
+            return await _context.TrackTasks.AsNoTracking()
+                                            .Where(t => t.TraineeId == trainee.Id)
+                                            .Select(t => new TrackTaskPersonalResponse(
+                                                t.Id,
+                                                t.TraineeId,
+                                                t.Trainee.FirstName + " "+t.Trainee.LastName,          
+                                                t.MentorId,
+                                                t.Mentor.FirstName + " "+t.Mentor.LastName,           
+                                                t.LearningTaskId,
+                                                t.LearningTask.Title,    
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            ))
+                                            .ToListAsync();
+        }
+        else if(userRole == UserRole.Admin.ToString())
+        {
+            return await _context.TrackTasks.AsNoTracking()
+                                            .Select(t => new TrackTaskPersonalResponse(
+                                                t.Id,
+                                                t.TraineeId,
+                                                t.Trainee.FirstName + " "+t.Trainee.LastName,          
+                                                t.MentorId,
+                                                t.Mentor.FirstName + " "+t.Mentor.LastName,           
+                                                t.LearningTaskId,
+                                                t.LearningTask.Title,    
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            ))
+                                            .ToListAsync();
+        }
+        else
+        {
+            return [];
+        }
     }
 
     public async Task<TrackTaskPopulatedResponseBody> GetTrackTaskByIdAsync(long id)
     {
-        string cacheKey = CacheKey.trackTaskId + $"{id}";
-        TrackTaskPopulatedResponseBody? trackTask = await _cache.GetAsync<TrackTaskPopulatedResponseBody>(cacheKey);
+        long userId = _currentUser.Id;
+        string userRole = _currentUser.Role;
 
-        if(trackTask is null)
+        if(userRole == UserRole.Mentor.ToString())
         {
-            TrackTask? task = await _context.TrackTasks
-                .Include(t => t.Trainee)
-                .Include(t => t.Mentor)
-                .Include(t => t.LearningTask)
-                .FirstOrDefaultAsync(t => t.Id == id) ; 
-            
-            if(task is null)
+            Mentor? mentor = await _context.Mentors.AsNoTracking().FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if(mentor == null)
             {
                 throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
             }
 
-            trackTask = new TrackTaskPopulatedResponseBody
-            (
-                Id: task.Id,
-                Trainee: new TraineeResponse(task.Trainee.Id, task.Trainee.FirstName, task.Trainee.LastName, task.Trainee.Email, task.Trainee.TechStack, task.Trainee.Status),
-                Mentor: new MentorResponse(task.Mentor.Id, task.Mentor.FirstName,task.Mentor.LastName, task.Mentor.Email, task.Mentor.Expertise, task.Mentor.Status),
-                LearningTask: new TaskResponseData(task.LearningTask.Id, task.LearningTask.Title, task.LearningTask.Description, task.LearningTask.ExpectedTechStack, task.LearningTask.DueDate, task.LearningTask.Status),
-                AssignedDate: task.AssignedDate,
-                DueDate: task.DueDate,
-                Status: task.Status,
-                Remark: task.Remark
-            );
+            TrackTaskPopulatedResponseBody? t = await _context.TrackTasks.AsNoTracking()
+                                            .Where(t => t.MentorId == mentor.Id && t.Id == id)
+                                            .Select(t => new TrackTaskPopulatedResponseBody(
+                                                t.Id,
+                                                new TraineeResponse(
+                                                    t.TraineeId,
+                                                    t.Trainee.FirstName,
+                                                    t.Trainee.LastName,
+                                                    t.Trainee.Email,
+                                                    t.Trainee.TechStack,
+                                                    t.Trainee.Status
+                                                ),
+                                                new MentorResponse(
+                                                    t.MentorId,
+                                                    t.Mentor.FirstName,
+                                                    t.Mentor.LastName,
+                                                    t.Mentor.Email,
+                                                    t.Mentor.Expertise,
+                                                    t.Mentor.Status
+                                                ),
+                                                new TaskResponseData(
+                                                    t.LearningTaskId,
+                                                    t.LearningTask.Title,
+                                                    t.LearningTask.Description,
+                                                    t.LearningTask.ExpectedTechStack,
+                                                    t.LearningTask.DueDate,
+                                                    t.LearningTask.Status
+                                                ),
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            )).FirstOrDefaultAsync();
 
-            await _cache.SetAsync<TrackTaskPopulatedResponseBody>(cacheKey,trackTask,CacheTTL.GETS_TTL_MIN);
+            if(t == null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
+
+            return t;
+
+        }
+        if(userRole == UserRole.Trainee.ToString())
+        {
+            Trainee? trainee = await _context.Trainees.AsNoTracking().FirstOrDefaultAsync(m => m.UserId == userId);
+
+            if(trainee == null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
+
+            TrackTaskPopulatedResponseBody? t = await _context.TrackTasks.AsNoTracking()
+                                            .Where(t => t.TraineeId == trainee.Id && t.Id == id)
+                                            .Select(t => new TrackTaskPopulatedResponseBody(
+                                                t.Id,
+                                                new TraineeResponse(
+                                                    t.TraineeId,
+                                                    t.Trainee.FirstName,
+                                                    t.Trainee.LastName,
+                                                    t.Trainee.Email,
+                                                    t.Trainee.TechStack,
+                                                    t.Trainee.Status
+                                                ),
+                                                new MentorResponse(
+                                                    t.MentorId,
+                                                    t.Mentor.FirstName,
+                                                    t.Mentor.LastName,
+                                                    t.Mentor.Email,
+                                                    t.Mentor.Expertise,
+                                                    t.Mentor.Status
+                                                ),
+                                                new TaskResponseData(
+                                                    t.LearningTaskId,
+                                                    t.LearningTask.Title,
+                                                    t.LearningTask.Description,
+                                                    t.LearningTask.ExpectedTechStack,
+                                                    t.LearningTask.DueDate,
+                                                    t.LearningTask.Status
+                                                ),
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            )).FirstOrDefaultAsync();
+
+            if(t == null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
+
+            return t;
+
+        }
+        else if(userRole == UserRole.Admin.ToString())
+        {
+            TrackTaskPopulatedResponseBody? t = await _context.TrackTasks.AsNoTracking()
+                                            .Where(t => t.Id == id)
+                                            .Select(t => new TrackTaskPopulatedResponseBody(
+                                                t.Id,
+                                                new TraineeResponse(
+                                                    t.TraineeId,
+                                                    t.Trainee.FirstName,
+                                                    t.Trainee.LastName,
+                                                    t.Trainee.Email,
+                                                    t.Trainee.TechStack,
+                                                    t.Trainee.Status
+                                                ),
+                                                new MentorResponse(
+                                                    t.MentorId,
+                                                    t.Mentor.FirstName,
+                                                    t.Mentor.LastName,
+                                                    t.Mentor.Email,
+                                                    t.Mentor.Expertise,
+                                                    t.Mentor.Status
+                                                ),
+                                                new TaskResponseData(
+                                                    t.LearningTaskId,
+                                                    t.LearningTask.Title,
+                                                    t.LearningTask.Description,
+                                                    t.LearningTask.ExpectedTechStack,
+                                                    t.LearningTask.DueDate,
+                                                    t.LearningTask.Status
+                                                ),
+                                                t.AssignedDate,
+                                                t.DueDate,
+                                                t.Status,
+                                                t.Remark
+                                            )).FirstOrDefaultAsync();
+
+            if(t == null)
+            {
+                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
+            }
+
+            return t;
+        }
+        else
+        {
+            throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
         }
         
-
-        return trackTask;
     }
 
     public async Task<TrackTaskResponse> UpdateTrackTaskAsync(long id, TrackTaskUpdateRequestBody body)

@@ -50,7 +50,7 @@ public class TrackTaskController : ControllerBase
     [HttpGet("getall")]
     public async Task<ActionResult> GetAllTasks()
     {
-        IEnumerable<TrackTaskResponse> tasks = await _trackTaskService.GetAllTasks();
+        IEnumerable<TrackTaskPersonalResponse> tasks = await _trackTaskService.GetAllTasks();
         return ResponseHandler.SuccessResponse(HttpContext, ErrorCodes.SUCCESS, tasks);
     }
 
