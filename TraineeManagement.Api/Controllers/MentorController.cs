@@ -62,7 +62,7 @@ public class MentorController : ControllerBase
         return ResponseHandler.SuccessResponse(HttpContext,ErrorCodes.SUCCESS,mentor);
     }
 
-    [Authorize(Policy = "MentorOrAdminOnly")]
+    [Authorize(Policy = "AdminOnly")]
     [HttpPut("{id}")]
     public async Task<ActionResult<MentorResponse>> UpdateMentorRequest(long id, [FromBody] MentorUpdateRequestBody mentorInfo)
     {

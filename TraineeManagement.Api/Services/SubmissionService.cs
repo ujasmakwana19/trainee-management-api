@@ -8,8 +8,6 @@ using TraineeManagement.Data.SubmissionModel;
 using TraineeManagement.Data.CacheServices;
 using TraineeManagement.WebCommons.AuthClaims;
 using TraineeManagement.Data.UserModel;
-using TraineeManagement.Data.MentorModel;
-using TraineeManagement.Data.TrackTaskModel;
 
 namespace TraineeManagement.Api.SubmissionService;
 
@@ -31,6 +29,24 @@ public class SubmissionService : ISubmissionService
         _publishService = publishService;
     }
 
+    private IQueryable<Submission> GetAccessibleSubmissions(long userId, string role)
+    {
+        IQueryable<Submission> query = _context.Submissions.AsNoTracking();
+
+        return role switch
+        {
+            nameof(UserRole.Admin) => query,
+
+            nameof(UserRole.Mentor) => query.Where(s =>
+                s.TrackTask.Mentor.UserId == userId),
+
+            nameof(UserRole.Trainee) => query.Where(s =>
+                s.TrackTask.Trainee.UserId == userId),
+
+            _ => query.Where(_ => false)
+        };
+    }
+
     private async Task<Submission> FetchSubmission(long id)
     {
         Submission? s = await _context.Submissions.FirstOrDefaultAsync(t => t.Id == id);
@@ -41,9 +57,9 @@ public class SubmissionService : ISubmissionService
         return s;
     }
 
-    private SubmissionResponse ToResponse(Submission task)
+    private static SubmissionCreateResponse ToResponse(Submission task)
     {
-        return new SubmissionResponse(
+        return new SubmissionCreateResponse(
             task.Id,
             task.TaskAssignmentId,
             task.SubmissionUrl,
@@ -53,83 +69,102 @@ public class SubmissionService : ISubmissionService
         );
     }
 
-    public async Task<SubmissionResponse> CreateSubmission(SubmissionRequestBody body)
+    public async Task<SubmissionCreateResponse> CreateSubmission(SubmissionRequestBody body)
     {
         long userId = _currentUser.Id;
-        string userRole = _currentUser.Role;
+        string role = _currentUser.Role;
 
-        if(userRole == UserRole.Mentor.ToString())
+        bool hasAccess = role switch
         {
-            bool taskExists = await _context.TrackTasks.AnyAsync(t => t.Id == body.TaskAssignmentId && t.MentorId == userId);
+            nameof(UserRole.Admin) => true,
 
-            if (!taskExists)
-            {
-                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
-            }
+            nameof(UserRole.Trainee) => await _context.TrackTasks
+                .AnyAsync(t =>
+                    t.Id == body.TaskAssignmentId &&
+                    t.Trainee.UserId == userId),
 
-        }
-        else if (userRole == UserRole.Trainee.ToString())
-        {
-            bool taskExists = await _context.TrackTasks.AnyAsync(t => t.Id == body.TaskAssignmentId && t.TraineeId == userId);
+            nameof(UserRole.Mentor) => await _context.TrackTasks
+                .AnyAsync(t =>
+                    t.Id == body.TaskAssignmentId &&
+                    t.Mentor.UserId == userId),
 
-            if (!taskExists)
-            {
-                throw new NotFoundException(ErrorCodes.NOT_FOUND_TASK_ASSIGNMENT);
-            }
-        }
-        Submission s = new Submission
+            _ => false
+        };
+
+        if (!hasAccess)
+            throw new UnauthorizedException(ErrorCodes.ROLE_FORBIDDEN);
+
+        Submission submission = new Submission
         {
             TaskAssignmentId = body.TaskAssignmentId,
             SubmissionUrl = body.SubmissionUrl,
             Notes = body.Notes,
             SubmittedDate = body.SubmittedDate,
-            Status = body.Status   
+            Status = body.Status
         };
-        _context.Submissions.Add(s);
+
+        _context.Submissions.Add(submission);
         await _context.SaveChangesAsync();
-        _logger.LogInformation("Submission {SubmissionId} created successfully", s.Id);
-        return ToResponse(s);
+
+        _logger.LogInformation(
+            "Submission {SubmissionId} created successfully",
+            submission.Id);
+
+        return ToResponse(submission);
     }
 
     public async Task<SubmissionResponse> GetSubmissionById(long id)
     {
-        string cacheKey = CacheKey.submissionId + $"{id}";
-        SubmissionResponse? s = await _cache.GetAsync<SubmissionResponse>(cacheKey);
+        long userId = _currentUser.Id;
+        string role = _currentUser.Role;
 
-        if(s is null)
+        string cacheKey = CacheKey.submissionId + $"{id}";
+
+        SubmissionResponse? submission =
+            await _cache.GetAsync<SubmissionResponse>(cacheKey);
+
+        if (submission is null)
         {
-            s = await _context.Submissions
-                                .Where(t => t.Id == id)
-                                .Select(t => new SubmissionResponse(
-                                    t.Id,
-                                    t.TaskAssignmentId,
-                                    t.SubmissionUrl,
-                                    t.Notes,
-                                    t.SubmittedDate,
-                                    t.Status
-                                ))
-                                .FirstOrDefaultAsync();
-            if(s is null)
+            submission = await GetAccessibleSubmissions(userId, role)
+                .Where(s => s.Id == id)
+                .Select(s => new SubmissionResponse(
+                    s.Id,
+                    s.TaskAssignmentId,
+                    s.TrackTask.LearningTask.Title,
+                    s.SubmissionUrl,
+                    s.Notes,
+                    s.SubmittedDate,
+                    s.Status
+                ))
+                .FirstOrDefaultAsync();
+
+            if (submission is null)
                 throw new NotFoundException(ErrorCodes.NOT_FOUND_SUBMISSION);
 
-            await _cache.SetAsync<SubmissionResponse>(cacheKey, s, CacheTTL.GETS_TTL_MIN);
+            await _cache.SetAsync(
+                cacheKey,
+                submission,
+                CacheTTL.GETS_TTL_MIN);
         }
-        return s;
+
+        return submission;
     }
 
     public async Task<IEnumerable<SubmissionResponse>> GetAll()
     {
-        List<SubmissionResponse> submissions = await _context.Submissions
-                                        .Select(t => new SubmissionResponse(
-                                            t.Id,
-                                            t.TaskAssignmentId,
-                                            t.SubmissionUrl,
-                                            t.Notes,
-                                            t.SubmittedDate,
-                                            t.Status
-                                        ))
-                                        .ToListAsync();
-
-        return submissions;
+        long userId = _currentUser.Id;
+        string role = _currentUser.Role;
+        
+        return await GetAccessibleSubmissions(userId, role)
+            .Select(s => new SubmissionResponse(
+                s.Id,
+                s.TaskAssignmentId,
+                s.TrackTask.LearningTask.Title,
+                s.SubmissionUrl,
+                s.Notes,
+                s.SubmittedDate,
+                s.Status
+            ))
+            .ToListAsync();
     }
 }

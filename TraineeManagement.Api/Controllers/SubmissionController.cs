@@ -30,7 +30,7 @@ public class SubmitController : ControllerBase
                     StatusCodes.Status400BadRequest,
                     ErrorCodes.INVALID_MODEL);
         }
-        SubmissionResponse submission = await _service.CreateSubmission(body);
+        SubmissionCreateResponse submission = await _service.CreateSubmission(body);
         return ResponseHandler.AcceptResponse(
             HttpContext,
             ErrorCodes.ACCEPTED,

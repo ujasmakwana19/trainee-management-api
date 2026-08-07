@@ -29,6 +29,16 @@ public record SubmissionRequestBody (
 public record SubmissionResponse(
     long Id,
     long TaskAssignmentId,
+    string TaskAssignmentTitle,
+    string SubmissionUrl,
+    string Notes,
+    DateOnly SubmittedDate,
+    SubmissionStatus Status
+);
+
+public record SubmissionCreateResponse(
+    long Id,
+    long TaskAssignmentId,
     string SubmissionUrl,
     string Notes,
     DateOnly SubmittedDate,
