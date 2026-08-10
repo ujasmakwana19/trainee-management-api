@@ -30,7 +30,7 @@ public class ReviewController : ControllerBase
                 ErrorCodes.INVALID_MODEL
             );
         }
-        ReviewResponse review = await _service.CreateReview(body);
+        ReviewPostResponse review = await _service.CreateReview(body);
         return ResponseHandler.SuccessResponse(
             HttpContext,
             ErrorCodes.SUCCESS,

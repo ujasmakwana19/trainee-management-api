@@ -27,9 +27,23 @@ public record ReviewRequestBody(
 public record ReviewResponse(
     long Id,
     long SubmissionId,
+    string Submission,
+    string SubmissionUrl,
     long MentorId,
+    string Mentor,
     string Feedback,
     long Score,
+    ReviewStatusValue ReviewStatus,
+    DateOnly ReviewedDate
+);
+
+public record ReviewPostResponse
+(
+    long Id,
+    long SubmissionId,
+    long MentorId,
+    long Score,
+    string Feedback,
     ReviewStatusValue ReviewStatus,
     DateOnly ReviewedDate
 );

@@ -5,59 +5,65 @@ using TraineeManagement.WebCommons.ErrorCodesUtils;
 using TraineeManagement.WebCommons.ExceptionUtils;
 using TraineeManagement.Data.ReviewModel;
 using TraineeManagement.Data.TrackTaskModel;
+using TraineeManagement.WebCommons.AuthClaims;
+using TraineeManagement.Data.UserModel;
+using TraineeManagement.Data.SubmissionModel;
+
 namespace TraineeManagement.Api.ReviewService;
+
 public class ReviewService : IReviewService
 {   
     private readonly AppDbContext _context;
     private readonly ILogger<ReviewService> _logger;
+    private readonly ICurrentUserAccessor _currentUser;
     private readonly ICacheService _cache;
 
-    public ReviewService(AppDbContext context, ILogger<ReviewService> logger, ICacheService cache)
+    public ReviewService(AppDbContext context, ICurrentUserAccessor currentUser, ILogger<ReviewService> logger, ICacheService cache)
     {
         _context = context;
+        _currentUser = currentUser;
         _logger = logger;
         _cache = cache;
     }
 
-    private async Task<Review> FetchReview(long id)
+    private IQueryable<Review> GetAccessibleReviews(long userId, string role)
     {
-        Review? t = await _context.Reviews.FirstOrDefaultAsync(t => t.Id == id);
-        if(t is null)
+        IQueryable<Review> query = _context.Reviews.AsNoTracking();
+
+        return role switch
+        {
+            nameof(UserRole.Admin) => query,
+
+            nameof(UserRole.Mentor) => query.Where(r => r.Mentor.UserId == userId),
+
+            nameof(UserRole.Trainee) => query.Where(r => r.Submission.TrackTask.Trainee.UserId == userId),
+
+            _ => query.Where(_ => false)
+        };
+    }
+
+    public async Task<ReviewPostResponse> CreateReview(ReviewRequestBody body)
+    {   
+        long userId = _currentUser.Id;
+        string role = _currentUser.Role;
+
+        Submission? submission = await _context.Submissions
+            .Include(s => s.TrackTask)
+                .ThenInclude(t => t.Mentor)
+            .FirstOrDefaultAsync(s => s.Id == body.SubmissionId);
+
+        if (submission is null)
         {
             throw new NotFoundException(ErrorCodes.NOT_FOUND_REVIEW);
         }
-        return t;
-    }
 
-    private ReviewResponse ToResponse(Review r)
-    {
-        return new ReviewResponse(
-            r.Id,
-            r.SubmissionId,
-            r.MentorId,
-            r.Feedback,
-            r.Score,
-            r.ReviewStatus,
-            r.ReviewedDate
-        );
-    }
+        bool isAssignedMentor = role == nameof(UserRole.Mentor) && 
+                    submission.TrackTask.Mentor.UserId == userId && 
+                    submission.TrackTask.MentorId == body.MentorId;
 
-    // The Assigned Mentor only can create the review for the specific submission
-    private async Task<bool> IsMentorSameAsAssigned(long submissionId, long mentorId)
-    {
-        bool isAssigned = await (
-            from s in _context.Submissions
-            join t in _context.TrackTasks on s.TaskAssignmentId equals t.Id
-            where s.Id == submissionId
-            select t.MentorId == mentorId
-        ).FirstOrDefaultAsync();
-    
-        return isAssigned;
-    } 
+        bool isAdmin = role == nameof(UserRole.Admin);
 
-    public async Task<ReviewResponse> CreateReview(ReviewRequestBody body)
-    {
-        if(!await IsMentorSameAsAssigned(body.SubmissionId, body.MentorId))
+        if (!isAssignedMentor && !isAdmin)
         {
             throw new UnauthorizedException(ErrorCodes.NOT_OWNER_ACCESS);
         }
@@ -71,54 +77,71 @@ public class ReviewService : IReviewService
             ReviewStatus = body.ReviewStatus,
             ReviewedDate = body.ReviewedDate
         };
-        _context.Add(review);
+
+        _context.Reviews.Add(review);
         await _context.SaveChangesAsync();
+
         _logger.LogInformation("Review {ReviewId} created successfully", review.Id);
         await _cache.RemoveAsync(CacheKey.reviewAll);
-        return ToResponse(review);
+
+        return new ReviewPostResponse(
+            review.Id,
+            review.SubmissionId,
+            review.MentorId,
+            review.Score,
+            review.Feedback,
+            review.ReviewStatus,
+            review.ReviewedDate
+        );
     }
 
-    public async Task<ReviewResponse> GetById(long Id)
+    public async Task<ReviewResponse> GetById(long id)
     {
+        long userId = _currentUser.Id;
+        string role = _currentUser.Role;
 
-        ReviewResponse? review = await _context.Reviews
-                                .Where(t => t.Id == Id)
-                                .Select(t => new ReviewResponse(
-                                    t.Id,
-                                    t.SubmissionId,
-                                    t.MentorId,
-                                    t.Feedback,
-                                    t.Score,
-                                    t.ReviewStatus,
-                                    t.ReviewedDate
-                                ))
-                                .FirstOrDefaultAsync();
-        if(review is null)
+        ReviewResponse? review = await GetAccessibleReviews(userId, role)
+            .Where(r => r.Id == id)
+            .Select(r => new ReviewResponse(
+                r.Id,
+                r.SubmissionId,
+                r.Submission.TrackTask.LearningTask.Title,
+                r.Submission.SubmissionUrl,
+                r.MentorId,
+                r.Mentor.FirstName + " " + r.Mentor.LastName,
+                r.Feedback,
+                r.Score,
+                r.ReviewStatus,
+                r.ReviewedDate
+            ))
+            .FirstOrDefaultAsync();
+
+        if (review is null)
+        {
             throw new NotFoundException(ErrorCodes.NOT_FOUND_REVIEW);
+        }
+
         return review;
     }
 
     public async Task<IEnumerable<ReviewResponse>> GetAll()
     {
-        IEnumerable<ReviewResponse>? reviews = await _cache.GetAsync<IEnumerable<ReviewResponse>>(CacheKey.reviewAll);
-
-        if(reviews is null)
-        {
-
-            reviews = await _context.Reviews
-                                    .Select(t => new ReviewResponse(
-                                        t.Id,
-                                        t.SubmissionId,
-                                        t.MentorId,
-                                        t.Feedback,
-                                        t.Score,
-                                        t.ReviewStatus,
-                                        t.ReviewedDate
-                                    ))
-                                    .ToListAsync();
-            if(reviews.Any())
-                await _cache.SetAsync<IEnumerable<ReviewResponse>>(CacheKey.reviewAll, reviews, CacheTTL.GETS_TTL_MIN);
-        }
-        return reviews;
+        long userId = _currentUser.Id;
+        string role = _currentUser.Role;
+        
+        return await GetAccessibleReviews(userId, role)
+            .Select(r => new ReviewResponse(
+                r.Id,
+                r.SubmissionId,
+                r.Submission.TrackTask.LearningTask.Title,
+                r.Submission.SubmissionUrl,
+                r.MentorId,
+                r.Mentor.FirstName + " " + r.Mentor.LastName,
+                r.Feedback,
+                r.Score,
+                r.ReviewStatus,
+                r.ReviewedDate
+            ))
+            .ToListAsync();
     }
 }
